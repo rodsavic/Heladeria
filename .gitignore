@@ -8,9 +8,14 @@
 # pinned files extension
 .vscode/pinned-files.json
 
-# byte-compiled / optimized / DLL files
+# Directorios de compilación
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.pytest_cache/
+.tox/
 
 # tests and coverage
 *.pytest_cache
