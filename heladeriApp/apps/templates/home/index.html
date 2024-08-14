@@ -1,12 +1,12 @@
-<!DOCTYPE html>
 {% extends "base/base.html" %}
-{% extends "base/sidebar.html" %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
 
-</body>
-</html>
+{% block title %}Home{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>Bienvenido a la página principal {{ usuario_actual.nombre_usuario }}</h1>
+    <p>Este es el contenido de la página de inicio.</p>
+</div>
+{% endblock %}

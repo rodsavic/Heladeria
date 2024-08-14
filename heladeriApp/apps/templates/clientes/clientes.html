@@ -1,10 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base/base.html" %}
+
+{% block title %}Clientes{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+
+    <h1>Lista de Clientes</h1>
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                {% for columna in columnas %}
+                <th>{{columna}}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for cliente in clientes %}
+        <tr>
+            <td>{{cliente.nombre}}</td>
+            <td>{{cliente.apellido}}</td>
+            <td>{{cliente.correo}}</td>
+            <td>{{cliente.documento}}</td>
+            <td>{{cliente.telefono}}</td>
+            <td>{{cliente.direccion}}</td>
+            <td>{{cliente.estado}}</td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
+
+
+
+    <a class="btn btn-primary" href="{% url 'clientes:crear_cliente' %}" role="button">Crear Cliente</a>
+
+{% endblock %}
