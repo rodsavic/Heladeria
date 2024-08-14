@@ -1,0 +1,44 @@
+# Carpeta de migraciones
+**/migrations/*
+!**migrations/__init__.py
+
+# Archivo temporal architect
+*~
+
+# pinned files extension
+.vscode/pinned-files.json
+
+# byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# tests and coverage
+*.pytest_cache
+.coverage
+
+# database & logs
+*.db
+*.sqlite3
+*.log
+
+# venv
+.venv/
+env/
+.env/
+
+# other
+.DS_Store
+
+# javascript
+package-lock.json
+
+staticfiles/*
+!staticfiles/.gitkeep 
+.vscode/symbols.json
+
+apps/static/assets/node_modules
+apps/static/assets/yarn.lock
+apps/static/assets/.temp
+
+# Archivos de caché
+*.cache
