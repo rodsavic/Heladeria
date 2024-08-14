@@ -1,0 +1,35 @@
+{% extends "base/base.html" %}
+
+{% block title %}Lista de Usuarios {% endblock %}
+{% block body_class %} sidebar-mini {% endblock body_class %}
+{% block content %}
+
+
+
+    <h3>Lista de Usuarios</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                {% for columna in columnas %}
+                <th>{{ columna|title }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario.nombre_usuario }}</td>
+                <td>{{ usuario.nombre }}</td>
+                <td>{{ usuario.apellido }}</td>
+                <td></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a class="btn btn-primary" href="{% url 'usuarios:crear_usuario' %}" role="button">Crear usuario</a>
+
+
+
+{% endblock %}
