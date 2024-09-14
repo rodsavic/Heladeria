@@ -1,0 +1,137 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Crear Venta{% endblock title %}
+
+{% block content %}
+
+<form method="post">
+    {% csrf_token %}
+    <div>
+        <label for="selectProducto">Producto</label>
+        <select name="selectProducto" id="selectProducto">
+            {% for producto in productos %}
+            <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio_actual }}" data-idiva="{{ producto.id_iva.descripcion }}">
+                {{ producto.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="cantidad">Cantidad:</label>
+        <input type="number" name="cantidad" id="cantidad">
+        <br>
+        <button type="button" onclick="agregarProductoATabla()">Agregar Producto</button>
+    </div>
+
+    <br><br>
+
+    <table id="tablaProductos" border="1">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total Detalle</th>
+                <th>IVA</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aquí se agregarán las filas dinámicamente -->
+        </tbody>
+    </table>
+    <input type="hidden" name="productos_json" id="productos_json">
+
+    <br>
+
+    <label for="total_venta">Total venta:</label>
+    <input type="number" name="total_venta" id="total_venta" value="0" readonly>
+    <br>
+    <label for="total_iva_10">Total IVA 10:</label>
+    <input type="number" name="total_iva_10" id="total_iva_10" value="0" readonly>
+    <br>
+    <label for="total_iva_5">Total IVA 5:</label>
+    <input type="number" name="total_iva_5" id="total_iva_5" value="0" readonly>
+    <br>
+    
+    <label for="cliente">Cliente</label>
+    <select name="cliente" id="cliente">
+        {% for cliente in clientes %}
+        <option value="{{ cliente.id_cliente }}">
+            {{ cliente.nombre }}
+        </option>
+        {% endfor %}
+    </select>
+    
+
+    <button type="submit">Guardar</button>
+</form>
+
+<script>
+    let productos = [];
+    function agregarProductoATabla() {
+        const selectProducto = document.getElementById("selectProducto");
+        const cantidad = parseFloat(document.getElementById("cantidad").value) || 0;
+        const precio = parseFloat(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-precio')) || 0;
+        const idIva = parseInt(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-idiva')) || 0;
+        const nombreProducto = selectProducto.options[selectProducto.selectedIndex].text;
+        
+        const totalDetalle = cantidad * precio;
+        let iva = 0;
+
+        // Calcular IVA en base al valor del id_iva
+        if (idIva === 10) {
+            iva = totalDetalle * 0.1;
+            actualizarTotalIVA(iva, 0);
+        } else if (idIva === 5) {
+            iva = totalDetalle * 0.05;
+            actualizarTotalIVA(0, iva);
+        }
+
+        const tabla = document.getElementById("tablaProductos").querySelector("tbody");
+        const nuevaFila = tabla.insertRow();
+
+        const celdaProducto = nuevaFila.insertCell(0);
+        const celdaCantidad = nuevaFila.insertCell(1);
+        const celdaPrecio = nuevaFila.insertCell(2);
+        const celdaTotalDetalle = nuevaFila.insertCell(3);
+        const celdaIva = nuevaFila.insertCell(4);
+
+        celdaProducto.innerText = nombreProducto;
+        celdaCantidad.innerText = cantidad;
+        celdaPrecio.innerText = precio.toFixed(2);
+        celdaTotalDetalle.innerText = totalDetalle.toFixed(2);
+        celdaIva.innerText = iva.toFixed(2);
+
+        const productoObj = {
+            id_producto: selectProducto.value,
+            cantidad: cantidad,
+            total_detalle: totalDetalle
+        };
+        productos.push(productoObj);
+
+        document.getElementById('productos_json').value = JSON.stringify(productos);
+        /*
+        // Agregar campos ocultos para enviar al servidor
+        nuevaFila.innerHTML += `
+            <input type="hidden" name="tablaProductos[]" value="${selectProducto.value},${cantidad},${totalDetalle}">
+        `;*/
+        actualizarTotal(totalDetalle);
+    }
+
+    function actualizarTotal(nuevoTotalDetalle) {
+        const total_venta = document.getElementById("total_venta");
+        const totalVentaActual = parseFloat(total_venta.value) || 0;
+        const nuevoTotalVenta = totalVentaActual + nuevoTotalDetalle;
+        total_venta.value = nuevoTotalVenta.toFixed(2);
+    }
+
+    function actualizarTotalIVA(iva10, iva5) {
+        const totalIva10 = document.getElementById('total_iva_10');
+        const totalIva5 = document.getElementById('total_iva_5');
+
+        totalIva10.value = (parseFloat(totalIva10.value) || 0) + iva10;
+        totalIva5.value = (parseFloat(totalIva5.value) || 0) + iva5;
+    }
+    
+</script>
+
+{% endblock content %}

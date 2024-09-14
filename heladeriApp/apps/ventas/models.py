@@ -1,7 +1,7 @@
 from django.db import models
 
-from heladeriApp.apps.clientes.models import Cliente
-from heladeriApp.apps.productos.models import Producto
+from apps.clientes.models import Cliente
+from apps.productos.models import Producto
 
 class Venta(models.Model):
     id_venta = models.BigAutoField(primary_key=True)
@@ -26,8 +26,8 @@ class VentaDetalle(models.Model):
     id_detalle = models.BigAutoField(primary_key=True)
     total_detalle = models.FloatField(db_column='total_detalle', null=False)
     cantidad_producto = models.FloatField(db_column='cantidad_producto', null=False)
-    id_venta = models.BigIntegerField(Venta, models.DO_NOTHING, db_column='id_venta')
-    id_producto = models.BigIntegerField(Producto, models.DO_NOTHING, db_column='id_producto')
+    id_venta = models.ForeignKey(Venta, models.DO_NOTHING, db_column='id_venta')
+    id_producto = models.ForeignKey(Producto, models.DO_NOTHING, db_column='id_producto')
 
     class Meta:
         managed = False

@@ -1,0 +1,42 @@
+{% extends "base/base.html" %}
+
+{% block title %}Productos{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+
+    <h1>Lista de Ventas</h1>
+
+    
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                {% for columna in columnas %}
+                <th>{{columna}}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for venta in ventas %}
+        <tr>
+            <td>{{venta.id_cliente.nombre}}</td>
+            <td>{{venta.total_venta}}</td>
+            <td>{{venta.total_iva_10}}</td>
+            <td>{{venta.total_iva_5}}</td>
+            <td>{{venta.fecha_venta}}</td>
+            <td>{{venta.usuario_creacion}}</td>
+            
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
+
+
+
+    <a class="btn btn-primary" href="{% url 'ventas:crear_venta' %}" role="button">Crear Venta</a>
+
+{% endblock %}
