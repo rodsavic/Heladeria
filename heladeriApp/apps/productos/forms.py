@@ -2,10 +2,6 @@ from django import forms
 from .models import *
 
 
-class MyModelChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return obj.descripcion
-
 class ProductosForm(forms.ModelForm):
     iva = forms.ModelChoiceField (
         queryset=Iva.objects.all(),

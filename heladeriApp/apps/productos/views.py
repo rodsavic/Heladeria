@@ -4,8 +4,10 @@ from django.contrib import messages
 from .forms import *
 
 def productosReadView(request):
-    productos = Producto.objects.all()
+    productos = Producto.objects.select_related('id_medida').all()
+    columnas = ['Nombre','Precio Actual','Stock Minimo','Stock Actual','Vencimiento','Costo Actual','Medida']
     context = {
+        'columnas':columnas,
         'productos':productos
     }
     

@@ -64,7 +64,7 @@ class Producto(models.Model):
         verbose_name_plural = 'Productos'
 
     def __str__(self):
-        return f'idProducto: {self.id_producto}, nombre: {self.nombre}, precioActual: {self.precio_actual}, usuarioCreacion: {self.usuario_creacion}'
+        return f'idProducto: {self.id_producto}, nombre: {self.nombre}, precioActual: {self.precio_actual}, usuarioCreacion: {self.usuario_creacion}, id_iva: {self.id_iva}'
 
 
 class CategoriaProducto(models.Model):
