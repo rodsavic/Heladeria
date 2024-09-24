@@ -1,17 +1,36 @@
 import json
 from django.contrib import messages
 import logging
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from apps.ventas.forms import *
 from apps.productos.models import Producto
 from apps.clientes.models import Cliente
+from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage
+from django.db.models import Sum
+from django.utils import timezone
+
+from apps.tipo_pago.models import TipoPago
 
 def ventasReadView(request):
-    ventas = Venta.objects.all()
-    columnas = ['Cliente','Total venta', 'Total IVA 10', 'Total IVA 5','Fecha','Usuario']
+    today = timezone.localdate()
+    ventas = Venta.objects.filter(fecha_venta__date=today).order_by('id_venta')
+    print(f'fecha: {today}, ventas: {ventas}')
+    total_ventas = ventas.aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
+    total_ventas_caja = ventas.filter(id_tipo_pago=1).aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
+    ventas_todas = Venta.objects.all()
+    for venta in ventas_todas:
+        print("id: ",venta.id_venta ,"fecha: " ,venta.fecha_venta)
+
+    columnas = ['Cliente','Total venta', 'Total IVA 10', 'Total IVA 5','Tipo','Fecha']
+    paginator = Paginator(ventas,10)
+    page_number = request.GET.get('page',1)
+    ventas_por_pagina=paginator.get_page(page_number)
+
     context = {
         'columnas':columnas,
-        'ventas':ventas
+        'ventas_por_pagina' :ventas_por_pagina,
+        'total_ventas': total_ventas,
+        'total_ventas_caja':total_ventas_caja
     }
 
     return render(request, 'ventas/ventas.html', context=context)
@@ -20,6 +39,7 @@ def ventasCreateView(request):
     # Se cargan los productos para mostrar en la lista
     productos = Producto.objects.all()
     clientes = Cliente.objects.all()
+    tipos_de_pago = TipoPago.objects.all()
     print(f'productos: {productos}')
     
     if request.method == 'POST':
@@ -30,11 +50,13 @@ def ventasCreateView(request):
             total_iva_10 = request.POST['total_iva_10']
             total_iva_5 = request.POST['total_iva_5']
             id_cliente =  request.POST['cliente']
+            id_tipo_pago = request.POST['tipo_de_pago']
             total_venta = request.POST['total_venta']
             nueva_venta = Venta.objects.create(
                 total_iva_10 = total_iva_10,
                 total_iva_5 = total_iva_5,
                 id_cliente = Cliente.objects.get(id_cliente=id_cliente),
+                id_tipo_pago = TipoPago.objects.get(id_tipo_pago=id_tipo_pago),
                 total_venta = total_venta,
                 usuario_creacion = request.user.id
             )
@@ -70,8 +92,32 @@ def ventasCreateView(request):
     #    form = VentaForm()
     context = {
         'productos':productos,
-        'clientes':clientes
+        'clientes':clientes,
+        'tipos_de_pago':tipos_de_pago
         #'form':form
     }
         
     return render(request, 'ventas/crear_venta.html', context=context)
+
+def ventasEditView(request,id_venta):
+    venta = Venta.objects.filter(id_venta = id_venta)
+    clientes = Cliente.objects.all()
+    tipos_de_pago = TipoPago.objects.all()
+    context = {
+        'venta':venta,
+        'clientes': clientes,
+    }
+
+
+def ventasDeleteView(request, id_venta):
+    venta = get_object_or_404(Venta, pk=id_venta)
+    
+    if venta:
+
+        detalles = VentaDetalle.objects.filter(id_venta = id_venta)
+
+        for detalle in detalles:
+            detalle.delete()
+
+        venta.delete()
+    return redirect('ventas:ventas')

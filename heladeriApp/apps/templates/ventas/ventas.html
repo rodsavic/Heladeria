@@ -1,14 +1,30 @@
 {% extends "base/base.html" %}
+{% load humanize %}
 
-{% block title %}Productos{% endblock %}
+{% block title %}Ventas{% endblock %}
 
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
 
-    <h1>Lista de Ventas</h1>
+    <h2>Lista de Ventas</h2>
+<div class="grid-container">
 
+
+
+<div class="grid-item">
+    <div class="grid-item">
+        <h3 class="text-right" >Total del día: {{total_ventas|floatformat:0|intcomma }}</h3>
+    </div>
+    <div class="grid-item">
+        <h3 class="text-right" >Total en caja: {{total_ventas_caja|floatformat:0|intcomma }}</h3>
+    <a href="#" target="_blank" rel="noopener noreferrer">Historial de ventas</a>
+    </div>
     
+</div>
+<div>
+    <a class="btn btn-primary" href="{% url 'ventas:crear_venta' %}" role="button">Crear Venta</a>
+</div>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
@@ -16,27 +32,29 @@
                 {% for columna in columnas %}
                 <th>{{columna}}</th>
                 {% endfor %}
+                <th></th>
             </tr>
         </thead>
         <tbody>
-        {% for venta in ventas %}
+        {% for venta in ventas_por_pagina %}
         <tr>
+
             <td>{{venta.id_cliente.nombre}}</td>
-            <td>{{venta.total_venta}}</td>
-            <td>{{venta.total_iva_10}}</td>
-            <td>{{venta.total_iva_5}}</td>
+            <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
+            <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
+            <td>{{venta.total_iva_5|floatformat:0|intcomma}}</td>
+            <td>{{venta.id_tipo_pago.descripcion}}</td>
             <td>{{venta.fecha_venta}}</td>
-            <td>{{venta.usuario_creacion}}</td>
-            
+            <td> <a type="button" class="btn btn-danger" href="{% url 'ventas:eliminar_venta' venta.id_venta %}"><span class="material-symbols-outlined">
+                delete
+                </span></a> 
+            </td>
         </tr>
         {% endfor %}
 
         </tbody>
     </table>
+    {% include "base/pagination.html" with items_page=ventas_por_pagina %}
 </div>
-
-
-
-    <a class="btn btn-primary" href="{% url 'ventas:crear_venta' %}" role="button">Crear Venta</a>
-
+</div>    
 {% endblock %}

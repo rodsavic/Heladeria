@@ -1,6 +1,8 @@
 {% extends 'base/base.html' %}
-
-{% block title %}Crear Venta{% endblock title %}
+<head>
+    {% block title %}Crear Venta{% endblock title %}
+    {% block stylesheets %}{% endblock stylesheets %}
+</head>
 
 {% block content %}
 
@@ -8,12 +10,15 @@
     {% csrf_token %}
     <div>
         <label for="selectProducto">Producto</label>
-        <select name="selectProducto" id="selectProducto">
+        <select class="selectProducto" name="selectProducto" id="selectProducto">
+            <option value= ""></option>
             {% for producto in productos %}
-            <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio_actual }}" data-idiva="{{ producto.id_iva.descripcion }}">
+            <option value="{{ producto.id_producto }}" 
+                data-precio="{{ producto.precio_actual }}" data-idiva="{{ producto.id_iva.descripcion }}">
                 {{ producto.nombre }}
             </option>
             {% endfor %}
+            
         </select>
         <br>
         <label for="cantidad">Cantidad:</label>
@@ -32,6 +37,7 @@
                 <th>Precio Unitario</th>
                 <th>Total Detalle</th>
                 <th>IVA</th>
+                <th>Accion</th>
             </tr>
         </thead>
         <tbody>
@@ -60,11 +66,27 @@
         </option>
         {% endfor %}
     </select>
-    
+    <div>
+    <label for="tipo_de_pago">Forma de Pago</label>
+    <select name="tipo_de_pago" id="tipos_de_pago">
+        {% for tipo_de_pago in tipos_de_pago %}
+        <option value="{{ tipo_de_pago.id_tipo_pago }}">
+            {{ tipo_de_pago.descripcion }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
 
     <button type="submit">Guardar</button>
 </form>
-
+<script>
+    $(document).ready(function() {
+        $('#selectProducto').select2({
+            placeholder: "Selecciona un producto",
+            allowClear: true
+        });
+    });
+</script>
 <script>
     let productos = [];
     function agregarProductoATabla() {
@@ -88,18 +110,21 @@
 
         const tabla = document.getElementById("tablaProductos").querySelector("tbody");
         const nuevaFila = tabla.insertRow();
+        const rowIndex = tabla.rows.length - 1;
 
         const celdaProducto = nuevaFila.insertCell(0);
         const celdaCantidad = nuevaFila.insertCell(1);
         const celdaPrecio = nuevaFila.insertCell(2);
         const celdaTotalDetalle = nuevaFila.insertCell(3);
         const celdaIva = nuevaFila.insertCell(4);
+        const celdaAccion = nuevaFila.insertCell(5)
 
         celdaProducto.innerText = nombreProducto;
         celdaCantidad.innerText = cantidad;
         celdaPrecio.innerText = precio.toFixed(2);
         celdaTotalDetalle.innerText = totalDetalle.toFixed(2);
         celdaIva.innerText = iva.toFixed(2);
+        celdaAccion.innerHTML = `<button type="button" onclick="eliminarProducto(${rowIndex}, ${totalDetalle}, ${iva}, ${idIva})">Eliminar</button>`;
 
         const productoObj = {
             id_producto: selectProducto.value,
@@ -117,6 +142,28 @@
         actualizarTotal(totalDetalle);
     }
 
+    function eliminarProducto(index, totalDetalle, iva, idIva) {
+        // Eliminar fila de la tabla
+        const tabla = document.getElementById("tablaProductos").querySelector("tbody");
+        tabla.deleteRow(index);
+
+        // Eliminar producto de la lista de productos
+        productos.splice(index, 1);
+
+        // Actualizar el campo oculto con los productos restantes
+        document.getElementById('productos_json').value = JSON.stringify(productos);
+
+        // Restar el total detalle del total de la venta
+        actualizarTotal(-totalDetalle);
+
+        // Restar el IVA correspondiente
+        if (idIva === 10) {
+            actualizarTotalIVA(-iva, 0);
+        } else if (idIva === 5) {
+            actualizarTotalIVA(0, -iva);
+        }
+    }
+
     function actualizarTotal(nuevoTotalDetalle) {
         const total_venta = document.getElementById("total_venta");
         const totalVentaActual = parseFloat(total_venta.value) || 0;
@@ -131,7 +178,9 @@
         totalIva10.value = (parseFloat(totalIva10.value) || 0) + iva10;
         totalIva5.value = (parseFloat(totalIva5.value) || 0) + iva5;
     }
-    
+
 </script>
+
+
 
 {% endblock content %}

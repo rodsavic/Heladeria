@@ -2,6 +2,7 @@ from django.db import models
 
 from apps.clientes.models import Cliente
 from apps.productos.models import Producto
+from apps.tipo_pago.models import TipoPago
 
 class Venta(models.Model):
     id_venta = models.BigAutoField(primary_key=True)
@@ -11,6 +12,7 @@ class Venta(models.Model):
     total_venta = models.FloatField(db_column='total_venta', null=False)
     usuario_creacion = models.BigIntegerField(db_column='usuario_creacion', null=False)
     id_cliente = models.ForeignKey(Cliente, models.DO_NOTHING, db_column='id_cliente', null=False)
+    id_tipo_pago = models.ForeignKey(TipoPago, models.DO_NOTHING, db_column='id_tipo_pago', null=False)
 
     class Meta:
         managed = False
