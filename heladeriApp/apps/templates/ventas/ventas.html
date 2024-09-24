@@ -18,7 +18,7 @@
     </div>
     <div class="grid-item">
         <h3 class="text-right" >Total en caja: {{total_ventas_caja|floatformat:0|intcomma }}</h3>
-    <a href="#" target="_blank" rel="noopener noreferrer">Historial de ventas</a>
+    <a href="{% url 'ventas:ventas_historial' %}" rel="noopener noreferrer">Historial de ventas</a>
     </div>
     
 </div>
@@ -47,7 +47,13 @@
             <td>{{venta.fecha_venta}}</td>
             <td> <a type="button" class="btn btn-danger" href="{% url 'ventas:eliminar_venta' venta.id_venta %}"><span class="material-symbols-outlined">
                 delete
-                </span></a> 
+                </span></a>
+                <a type="button" class="btn btn-primary" href="{% url 'ventas:editar_venta' venta.id_venta %}"><span class="material-symbols-outlined">
+                    edit
+                    </span></a>
+                <a type="button" class="btn btn-info" href="{% url 'ventas:detalle_venta' venta.id_venta %}"><span class="material-symbols-outlined">
+                    visibility
+                    </span></a> 
             </td>
         </tr>
         {% endfor %}

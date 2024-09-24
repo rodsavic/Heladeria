@@ -1,0 +1,57 @@
+{% extends 'base/base.html' %}
+{% load humanize %}
+{% load custom_filters %}
+{% block title %}Editar Venta{% endblock title %}
+
+{% block content %}
+
+<br><br>
+
+<table id="tablaProductos" border="1">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Total Detalle</th>
+            <th>IVA</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for detalle in detalle_venta %}
+        <tr data-index="{{ forloop.counter0 }}">
+            <td>{{ detalle.id_producto.nombre }}</td>
+            <td>{{ detalle.cantidad_producto|punto_comma }}</td>
+            <td>{{ detalle.id_producto.precio_actual|punto_comma }}</td>
+            <td>{{ detalle.total_detalle|punto_comma }}</td>
+            <td>
+                {% if detalle.iva_10 > 0 %}
+                    {{ detalle.iva_10|punto_comma }}
+                {% elif detalle.iva_5 > 0 %}
+                    {{ detalle.iva_5|punto_comma }}
+                {% else %}
+                    0
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br>
+
+<label for="total_venta">Total venta:</label>
+<input type="text" name="total_venta" id="total_venta" value="{{ venta.total_venta|punto_comma }}" readonly>
+<br>
+<label for="total_iva_10">Total IVA 10:</label>
+<input type="text" name="total_iva_10" id="total_iva_10" value="{{ venta.total_iva_10|punto_comma }}" readonly>
+<br>
+<label for="total_iva_5">Total IVA 5:</label>
+<input type="text" name="total_iva_5" id="total_iva_5" value="{{ venta.total_iva_5|punto_comma }}" readonly>
+
+<label for="cliente">Cliente</label>
+<input type="text" name="id_cliente" id="id_cliente" value="{{ venta.id_cliente.nombre }}" readonly>
+<div>
+<label for="tipo_de_pago">Forma de Pago</label>
+<input type="text" name="id_tipo_pago" id="id_tipo_pago" value="{{ venta.id_tipo_pago.descripcion }}" readonly>
+</div>
+{% endblock content %}
