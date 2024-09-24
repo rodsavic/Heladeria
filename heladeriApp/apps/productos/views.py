@@ -2,13 +2,18 @@ import logging
 from django.shortcuts import render,redirect
 from django.contrib import messages
 from .forms import *
+from django.core.paginator import Paginator
 
 def productosReadView(request):
     productos = Producto.objects.select_related('id_medida').all()
     columnas = ['Nombre','Precio Actual','Stock Minimo','Stock Actual','Vencimiento','Costo Actual','Medida']
+    paginator = Paginator(productos,10)
+    page_number = request.GET.get('page')
+    items_page=paginator.get_page(page_number)
     context = {
         'columnas':columnas,
-        'productos':productos
+        'productos':productos,
+        'items_page': items_page
     }
     
     return render(request, 'productos/productos.html', context=context)
