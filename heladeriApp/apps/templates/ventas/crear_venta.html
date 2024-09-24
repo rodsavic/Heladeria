@@ -7,12 +7,12 @@
 </head>
 
 {% block content %}
+<h2>Registrar nueva venta</h2>
 
 <form method="post">
     {% csrf_token %}
-    <div>
-        <label for="selectProducto">Producto</label>
-        <select class="selectProducto" name="selectProducto" id="selectProducto">
+    <div class="hstack gap-3">
+        <select class="selectProducto me-auto" placeholder="Selecciona el producto..." name="selectProducto" id="selectProducto">
             <option value= ""></option>
             {% for producto in productos %}
             <option value="{{ producto.id_producto }}" 
@@ -22,16 +22,15 @@
             {% endfor %}
             
         </select>
-        <br>
-        <label for="cantidad">Cantidad:</label>
+        <label for="cantidad">Cantidad </label>
         <input type="number" name="cantidad" id="cantidad">
-        <br>
-        <button type="button" onclick="agregarProductoATabla()">Agregar Producto</button>
+        <div class="vr"></div>
+        <button class="btn btn-success" type="button" onclick="agregarProductoATabla()">Agregar Producto</button>
     </div>
 
     <br><br>
-
-    <table id="tablaProductos" border="1">
+<div class="table-responsive">
+    <table class="table table-bordered" id="tablaProductos" border="1">
         <thead>
             <tr>
                 <th>Producto</th>
@@ -47,7 +46,7 @@
         </tbody>
     </table>
     <input type="hidden" name="productos_json" id="productos_json">
-
+</div>
     <br>
 
     <label for="total_venta">Total venta:</label>

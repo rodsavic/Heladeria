@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-
+{% load humanize %}
 {% block title %}Productos{% endblock %}
 
 {% block body_class %} sidebar-mini {% endblock body_class %}
@@ -21,12 +21,12 @@
         {% for producto in items_page %}
         <tr>
             <td>{{producto.nombre}}</td>
-            <td>{{producto.precio_actual}}</td>
-            <td>{{producto.stock_minimo}}</td>
-            <td>{{producto.stock_actual}}</td>
-            <td>{{producto.vencimiento}}</td>
-            <td>{{producto.costo_actual}}</td>
-            <td>{{producto.id_medida.descripcion}}</td>
+            <td class="text-center">{{producto.precio_actual|floatformat:0|intcomma}}</td>
+            <td class="text-center">{{producto.stock_minimo|floatformat:0|intcomma}}</td>
+            <td class="text-center">{{producto.stock_actual|floatformat:0|intcomma}}</td>
+            <td class="text-center">{{producto.vencimiento}}</td>
+            <td class="text-center">{{producto.costo_actual|floatformat:0|intcomma}}</td>
+            <td class="text-center">{{producto.id_medida.descripcion}}</td>
         </tr>
         {% endfor %}
 
