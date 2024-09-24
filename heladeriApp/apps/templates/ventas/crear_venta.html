@@ -1,4 +1,6 @@
 {% extends 'base/base.html' %}
+{% load humanize %}
+{% load custom_filters %}
 <head>
     {% block title %}Crear Venta{% endblock title %}
     {% block stylesheets %}{% endblock stylesheets %}
@@ -101,10 +103,10 @@
 
         // Calcular IVA en base al valor del id_iva
         if (idIva === 10) {
-            iva = totalDetalle * 0.1;
+            iva = totalDetalle / 11;
             actualizarTotalIVA(iva, 0);
         } else if (idIva === 5) {
-            iva = totalDetalle * 0.05;
+            iva = totalDetalle / 21;
             actualizarTotalIVA(0, iva);
         }
 
@@ -121,15 +123,15 @@
 
         celdaProducto.innerText = nombreProducto;
         celdaCantidad.innerText = cantidad;
-        celdaPrecio.innerText = precio.toFixed(2);
-        celdaTotalDetalle.innerText = totalDetalle.toFixed(2);
-        celdaIva.innerText = iva.toFixed(2);
+        celdaPrecio.innerText = precio.toFixed(0);
+        celdaTotalDetalle.innerText = totalDetalle.toFixed(0);
+        celdaIva.innerText = iva.toFixed(0);
         celdaAccion.innerHTML = `<button type="button" onclick="eliminarProducto(${rowIndex}, ${totalDetalle}, ${iva}, ${idIva})">Eliminar</button>`;
 
         const productoObj = {
             id_producto: selectProducto.value,
             cantidad: cantidad,
-            total_detalle: totalDetalle
+            total_detalle: totalDetalle.toFixed(0)
         };
         productos.push(productoObj);
 
@@ -168,15 +170,15 @@
         const total_venta = document.getElementById("total_venta");
         const totalVentaActual = parseFloat(total_venta.value) || 0;
         const nuevoTotalVenta = totalVentaActual + nuevoTotalDetalle;
-        total_venta.value = nuevoTotalVenta.toFixed(2);
+        total_venta.value = nuevoTotalVenta.toFixed(0);
     }
 
     function actualizarTotalIVA(iva10, iva5) {
         const totalIva10 = document.getElementById('total_iva_10');
         const totalIva5 = document.getElementById('total_iva_5');
 
-        totalIva10.value = (parseFloat(totalIva10.value) || 0) + iva10;
-        totalIva5.value = (parseFloat(totalIva5.value) || 0) + iva5;
+        totalIva10.value = ((parseFloat(totalIva10.value) || 0) + iva10).toFixed(0);
+        totalIva5.value = ((parseFloat(totalIva5.value) || 0) + iva5).toFixed(0);
     }
 
 </script>
