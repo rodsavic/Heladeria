@@ -12,7 +12,7 @@ class Medida(models.Model):
         verbose_name_plural = 'Medidas'
 
     def __str__(self):
-        return f'idMedida: {self.id_medida}, descripcion: {self.descripcion}, prefijo{self.prefijo}'
+        return f'{self.descripcion}'
 
 
 class Categoria(models.Model):
@@ -26,7 +26,7 @@ class Categoria(models.Model):
         verbose_name_plural = 'Categorias'
 
     def __str__(self):
-        return f'idCategoria: {self.id_categoria}, descripcion: {self.descripcion}'
+        return f'{self.descripcion}'
 
 
 class Iva(models.Model):
@@ -40,7 +40,7 @@ class Iva(models.Model):
         verbose_name_plural = 'Ivas'
 
     def __str__(self):
-        return f'idIva: {self.id_iva}, descripcion: {self.descripcion}'
+        return f'{self.descripcion}'
 
 class Producto(models.Model):
     id_producto = models.AutoField(primary_key=True)

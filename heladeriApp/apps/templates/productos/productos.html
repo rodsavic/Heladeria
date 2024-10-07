@@ -5,7 +5,7 @@
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
-
+    
     <h1>Lista de Productos</h1>
 
 <div class="table-responsive">
@@ -15,6 +15,7 @@
                 {% for columna in columnas %}
                 <th>{{columna}}</th>
                 {% endfor %}
+                <th>Operaciones</th>
             </tr>
         </thead>
         <tbody>
@@ -27,6 +28,10 @@
             <td class="text-center">{{producto.vencimiento}}</td>
             <td class="text-center">{{producto.costo_actual|floatformat:0|intcomma}}</td>
             <td class="text-center">{{producto.id_medida.descripcion}}</td>
+            <td class="text-center"><a type="button" class="btn btn-primary"
+                href="{% url 'productos:editar_producto' producto.id_producto %}"><i class="bi bi-pen"></i></a>
+                <a type="button" class="btn btn-danger"
+                            href="{% url 'productos:eliminar_producto' producto.id_producto %}"><i class="bi bi-trash"></i></a></td>
         </tr>
         {% endfor %}
 
