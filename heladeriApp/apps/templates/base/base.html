@@ -15,8 +15,14 @@
       href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
       rel="stylesheet"
     />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
     <title>{% block title %}{% endblock %}</title>
     <style>
       .wrapper {
@@ -30,10 +36,11 @@
   <body
     class="hold-transition {% block body_class %}{% endblock body_class %}"
     style="height: 100%"
-  >
+  > {% include 'base/messages.html' %}
     <div class="wrapper d-flex">
       {% include 'base/sidebar.html' %}
       <div class="container">
+       
         <div class="content flex-grow-1">
           {% block content %} {% endblock %}
         </div>
@@ -48,5 +55,17 @@
     <!-- Include Choices JavaScript (latest) -->
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {% if messages %}
+    <script>
+      {% for message in messages %}
+          $(document).ready(function () {
+              $('.toast').toast('show');
+          });
+          $(document).on('click', '.toast .close', function(){
+            $(this).closest('.toast').toast('hide');
+          });
+      {% endfor %}
+    </script>
+    {% endif %}
   </body>
 </html>
