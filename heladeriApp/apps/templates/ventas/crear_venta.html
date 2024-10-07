@@ -183,7 +183,9 @@
             celdaTotalDetalle.innerText = totalDetalle.toFixed(0);
             celdaIva.innerText = iva.toFixed(0);
             celdaAccion.innerHTML = `<button class="btn btn-sm btn-danger" title="Eliminar" onclick="eliminarProducto('${idProducto}', ${totalDetalle}, ${iva}, ${idIva})"><i class="bi bi-trash"></i></button>`;
-
+            console.log("idProducto:",idProducto, "tipo de dato:", typeof idProducto)
+            console.log("cantidad:",cantidad, "tipo de dato:", typeof cantidad)
+            console.log("total_detalle:",totalDetalle, "tipo de dato:", typeof totalDetalle)
             const productoObj = {
                 id_producto: idProducto,
                 cantidad: cantidad,

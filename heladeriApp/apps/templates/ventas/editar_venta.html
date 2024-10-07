@@ -4,206 +4,280 @@
 {% block title %}Editar Venta{% endblock title %}
 
 {% block content %}
-<form method="post">
-{% csrf_token %}
-<div>
-    <label for="selectProducto">Producto</label>
-    <select class="selectProducto" name="selectProducto" id="selectProducto">
-        <option value=""></option>
-        {% for producto in productos %}
-        <option value="{{ producto.id_producto }}" 
-            data-precio="{{ producto.precio_actual }}" data-descripcionIva="{{ producto.id_iva.descripcion }}">
-            {{ producto.nombre }}
-        </option>
-        {% endfor %}
-    </select>
-    <br>
-    <label for="cantidad">Cantidad:</label>
-    <input type="number" name="cantidad" id="cantidad">
-    <br>
-    <button type="button" onclick="agregarProductoATabla()">Agregar Producto</button>
-</div>
+<section class="content">
+    <div class="container-fluid"><!-- INICO DEL CONTENEDOR -->
+        <h2>Modificar venta</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row"><!-- INICIO DE LA FILA -->
+                <div class="col-md-8 mt-3"><!-- INICIO PRIMERA COLUMNA -->
+                    <div class="hstack gap-5">
+                        <select class="selectProducto form-control" style="max-width: 50%;" name="selectProducto"
+                            id="selectProducto">
+                            <option value=""></option>
+                            {% for producto in productos %}
+                            <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio_actual }}"
+                                data-descripcionIva="{{ producto.id_iva.descripcion }}">
+                                {{ producto.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group input-group-sm" style="max-width: 20%;">
+                            <label class="input-group-text" for="cantidad">Cantidad </label>
+                            <input class="form-control" type="number" name="cantidad" id="cantidad">
+                        </div>
+                        <div class="vr"></div>
+                        <div class="">
+                            <button class="btn btn-success w-100" type="button" onclick="agregarProductoATabla()">
+                                <i class="bi bi-plus-circle"></i>
+                            </button>
+                        </div>
+                    </div>
 
-<br><br>
-
-<table id="tablaProductos" border="1">
-    <thead>
-        <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio Unitario</th>
-            <th>Total Detalle</th>
-            <th>IVA</th>
-            <th>Acción</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for detalle in detalle_venta %}
-        <tr data-index="{{ forloop.counter0 }}">
-            <td>{{ detalle.id_producto.nombre }}</td>
-            <td>{{ detalle.cantidad_producto|floatformat:0 }}</td>
-            <td>{{ detalle.id_producto.precio_actual|floatformat:0 }}</td>
-            <td>{{ detalle.total_detalle|floatformat:0 }}</td>
-            <td>
-                {% if detalle.iva_10 > 0 %}
+                    <br>
+                    <div class="table-responsive p-0">
+                        <table class="table table-hover text-nowrap" id="tablaProductos" border="1">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Total Detalle</th>
+                                    <th>IVA</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center">
+                                {% for detalle in detalle_venta %}
+                                <tr data-producto-id="{{detalle.id_producto.id_producto}}">
+                                    <td>{{ detalle.id_producto.nombre }}</td>
+                                    <td>{{ detalle.cantidad_producto|floatformat:0 }}</td>
+                                    <td>{{ detalle.id_producto.precio_actual|floatformat:0 }}</td>
+                                    <td>{{ detalle.total_detalle|floatformat:0 }}</td>
+                                    <td>
+                                        {% if detalle.iva_10 > 0 %}
+                                        {{ detalle.iva_10|floatformat:0 }}
+                                        {% elif detalle.iva_5 > 0 %}
+                                        {{ detalle.iva_5|floatformat:0 }}
+                                        {% else %}
+                                        0
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" title="Eliminar" onclick="eliminarProducto({{ detalle.id_producto.id_producto }}, {{ detalle.total_detalle|floatformat:0 }}, {% if detalle.iva_10 > 0 %}
                     {{ detalle.iva_10|floatformat:0 }}
                 {% elif detalle.iva_5 > 0 %}
                     {{ detalle.iva_5|floatformat:0 }}
                 {% else %}
                     0
-                {% endif %}
-            </td>
-            <td>
-                <button type="button" onclick="eliminarProducto({{ forloop.counter0 }}, {{ detalle.total_detalle|floatformat:0 }}, {% if detalle.iva_10 > 0 %}
-                    {{ detalle.iva_10|floatformat:0 }}
-                {% elif detalle.iva_5 > 0 %}
-                    {{ detalle.iva_5|floatformat:0 }}
-                {% else %}
-                    0
-                {% endif %}, {{ detalle.id_producto.id_iva.descripcion|floatformat:0 }})">Eliminar</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<input type="hidden" name="productos_json" id="productos_json">
+                {% endif %}, {{ detalle.id_producto.id_iva.descripcion|floatformat:0 }})"><i
+                                                class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <input type="hidden" name="productos_json" id="productos_json">
+                    </div>
+                </div> <!-- FIN PRIMERA COLUMNA -->
+                <div class="col-md-3 card"><!-- INICIO DE SEGUNDA COLUMNA -->
+                    <div class="vstack gap-2"> <!-- INICIO DE PILA DE DATOS -->
+                        <div class="p-2">
+                            <label class="card-title" for="cliente">Cliente</label>
+                            <select class="form-control" name="cliente" id="cliente">
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id_cliente }}">
+                                    {{ cliente.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="p-2">
+                            <label class="card-title" for="tipo_de_pago">Forma de Pago</label>
+                            <select class="form-control" name="tipo_de_pago" id="tipos_de_pago">
+                                {% for tipo_de_pago in tipos_de_pago %}
+                                <option value="{{ tipo_de_pago.id_tipo_pago }}">
+                                    {{ tipo_de_pago.descripcion }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="p-2">
+                            <label class="card-title" for="total_venta">Total venta</label>
+                            <input class="form-control" type="number" name="total_venta" id="total_venta"
+                                value="{{ venta.total_venta|floatformat:0 }}" readonly>
+                        </div>
+                        <div class="p-2">
+                            <label class="card-title" for="total_iva_10">Total IVA 10</label>
+                            <input class="form-control" type="number" name="total_iva_10" id="total_iva_10"
+                                value="{{ venta.total_iva_10|floatformat:0 }}" readonly>
+                        </div>
+                        <div class="p-2">
+                            <label for="total_iva_5">Total IVA 5</label>
+                            <input class="form-control" type="number" name="total_iva_5" id="total_iva_5"
+                                value="{{ venta.total_iva_5|floatformat:0 }}" readonly>
+                        </div>
 
-<br>
+                        <div class="text-center mb-3">
+                            <button type="submit" class="btn btn-primary mt-3 ">Guardar</button>
+                        </div>
+                    </div><!-- FIN DE PILA DE DATOS -->
+                </div><!-- FIN DE SEGUNDA COLUMNA -->
+            </div><!-- FIN DE LA FILA -->
+        </form><!-- FIN DE FORMULARIO -->
 
-<label for="total_venta">Total venta:</label>
-<input type="number" name="total_venta" id="total_venta" value="{{ venta.total_venta|floatformat:0 }}" readonly>
-<br>
-<label for="total_iva_10">Total IVA 10:</label>
-<input type="number" name="total_iva_10" id="total_iva_10" value="{{ venta.total_iva_10|floatformat:0 }}" readonly>
-<br>
-<label for="total_iva_5">Total IVA 5:</label>
-<input type="number" name="total_iva_5" id="total_iva_5" value="{{ venta.total_iva_5|floatformat:0 }}" readonly>
-
-<label for="cliente">Cliente</label>
-<select name="cliente" id="cliente">
-    {% for cliente in clientes %}
-    <option value="{{ cliente.id_cliente }}">
-        {{ cliente.nombre }}
-    </option>
-    {% endfor %}
-</select>
-<div>
-<label for="tipo_de_pago">Forma de Pago</label>
-<select name="tipo_de_pago" id="tipos_de_pago">
-    {% for tipo_de_pago in tipos_de_pago %}
-    <option value="{{ tipo_de_pago.id_tipo_pago }}">
-        {{ tipo_de_pago.descripcion }}
-    </option>
-    {% endfor %}
-</select>
-</div>
-
-<button type="submit">Guardar</button>
-</form>
+    </div><!-- FIN DEL CONTENEDOR -->
+</section>
 <script>
-$(document).ready(function() {
-    $('#selectProducto').select2({
-        placeholder: "Selecciona un producto",
-        allowClear: true
+    $(document).ready(function () {
+        $('#selectProducto').select2({
+            placeholder: "Selecciona un producto",
+            allowClear: true
+        });
     });
-});
+    $(document).ready(function () {
+        $('#cliente').select2({
+            placeholder: "Selecciona un cliente",
+            allowClear: true
+        });
+    });
 </script>
 <script>
-let productos = [];
-function agregarProductoATabla() {
-    const selectProducto = document.getElementById("selectProducto");
-    const cantidad = parseFloat(document.getElementById("cantidad").value) || 0;
-    const precio = parseFloat(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-precio')) || 0;
-    const descripcionIva = parseInt(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-descripcionIva')) || 0;
-    const nombreProducto = selectProducto.options[selectProducto.selectedIndex].text;
-    
-    const totalDetalle = cantidad * precio;
-    let iva = 0;
-
-    // Calcular IVA en base al valor del id_iva
-    if (descripcionIva === 10) {
-        iva = totalDetalle / 11;
-        actualizarTotalIVA(iva, 0);
-    } else if (descripcionIva === 5) {
-        iva = totalDetalle / 21;
-        actualizarTotalIVA(0, iva);
-    }
-
-    const tabla = document.getElementById("tablaProductos").querySelector("tbody");
-    const nuevaFila = tabla.insertRow();
-    const rowIndex = tabla.rows.length - 1;
-
-    const celdaProducto = nuevaFila.insertCell(0);
-    const celdaCantidad = nuevaFila.insertCell(1);
-    const celdaPrecio = nuevaFila.insertCell(2);
-    const celdaTotalDetalle = nuevaFila.insertCell(3);
-    const celdaIva = nuevaFila.insertCell(4);
-    const celdaAccion = nuevaFila.insertCell(5)
-
-    celdaProducto.innerText = nombreProducto;
-    celdaCantidad.innerText = cantidad; // Formato de miles
-    celdaPrecio.innerText = precio.toFixed(0); // Formato de miles
-    celdaTotalDetalle.innerText = totalDetalle.toFixed(0); // Formato de miles
-    celdaIva.innerText = iva.toFixed(0); // Formato de miles
-    celdaAccion.innerHTML = `<button type="button" onclick="eliminarProducto(${rowIndex}, ${totalDetalle}, ${iva}, ${descripcionIva})">Eliminar</button>`;
-
-    const productoObj = {
-        id_producto: selectProducto.value,
-        cantidad: cantidad,
-        total_detalle: totalDetalle
+    let productos = [];
+    let productoObj = {};
+    // Cargamos los productos ya existentes en la lista
+    {% for detalle in detalle_venta %}
+    productoObj = {
+        id_producto: "{{ detalle.id_producto.id_producto }}",
+        cantidad: parseFloat("{{ detalle.cantidad_producto }}"),
+        total_detalle: (parseFloat("{{ detalle.total_detalle }}")).toFixed(0)
     };
     productos.push(productoObj);
+    {% endfor %}
+    console.log("productos: ", productos)
 
+    // Actualizamos el campo hidden con el JSON de productos
     document.getElementById('productos_json').value = JSON.stringify(productos);
-    /*
-    // Agregar campos ocultos para enviar al servidor
-    nuevaFila.innerHTML += `
-        <input type="hidden" name="tablaProductos[]" value="${selectProducto.value},${cantidad},${totalDetalle}">
-    `;*/
-    actualizarTotal(totalDetalle);
-}
+    function agregarProductoATabla() {
+        const selectProducto = document.getElementById("selectProducto");
+        const cantidad = parseFloat(document.getElementById("cantidad").value) || 0;
+        const precio = parseFloat(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-precio')) || 0;
+        const descripcionIva = parseInt(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-descripcionIva')) || 0;
+        const nombreProducto = selectProducto.options[selectProducto.selectedIndex].text;
+        const idProducto = selectProducto.value;
 
-function eliminarProducto(index, totalDetalle, iva, descripcionIva) {
-    console.log("index: ",index, "totalDetalle: ", totalDetalle,"iva: ", iva," descripcionIva: ", descripcionIva)
-    // Eliminar fila de la tabla
-    const tabla = document.getElementById("tablaProductos").querySelector("tbody");
-    tabla.deleteRow(index);
+        const totalDetalle = cantidad * precio;
+        let iva = 0;
 
-    // Eliminar producto de la lista de productos
-    productos.splice(index, 1);
+        const tablaProductos = document.getElementById('tablaProductos');
+        const filas = tablaProductos.querySelectorAll('tbody tr');
+        console.log("filas", filas)
 
-    // Actualizar el campo oculto con los productos restantes
-    document.getElementById('productos_json').value = JSON.stringify(productos);
 
-    // Restar el total detalle del total de la venta
-    actualizarTotal(-totalDetalle);
+        // Calcular IVA en base al valor del id_iva
+        if (descripcionIva === 10) {
+            iva = totalDetalle / 11;
+            actualizarTotalIVA(iva, 0);
+        } else if (descripcionIva === 5) {
+            iva = totalDetalle / 21;
+            actualizarTotalIVA(0, iva);
+        }
 
-    // Restar el IVA correspondiente
-    if (descripcionIva === 10) {
-        actualizarTotalIVA(-iva, 0);
-    } else if (descripcionIva === 5) {
-        actualizarTotalIVA(0, -iva);
+        // Buscar si el producto ya está en la tabla
+        const productoExistente = productos.find(prod => prod.id_producto === idProducto);
+        console.log("productoExistente: ", productoExistente);
+        if (productoExistente) {
+            // Actualizar producto existente
+            let cant = parseFloat(productoExistente.cantidad);
+            cant = cant + cantidad;
+            productoExistente.total_detalle = (cant * precio).toFixed(0);
+            console.log("total_detalle: ", productoExistente.total_detalle);
+            // Actualizar la fila en la tabla
+            const fila = document.querySelector(`tr[data-producto-id="${idProducto}"]`);
+            fila.cells[1].innerText = cant;
+            fila.cells[3].innerText = productoExistente.total_detalle;
+            fila.cells[4].innerText = (parseFloat(fila.cells[4].innerText) + iva).toFixed(0);
+        } else {
+            const tabla = document.getElementById("tablaProductos").querySelector("tbody");
+            const nuevaFila = tabla.insertRow();
+            nuevaFila.setAttribute('data-producto-id', idProducto);
+
+            const celdaProducto = nuevaFila.insertCell(0);
+            const celdaCantidad = nuevaFila.insertCell(1);
+            const celdaPrecio = nuevaFila.insertCell(2);
+            const celdaTotalDetalle = nuevaFila.insertCell(3);
+            const celdaIva = nuevaFila.insertCell(4);
+            const celdaAccion = nuevaFila.insertCell(5)
+
+            celdaProducto.innerText = nombreProducto;
+            celdaCantidad.innerText = cantidad; // Formato de miles
+            celdaPrecio.innerText = precio.toFixed(0); // Formato de miles
+            celdaTotalDetalle.innerText = totalDetalle.toFixed(0); // Formato de miles
+            celdaIva.innerText = iva.toFixed(0); // Formato de miles
+            celdaAccion.innerHTML = `<button class="btn btn-sm btn-danger" title="Eliminar" onclick="eliminarProducto('${idProducto}', ${totalDetalle}, ${iva}, ${descripcionIva})"><i class="bi bi-trash"></i></button>`;
+
+            productoObj = {
+                id_producto: idProducto,
+                cantidad: cantidad,
+                total_detalle: totalDetalle.toFixed(0)
+            };
+            productos.push(productoObj);
+        }
+        console.log("Productos: ", productos)
+        document.getElementById('productos_json').value = JSON.stringify(productos);
+        /*
+        // Agregar campos ocultos para enviar al servidor
+        nuevaFila.innerHTML += `
+            <input type="hidden" name="tablaProductos[]" value="${selectProducto.value},${cantidad},${totalDetalle}">
+        `;*/
+        actualizarTotal(totalDetalle);
     }
-}
-function actualizarTotal(nuevoTotalDetalle) {
-    const total_venta = document.getElementById("total_venta");
-    const totalVentaActual = parseFloat(total_venta.value.replace(/\./g, '').replace(',', '.')) || 0;
-    const nuevoTotalVenta = totalVentaActual + nuevoTotalDetalle;
-    total_venta.value = nuevoTotalVenta.toFixed(0);
-}
 
-function actualizarTotalIVA(iva10, iva5) {
-    const totalIva10 = document.getElementById('total_iva_10');
-    const totalIva5 = document.getElementById('total_iva_5');
-    total_iva_10 = parseFloat(totalIva10.value.replace(/\./g, '').replace(',', '.')) || 0;
-    total_iva_5 = parseFloat(totalIva5.value.replace(/\./g, '').replace(',', '.')) || 0;
-    console.log("totalIva10: ",total_iva_10, " totalIva5: ",total_iva_5)
-    console.log("iva10: ",iva10, " iva5: ",iva5)
-    nuevo_total_iva_10 = total_iva_10 + iva10;
-    totalIva10.value = nuevo_total_iva_10.toFixed(0);
-    nuevo_total_iva_5 = total_iva_5 + iva5;
-    totalIva5.value = nuevo_total_iva_5.toFixed(0);
-}
+    function eliminarProducto(idProducto, totalDetalle, iva, descripcionIva) {
+        // Buscar la fila por el id_producto
+        const tabla = document.getElementById("tablaProductos").querySelector("tbody");
+        const fila = document.querySelector(`tr[data-producto-id='${idProducto}']`);
+        const total_detalle_a_eliminar = (parseFloat(fila.cells[3].innerText)).toFixed(0)
+        const total_iva = (parseFloat(fila.cells[4].innerText)).toFixed(0)
+        // Eliminar la fila de la tabla
+        tabla.removeChild(fila);
+        console.log("idProducto:", idProducto)
+        // Eliminar producto de la lista de productos
+        productos = productos.filter(prod => prod.id_producto.toString() !== idProducto.toString());
+
+        // Actualizar el campo oculto con los productos restantes
+        document.getElementById('productos_json').value = JSON.stringify(productos);
+
+        // Restar el total detalle del total de la venta
+        actualizarTotal(-total_detalle_a_eliminar);
+
+        // Restar el IVA correspondiente
+        if (descripcionIva === 10) {
+            actualizarTotalIVA(-total_iva, 0);
+        } else if (descripcionIva === 5) {
+            actualizarTotalIVA(0, -total_iva);
+        }
+        console.log('productos luego de eliminiar: ', productos)
+    }
+    function actualizarTotal(nuevoTotalDetalle) {
+        const total_venta = document.getElementById("total_venta");
+        const totalVentaActual = parseFloat(total_venta.value.replace(/\./g, '').replace(',', '.')) || 0;
+        const nuevoTotalVenta = totalVentaActual + nuevoTotalDetalle;
+        total_venta.value = nuevoTotalVenta.toFixed(0);
+    }
+
+    function actualizarTotalIVA(iva10, iva5) {
+        const totalIva10 = document.getElementById('total_iva_10');
+        const totalIva5 = document.getElementById('total_iva_5');
+        total_iva_10 = parseFloat(totalIva10.value.replace(/\./g, '').replace(',', '.')) || 0;
+        total_iva_5 = parseFloat(totalIva5.value.replace(/\./g, '').replace(',', '.')) || 0;
+        console.log("totalIva10: ", total_iva_10, " totalIva5: ", total_iva_5)
+        console.log("iva10: ", iva10, " iva5: ", iva5)
+        nuevo_total_iva_10 = total_iva_10 + iva10;
+        totalIva10.value = nuevo_total_iva_10.toFixed(0);
+        nuevo_total_iva_5 = total_iva_5 + iva5;
+        totalIva5.value = nuevo_total_iva_5.toFixed(0);
+    }
 
 </script>
 

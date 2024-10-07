@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 import logging
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from apps.ventas.forms import *
 from apps.productos.models import Producto
 from apps.clientes.models import Cliente
@@ -84,7 +85,7 @@ def ventasCreateView(request):
                     total_detalle=total_detalle
                 )
                 venta_detalle.save()
-
+            messages.success(request, "Venta registrada exitosamente")
             return redirect('ventas:ventas')
         except Exception as e:
             error_message = str(e)
@@ -123,15 +124,21 @@ def ventasEditView(request,id_venta):
             venta.total_venta = total_venta
             venta.usuario_creacion = request.user.id 
             venta.save()
+            
+            # Se obtienen los detalles para eliminarlos 
+            detalles = VentaDetalle.objects.filter(id_venta=id_venta)
+            for detalle in detalles:
+                detalle.delete()
+
+            # Se obtienen la lista nueva de productos
             productos_json = request.POST.get('productos_json')
             productos_data = json.loads(productos_json)  # Convertir JSON en lista de diccionarios
-            
             for detalle in productos_data:
                 id_producto = detalle['id_producto']
                 cantidad_producto = detalle['cantidad']
                 total_detalle = detalle['total_detalle']
                 
-                # Crear y guardar cada detalle de venta
+                # Crear y guardar cada detalle de venta 
                 venta_detalle = VentaDetalle.objects.create(
                     id_venta=venta,
                     id_producto=Producto.objects.get(id_producto=id_producto),
@@ -143,9 +150,9 @@ def ventasEditView(request,id_venta):
             return redirect('ventas:ventas')
         except Exception as e:
             error_message = str(e)
-            messages.error(request, "Error al registrar venta {error_message}")
+            messages.error(request, f"Error al registrar venta {error_message}")
             logging.error(f'Error al crear venta: {error_message}') 
-            return redirect('ventas:editar_venta')
+            return redirect(reverse('ventas:editar_venta', args=[id_venta]))
     else:
         venta = get_object_or_404(Venta, id_venta=id_venta)
         detalle_venta = VentaDetalle.objects.filter(id_venta = id_venta)
