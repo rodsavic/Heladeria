@@ -1,12 +1,12 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render,redirect
+from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
 from .forms import *
 from .models import *
 
 @login_required(login_url="/authentication/login")
 def clienteReadView(request):
-    clientes = Cliente.objects.all()
+    clientes = Cliente.objects.all().order_by('nombre')
     columnas = ["Nombre", "Apellido", "Correo","Cédula","Número", "Dirección", "Estado"]
     context = {
         'columnas':columnas,
@@ -49,3 +49,41 @@ def crearCliente(request):
         form = ClienteForm()
 
     return render(request, "clientes/crear_cliente.html", {'form':form})
+
+def clienteUpdateView(request, id_cliente):
+    """Vista para modificar cliente"""
+    cliente = Cliente.objects.get(id_cliente=id_cliente)
+    # Si se desea guardar en la BDD
+    if request.method == 'POST':
+        # Creamos una instancia de formulario y la llenamos con el data del request:
+        form = ClienteForm(request.POST, instance=cliente)
+        # Si no se han hecho modificaciones
+        if not form.has_changed():
+            messages.info(request, "No ha hecho ningun cambio", extra_tags=" ")
+            return redirect('clientes:clientes')
+        # Verificamos que los datos sean validos:
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'cliente: ' +
+                             request.POST['nombre'] + ' modificado exitosamente!', extra_tags=" ")
+            return redirect('clientes:clientes')
+        else:
+            # Datos invalidos en el formulario, renderizamos de nuevo con los errores
+            if 'nombre' in form.errors:
+                messages.info(request, 'El nombre ya existe!',
+                              extra_tags="Verifica e intenta de nuevo.")
+            return render(request, 'clientes/editar_cliente.html',
+                          {'form': form, 'cliente': cliente})
+    else:
+        # Si es una solicitud GET envia el template
+        context = {
+            'form': ClienteForm(instance=cliente),
+            'cliente': cliente
+        }
+        return render(request, 'clientes/editar_cliente.html', context=context)
+
+def clienteDeleteView(request, id_cliente):
+    cliente = get_object_or_404(Cliente, pk=id_cliente)
+    cliente.delete()
+    messages.success(request,"Cliente eliminado correctamente")
+    return redirect('clientes:clientes')

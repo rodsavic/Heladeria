@@ -14,6 +14,7 @@
                 {% for columna in columnas %}
                 <th>{{columna}}</th>
                 {% endfor %}
+                <th>Operaciones</th>
             </tr>
         </thead>
         <tbody>
@@ -26,6 +27,10 @@
             <td>{{cliente.celular}}</td>
             <td>{{cliente.direccion}}</td>
             <td>{{cliente.estado}}</td>
+            <td class="text-center"><a type="button" class="btn btn-primary"
+                href="{% url 'clientes:editar_cliente' cliente.id_cliente %}"><i class="bi bi-pen"></i></a>
+                <a type="button" class="btn btn-danger"
+                            href="{% url 'clientes:eliminar_cliente' cliente.id_cliente %}"><i class="bi bi-trash"></i></a></td>
         </tr>
         {% endfor %}
 
