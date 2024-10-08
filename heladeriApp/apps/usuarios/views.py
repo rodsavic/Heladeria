@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.core.paginator import Paginator
 from .forms import *
 from .models import *
 
@@ -8,12 +9,16 @@ from .models import *
 def usuariosReadView(request):
 
     # Obtener los campos de los usuarios
-    usuarios = Usuario.objects.all()
+    usuarios = Usuario.objects.all().order_by('nombre')
     columnas = ["Usuario","Nombre", "Apellido","Accion"]
+    paginator = Paginator(usuarios,10)
+    page_number = request.GET.get('page')
+    usuarios_por_pagina=paginator.get_page(page_number)
     print(f'{usuarios}')
     context = {
         "columnas":columnas,
-        "usuarios": usuarios
+        "usuarios": usuarios,
+        'usuarios_por_pagina':usuarios_por_pagina
     }
     return render(request, "usuarios/usuarios.html", context=context)
 
@@ -27,36 +32,73 @@ def crearUsuario(request):
 
         if form.is_valid():
             try:
+                # Obtener el usuario actual
                 usuario_actual = Usuario.objects.get(nombre_usuario=request.user)
-                nombre = request.POST["nombre"]
-                apellido = request.POST["apellido"]
-                documento = request.POST["documento"]
-                nombre_usuario = request.POST["nombre_usuario"]
-                usuario_creacion = usuario_actual.id_usuario
-                contrasena = make_password(request.POST["contrasena"])
-                '''
-                usuario = form.save(commit=False)
-                usuario.set_password(form.cleaned_data["contrasena"])
-                usuario.save()
-                '''
+
+                # Crear el nuevo usuario utilizando los datos validados del formulario
                 usuario_nuevo = Usuario.objects.create(
-                    nombre = nombre,
-                    apellido = apellido,
-                    documento = documento,
-                    nombre_usuario = nombre_usuario,
-                    usuario_creacion = usuario_creacion,
-                    contrasena = contrasena
+                    nombre=form.cleaned_data["nombre"],
+                    apellido=form.cleaned_data["apellido"],
+                    documento=form.cleaned_data["documento"],
+                    nombre_usuario=form.cleaned_data["nombre_usuario"],
+                    usuario_creacion=usuario_actual.id_usuario,
+                    contrasena=make_password(form.cleaned_data["contrasena"])
                 )
                 usuario_nuevo.save()
+
+                # Asignar roles al usuario nuevo
                 roles = form.cleaned_data["roles"]
                 for rol in roles:
-                    UsuarioRol.objects.create(id_usuario= usuario_nuevo,id_rol = rol)
-
+                    UsuarioRol.objects.create(id_usuario=usuario_nuevo, id_rol=rol)
 
                 messages.success(request, "Usuario creado exitosamente")
                 return redirect("usuarios:usuarios")
-            except:
-                messages.error(request, "Hubo un error en el servidor")
+
+            except Exception as e:
+                messages.error(request, f"Hubo un error en el servidor: {str(e)}")
+        else:
+            messages.error(request, "Corrige los errores en el formulario.")
+    else:
+        form = UsuarioForm()
+
+    return render(request, "usuarios/crear_usuario.html", {"form": form})
+
+@login_required(login_url="/authentication/login")
+def usuarioUpdateView(request,id_usuario):
+    usuario = Usuario.objects.get(id_usuario=id_usuario)
+    # Vista para crear usuarios
+    if request.method == "POST":
+        form = UsuarioForm(request.POST,instance=usuario)
+        # Si no se han hecho modificaciones
+        if not form.has_changed():
+            messages.info(request, "No ha hecho ningun cambio", extra_tags=" ")
+            return redirect('usuarios:usuarios')
+        if form.is_valid():
+            try:
+                # Obtener el usuario actual
+                usuario_actual = Usuario.objects.get(nombre_usuario=request.user)
+
+                # Crear el nuevo usuario utilizando los datos validados del formulario
+                usuario_nuevo = Usuario.objects.create(
+                    nombre=form.cleaned_data["nombre"],
+                    apellido=form.cleaned_data["apellido"],
+                    documento=form.cleaned_data["documento"],
+                    nombre_usuario=form.cleaned_data["nombre_usuario"],
+                    usuario_creacion=usuario_actual.id_usuario,
+                    contrasena=make_password(form.cleaned_data["contrasena"])
+                )
+                usuario_nuevo.save()
+
+                # Asignar roles al usuario nuevo
+                roles = form.cleaned_data["roles"]
+                for rol in roles:
+                    UsuarioRol.objects.create(id_usuario=usuario_nuevo, id_rol=rol)
+
+                messages.success(request, "Usuario creado exitosamente")
+                return redirect("usuarios:usuarios")
+
+            except Exception as e:
+                messages.error(request, f"Hubo un error en el servidor: {str(e)}")
         else:
             messages.error(request, "Corrige los errores en el formulario.")
     else:
@@ -118,8 +160,12 @@ def crearPermiso(request):
 @login_required(login_url="/authentication/login")
 def permisoReadView(request):
     permisos = Permiso.objects.all()
+    paginator = Paginator(permisos,10)
+    page_number = request.GET.get('page')
+    permisos_por_pagina=paginator.get_page(page_number)
     context = {
-        'permisos':permisos
+        'permisos':permisos,
+        'permisos_por_pagina':permisos_por_pagina,
     }
 
     return render(request, 'usuarios/permisos.html', context=context)
