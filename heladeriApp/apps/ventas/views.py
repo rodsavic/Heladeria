@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.db.models.functions import TruncDate
 
 from apps.tipo_pago.models import TipoPago
+from apps.ventas.models import VentaTipoDePago
 
 def ventasReadView(request,fecha=None):
     if fecha:
@@ -21,14 +22,21 @@ def ventasReadView(request,fecha=None):
         fecha_venta = timezone.localdate()
 
     ventas = Venta.objects.filter(fecha_venta__date=fecha_venta).order_by('id_venta')
+    # Obtener los id_venta de las ventas filtradas
+    ids_ventas = ventas.values_list('id_venta', flat=True)
+
+    # Filtrar los pagos con id_tipo_pago=1 y los id_venta obtenidos
+    pagos_efectivo = VentaTipoDePago.objects.filter(id_tipo_pago=1, id_venta__in=ids_ventas)
+
+    # Obtener solo los montos (opcional)
+    montos_efectivo = pagos_efectivo.values_list('monto', flat=True)
+
+    # Si necesitas sumarlos
+    total_monto_efectivo = pagos_efectivo.aggregate(total=Sum('monto'))['total']
     print(f'fecha: {fecha_venta}, ventas: {ventas}')
     total_ventas = ventas.aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
-    total_ventas_caja = ventas.filter(id_tipo_pago=1).aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
-    ventas_todas = Venta.objects.all()
-    for venta in ventas_todas:
-        print("id: ",venta.id_venta ,"fecha: " ,venta.fecha_venta)
-
-    columnas = ['Cliente','Total venta', 'Total IVA 10', 'Total IVA 5','Tipo','Fecha']
+    
+    columnas = ['Cliente','Total venta', 'Total IVA 10', 'Total IVA 5','Fecha']
     paginator = Paginator(ventas,10)
     page_number = request.GET.get('page',1)
     ventas_por_pagina=paginator.get_page(page_number)
@@ -37,7 +45,7 @@ def ventasReadView(request,fecha=None):
         'columnas':columnas,
         'ventas_por_pagina' :ventas_por_pagina,
         'total_ventas': total_ventas,
-        'total_ventas_caja':total_ventas_caja
+        'total_efectivo': total_monto_efectivo
     }
 
     return render(request, 'ventas/ventas.html', context=context)
@@ -53,21 +61,24 @@ def ventasCreateView(request):
         #form = VentaForm(request.POST)
         #if form.is_valid():
         try:
-            print("Ingresa al metodo POST")   
+            print("Ingresa al metodo POST", request.POST)   
             total_iva_10 = request.POST['total_iva_10']
             total_iva_5 = request.POST['total_iva_5']
             id_cliente =  request.POST['cliente']
-            id_tipo_pago = request.POST['tipo_de_pago']
             total_venta = request.POST['total_venta']
+            pago_pos = float(request.POST.get('pos', 0) or 0)
+            pago_efectivo = float(request.POST.get('efectivo', 0) or 0)
+            pago_transferencia = float(request.POST.get('transferencia', 0) or 0)
+
+
             nueva_venta = Venta.objects.create(
                 total_iva_10 = total_iva_10,
                 total_iva_5 = total_iva_5,
                 id_cliente = Cliente.objects.get(id_cliente=id_cliente),
-                id_tipo_pago = TipoPago.objects.get(id_tipo_pago=id_tipo_pago),
                 total_venta = total_venta,
                 usuario_creacion = request.user.id
             )
-            #print(f'nueva venta: {nueva_venta}')
+            
             nueva_venta.save()
             productos_json = request.POST.get('productos_json')
             productos_data = json.loads(productos_json)  # Convertir JSON en lista de diccionarios
@@ -85,6 +96,31 @@ def ventasCreateView(request):
                     total_detalle=total_detalle
                 )
                 venta_detalle.save()
+
+            if pago_pos > 0: 
+                venta_tipo_pago = VentaTipoDePago.objects.create(
+                    id_venta = nueva_venta,
+                    id_tipo_pago = TipoPago.objects.get(id_tipo_pago = 2),
+                    monto = pago_pos,
+                )
+                venta_tipo_pago.save()
+
+            if pago_efectivo > 0: 
+                venta_tipo_pago = VentaTipoDePago.objects.create(
+                    id_venta = nueva_venta,
+                    id_tipo_pago = TipoPago.objects.get(id_tipo_pago = 1),
+                    monto = pago_efectivo,
+                )
+                venta_tipo_pago.save()
+
+            if pago_transferencia > 0: 
+                venta_tipo_pago = VentaTipoDePago.objects.create(
+                    id_venta = nueva_venta,
+                    id_tipo_pago = TipoPago.objects.get(id_tipo_pago = 3),
+                    monto = pago_transferencia,
+                )
+                venta_tipo_pago.save()
+            
             messages.success(request, "Venta registrada exitosamente")
             return redirect('ventas:ventas')
         except Exception as e:
@@ -92,16 +128,11 @@ def ventasCreateView(request):
             messages.error(request, "Error al registrar venta {error_message}")
             logging.error(f'Error al crear venta: {error_message}') 
             return redirect('ventas:crear_venta')  
-        #else:
-        #    print("formulario no valido") 
-    #else:
-    #    messages.success(request,"Se arma el formulario")
-    #    form = VentaForm()
+        
     context = {
         'productos':productos,
         'clientes':clientes,
         'tipos_de_pago':tipos_de_pago
-        #'form':form
     }
         
     return render(request, 'ventas/crear_venta.html', context=context)
@@ -156,6 +187,7 @@ def ventasEditView(request,id_venta):
     else:
         venta = get_object_or_404(Venta, id_venta=id_venta)
         detalle_venta = VentaDetalle.objects.filter(id_venta = id_venta)
+        detalle_tipo_pago = VentaTipoDePago.objects.filter(id_venta = id_venta)
         for detalle in detalle_venta:
             if detalle.id_producto.id_iva.descripcion == 10:
                 detalle.iva_10 = detalle.total_detalle / 11  # Calcula IVA 10%
@@ -169,14 +201,12 @@ def ventasEditView(request,id_venta):
 
         clientes = Cliente.objects.all()
         productos = Producto.objects.all()
-        tipos_de_pago = TipoPago.objects.all()
-        print("detalle_venta:",detalle_venta)
         context = {
             'venta':venta,
             'clientes': clientes,
             'detalle_venta':detalle_venta,
             'productos': productos,
-            'tipos_de_pago': tipos_de_pago,
+            'detalle_tipo_pago': detalle_tipo_pago
         }
     return render(request, 'ventas/editar_venta.html', context=context)
 
@@ -190,6 +220,11 @@ def ventasDeleteView(request, id_venta):
 
         for detalle in detalles:
             detalle.delete()
+
+        ventas_tipo_pago = VentaTipoDePago.objects.filter(id_venta = id_venta)
+
+        for pago in ventas_tipo_pago:
+            pago.delete()
 
         venta.delete()
     return redirect('ventas:ventas')

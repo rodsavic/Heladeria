@@ -15,7 +15,7 @@
             <h5 class="text-right">Total del día: {{total_ventas|floatformat:0|intcomma }}</h5>
         </div>
         <div class="col">
-            <h5 class="text-right">Total en caja: {{total_ventas_caja|floatformat:0|intcomma }}</h5>
+            <h5 class="text-right">Total ventas en efectivo: {{total_efectivo|floatformat:0|intcomma }}</h5>
         </div>
         <div class="col-2">
             <a role="button" class="btn btn-primary btn-sm" href="{% url 'ventas:ventas_historial' %}" ><i
@@ -47,7 +47,6 @@
                     <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
                     <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
                     <td>{{venta.total_iva_5|floatformat:0|intcomma}}</td>
-                    <td>{{venta.id_tipo_pago.descripcion}}</td>
                     <td>{{venta.fecha_venta}}</td>
                     <td class="text-center"> <a type="button" class="btn btn-danger"
                             href="{% url 'ventas:eliminar_venta' venta.id_venta %}"><i class="bi bi-trash"></i></a>

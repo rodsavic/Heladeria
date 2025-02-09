@@ -12,7 +12,6 @@ class Venta(models.Model):
     total_venta = models.FloatField(db_column='total_venta', null=False)
     usuario_creacion = models.BigIntegerField(db_column='usuario_creacion', null=False)
     id_cliente = models.ForeignKey(Cliente, models.DO_NOTHING, db_column='id_cliente', null=False)
-    id_tipo_pago = models.ForeignKey(TipoPago, models.DO_NOTHING, db_column='id_tipo_pago', null=False)
 
     class Meta:
         managed = False
@@ -30,7 +29,7 @@ class VentaDetalle(models.Model):
     cantidad_producto = models.FloatField(db_column='cantidad_producto', null=False)
     id_venta = models.ForeignKey(Venta, models.DO_NOTHING, db_column='id_venta')
     id_producto = models.ForeignKey(Producto, models.DO_NOTHING, db_column='id_producto')
-
+    
     class Meta:
         managed = False
         db_table = 'venta_detalle'
@@ -39,4 +38,18 @@ class VentaDetalle(models.Model):
 
     def __str__(self):
         return f"Detalle {self.id_detalle} - Venta {self.id_venta} - Producto {self.id_producto}"
+    
+class VentaTipoDePago(models.Model):
+    id_venta_tipo_pago = models.BigAutoField(primary_key=True)
+    id_venta = models.ForeignKey(Venta, models.DO_NOTHING, db_column='id_venta')
+    id_tipo_pago = models.ForeignKey(TipoPago, models.DO_NOTHING, db_column='id_tipo_pago')
+    monto = models.IntegerField(db_column='monto', null=False)
 
+    class Meta:
+        managed = False
+        db_table = 'ventas_tipo_de_pago'
+        verbose_name = 'Venta Tipo de Pago'
+        verbose_name_plural = 'Ventas Tipos de Pago'
+
+    def __str__(self):
+        return super().__str__()
