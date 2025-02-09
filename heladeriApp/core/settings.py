@@ -87,10 +87,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES= {
     'default' : {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': '',
+        'NAME': 'heladeriApp',
         'USER': 'postgres',
         'PASSWORD': 'de$arr0ll02025',
-        'HOST': 'database-1.c1aa2qic48am.us-east-2.rds.amazonaws.com',
+        'HOST': 'database-2.c1aa2qic48am.us-east-2.rds.amazonaws.com',
         'PORT': '5432'
     }
 }
