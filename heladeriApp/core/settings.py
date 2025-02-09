@@ -24,9 +24,9 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-sq6!_3z2m+x*nrh&8e%2w4o*&4odz^-90nedq5byj55xl3f42o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['18.217.228.225','heladeriapp.com']
 
 
 # Application definition
@@ -87,10 +87,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES= {
     'default' : {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'heladeriApp',
+        'NAME': 'databse-1',
         'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
+        'PASSWORD': 'de$arr0ll02025',
+        'HOST': 'database-1.c1aa2qic48am.us-east-2.rds.amazonaws.com',
         'PORT': '5432'
     }
 }
@@ -137,6 +137,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
