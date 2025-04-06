@@ -92,8 +92,8 @@ DATABASES= {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'heladeriApp',
         'USER': 'postgres',
-        'PASSWORD': 'de$arr0ll02025',
-        'HOST': 'database-2.c1aa2qic48am.us-east-2.rds.amazonaws.com',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',
         'PORT': '5432'
     }
 }
