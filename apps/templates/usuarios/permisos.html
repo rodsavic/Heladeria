@@ -1,0 +1,37 @@
+{% extends "base/base.html" %}
+
+{% block title %}Permisos{% endblock %}
+
+{% block content %}
+    
+    
+    <div class="row mb-3">
+        <div class="col-8">
+            <h3>Lista de Permisos</h3>
+        </div>
+        <div class="col-4">
+            <a class="btn btn-primary" href="{% url 'usuarios:crear_permiso' %}" role="button">Crear Permiso</a>
+        </div>
+    </div>
+<div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Descripcion</th>
+                    <th>Accion</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for permiso in permisos_por_pagina %}
+                <tr>
+                    <th class="fw-normal">{{ permiso.descripcion }}</th>
+                    <th></th>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% include 'base/pagination.html' with items_page=permisos_por_pagina%}
+</div>
+    
+{% endblock %}

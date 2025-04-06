@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+
+{% block title %}Clientes{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+
+    <h1>Lista de Clientes</h1>
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                {% for columna in columnas %}
+                <th>{{columna}}</th>
+                {% endfor %}
+                <th>Operaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for cliente in clientes %}
+        <tr>
+            <td>{{cliente.nombre}}</td>
+            <td>{{cliente.apellido}}</td>
+            <td>{{cliente.correo}}</td>
+            <td>{{cliente.documento}}</td>
+            <td>{{cliente.celular}}</td>
+            <td>{{cliente.direccion}}</td>
+            <td>{{cliente.estado}}</td>
+            <td class="text-center"><a type="button" class="btn btn-primary"
+                href="{% url 'clientes:editar_cliente' cliente.id_cliente %}"><i class="bi bi-pen"></i></a>
+                <a type="button" class="btn btn-danger"
+                            href="{% url 'clientes:eliminar_cliente' cliente.id_cliente %}"><i class="bi bi-trash"></i></a>
+            </td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+</div>
+
+
+
+    <a class="btn btn-primary" href="{% url 'clientes:crear_cliente' %}" role="button">Crear Cliente</a>
+
+{% endblock %}

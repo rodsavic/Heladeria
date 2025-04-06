@@ -1,0 +1,56 @@
+{% extends "base/base.html" %} {% load humanize %}
+{% block title %}Productos{%endblock %}
+{% block body_class %} sidebar-mini {% endblock body_class %}
+{% block content %}
+<div class="row justify-content-between mb-3">
+    <div class="col-8">
+        <h1>Lista de Productos</h1>
+    </div>
+    <div class="col-4">
+        <a class="btn btn-primary" href="{% url 'productos:crear_producto' %}" role="button">Registrar Producto</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                {% for columna in columnas %}
+                <th>{{columna}}</th>
+                {% endfor %}
+                <th>Operaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in items_page %}
+            <tr>
+                <td>{{producto.nombre}}</td>
+                <td class="text-center">
+                    {{producto.precio_actual|floatformat:0|intcomma}}
+                </td>
+                <td class="text-center">
+                    {{producto.stock_minimo|floatformat:0|intcomma}}
+                </td>
+                <td class="text-center">
+                    {{producto.stock_actual|floatformat:0|intcomma}}
+                </td>
+                <td class="text-center">{{producto.vencimiento}}</td>
+                <td class="text-center">
+                    {{producto.costo_actual|floatformat:0|intcomma}}
+                </td>
+                <td class="text-center">{{producto.id_medida.descripcion}}</td>
+                <td class="text-center">
+                    <a type="button" class="btn btn-primary"
+                        href="{% url 'productos:editar_producto' producto.id_producto %}"><i class="bi bi-pen"></i></a>
+                    <a type="button" class="btn btn-danger"
+                        href="{% url 'productos:eliminar_producto' producto.id_producto %}"><i
+                            class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% include "base/pagination.html" with items_page=items_page %}
+</div>
+
+{% endblock %}
