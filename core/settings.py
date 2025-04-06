@@ -96,7 +96,8 @@ DATABASES= {
     #    'HOST': 'localhost',
     #    'PORT': '5432'
     #}
-    'default': dj_database_url.config(default='postgres://postgres:1234@localhost:5432/heladeriApp')
+    
+    'default': dj_database_url.config(conn_max_age=600)
 }
 
 
