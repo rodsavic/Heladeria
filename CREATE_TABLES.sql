@@ -1,4 +1,3 @@
-
 CREATE SEQUENCE public.tipo_pago_id_tipo_pago_seq;
 
 CREATE TABLE public.tipo_pago (
