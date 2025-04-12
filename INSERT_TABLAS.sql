@@ -10,3 +10,7 @@ INSERT INTO medidas(prefijo,descripcion) VALUES('GR', 'Gramos');
 INSERT INTO medidas(prefijo,descripcion) VALUES('L', 'Litros');
 INSERT INTO medidas(prefijo,descripcion) VALUES('U', 'Unidad');
 
+INSERT INTO tipo_pago (descripcion) VALUES ('Efectivo');
+INSERT INTO tipo_pago (descripcion) VALUES ('POS');
+INSERT INTO tipo_pago (descripcion) VALUES ('Transferencia');
+
