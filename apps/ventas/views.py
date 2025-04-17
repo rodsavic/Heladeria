@@ -11,6 +11,7 @@ from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage
 from django.db.models import Sum
 from django.utils import timezone
 from django.db.models.functions import TruncDate
+from django.core.serializers.json import DjangoJSONEncoder
 
 from apps.tipo_pago.models import TipoPago
 from apps.ventas.models import VentaTipoDePago
@@ -188,6 +189,7 @@ def ventasEditView(request,id_venta):
         venta = get_object_or_404(Venta, id_venta=id_venta)
         detalle_venta = VentaDetalle.objects.filter(id_venta = id_venta)
         detalle_tipo_pago = VentaTipoDePago.objects.filter(id_venta = id_venta)
+        detalles_serializados = []
         for detalle in detalle_venta:
             if detalle.id_producto.id_iva.descripcion == 10:
                 detalle.iva_10 = detalle.total_detalle / 11  # Calcula IVA 10%
@@ -198,6 +200,16 @@ def ventasEditView(request,id_venta):
             else:
                 detalle.iva_10 = 0  # No tiene IVA 10
                 detalle.iva_5 = 0   # No tiene IVA 5
+            detalles_serializados.append({
+                'id_producto': detalle.id_producto.id_producto,
+                'cantidad': detalle.cantidad_producto,
+                'precioUnitario': float(detalle.id_producto.precio_actual),
+                'totalDetalle': float(detalle.total_detalle),
+                'ivaDescripcion': int(detalle.id_producto.id_iva.descripcion),
+                'iva_10': float(detalle.iva_10),
+                'iva_5': float(detalle.iva_5),
+                'nombre': detalle.id_producto.nombre
+            })
 
         clientes = Cliente.objects.all()
         productos = Producto.objects.all()
@@ -206,7 +218,8 @@ def ventasEditView(request,id_venta):
             'clientes': clientes,
             'detalle_venta':detalle_venta,
             'productos': productos,
-            'detalle_tipo_pago': detalle_tipo_pago
+            'detalle_tipo_pago': detalle_tipo_pago,
+            'detalle_venta_json': json.dumps(detalles_serializados, cls=DjangoJSONEncoder)
         }
     return render(request, 'ventas/editar_venta.html', context=context)
 

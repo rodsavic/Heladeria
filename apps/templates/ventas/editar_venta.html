@@ -1,5 +1,6 @@
 {% extends 'base/base.html' %} {% load humanize %} {% load custom_filters %} 
 {% load static %}
+{% load humanize %}
 {% block title %}Editar Venta{% endblock title %} {% block content %}
 <section class="content">
   <div class="container-fluid">
@@ -239,26 +240,13 @@
 </section>
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src={% static 'js/ventas.js' %}></script>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     inicializarSelects();
-
-    // Cargar datos iniciales si es una edición
-    const detalles = JSON.parse("{{ detalle_venta_json|safe }}");
-    detalles.forEach((detalle) => {
-      productosSeleccionados.push({
-        productoId: detalle.id_producto.id_producto,
-        cantidad: detalle.cantidad_producto,
-        precioUnitario: detalle.id_producto.precio_actual,
-        totalDetalle: detalle.total_detalle,
-        ivaDescripcion: detalle.id_producto.id_iva.descripcion,
-      });
-    });
-    actualizarTabla();
-    calcularTotales();
   });
 </script>
 
-<script src={% static 'js/ventas.js' %}></script>
+
 {% endblock scripts %} {% endblock content %}

@@ -9,49 +9,67 @@ function inicializarSelects() {
     });
 }
 
-let productosSeleccionados   = [];
+let productosSeleccionados = [];
 
 function agregarProductoATabla() {
-    const selectProducto  = document.getElementById("selectProducto");
-    const cantidadInput  = parseFloat(document.getElementById("cantidad").value) || 0;
+
+    const selectProducto = document.getElementById("selectProducto");
+    const cantidadInput = parseFloat(document.getElementById("cantidad").value) || 0;
     const precio = parseFloat(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-precio')) || 0;
     const cantidad = parseInt(cantidadInput, 10);
     const idProducto = selectProducto.value;
+    const ivaDescripcion = parseInt(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-descripcionIva')) || 0;
+    const nombreProducto = selectProducto.options[selectProducto.selectedIndex].text;
+
+    console.log("idProducto:", idProducto, "tipo de dato:", typeof idProducto)
 
     if (!idProducto || cantidad <= 0) {
         alert("Selecciona un producto y una cantidad válida.");
         return;
     }
 
-    const idIva = parseInt(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-idiva')) || 0;
-    const nombreProducto = selectProducto.options[selectProducto.selectedIndex].text;
+    const tabla = document.getElementById('tablaProductos').getElementsByTagName('tbody')[0];
+
+    let filaExistente = null;
+
+    for (let fila of tabla.rows) {
+        if (fila.cells[0].innerText === nombreProducto) {
+            filaExistente = fila;
+            break;
+        }
+    }
+
+    console.log("productoExistente: ", filaExistente);
+    console.log("iva: ", ivaDescripcion)
 
     if (nombreProducto && cantidad > 0) {
         const totalDetalle = cantidad * precio;
         let iva = 0;
 
-        // Calcular IVA en base al valor del id_iva
-        if (idIva === 10) {
-            iva = totalDetalle / 11;
-            actualizarTotalIVA(iva, 0);
-        } else if (idIva === 5) {
-            iva = totalDetalle / 21;
-            actualizarTotalIVA(0, iva);
-        }
-
         // Buscar si el producto ya está en la tabla
-        const productoExistente = productosSeleccionados .find(prod => prod.id_producto === idProducto);
-        console.log("productoExistente: ", productoExistente);
-        if (productoExistente) {
+        console.log("productosSeleccionados: ", productosSeleccionados);
+        //const productoExistente = productosSeleccionados.find(prod => prod.id_producto === idProducto);
+
+        if (filaExistente) {
             // Actualizar producto existente
-            productoExistente.cantidad += cantidad;
-            productoExistente.total_detalle = (productoExistente.cantidad * precio).toFixed(0);
+            const totalDetalleNuevo = parseInt(filaExistente.cells[3].innerText) + totalDetalle;
+            const ivaAnterior = parseFloat(filaExistente.cells[4].innerText) || 0;
+
+            if (ivaDescripcion === 10) {
+                actualizarTotalIVA(-ivaAnterior, 0);
+                iva = totalDetalleNuevo / 11;
+                actualizarTotalIVA(iva, 0);
+            } else if (ivaDescripcion === 5) {
+                actualizarTotalIVA(0, -ivaAnterior);
+                iva = totalDetalleNuevo / 21;
+                actualizarTotalIVA(0, iva);
+            }
 
             // Actualizar la fila en la tabla
-            const fila = document.querySelector(`tr[data-producto-id='${idProducto}']`);
-            fila.cells[1].innerText = productoExistente.cantidad;
-            fila.cells[3].innerText = productoExistente.total_detalle;
-            fila.cells[4].innerText = (parseFloat(fila.cells[4].innerText) + iva).toFixed(0);
+            //const fila = document.querySelector(`tr[data-producto-id='${idProducto}']`);
+            filaExistente.cells[1].innerText = parseInt(filaExistente.cells[1].innerText) + cantidad;
+            filaExistente.cells[3].innerText = totalDetalleNuevo;
+            filaExistente.cells[4].innerText = iva.toFixed(0);
         } else {
             // Insertar nueva fila si no existe el producto
             const tabla = document.getElementById("tablaProductos").querySelector("tbody");
@@ -69,8 +87,16 @@ function agregarProductoATabla() {
             celdaCantidad.innerText = cantidad;
             celdaPrecio.innerText = precio.toFixed(0);
             celdaTotalDetalle.innerText = totalDetalle.toFixed(0);
+            // Calcular IVA en base al valor del id_iva
+            if (ivaDescripcion === 10) {
+                iva = totalDetalle / 11;
+                actualizarTotalIVA(iva, 0);
+            } else if (ivaDescripcion === 5) {
+                iva = totalDetalle / 21;
+                actualizarTotalIVA(0, iva);
+            }
             celdaIva.innerText = iva.toFixed(0);
-            celdaAccion.innerHTML = `<button class="btn btn-sm btn-danger" title="Eliminar" onclick="eliminarProducto('${idProducto}', ${totalDetalle}, ${iva}, ${idIva})"><i class="bi bi-trash"></i></button>`;
+            celdaAccion.innerHTML = `<button class="btn btn-sm btn-danger" title="Eliminar" onclick="eliminarProducto('${idProducto}', ${totalDetalle}, ${iva}, ${ivaDescripcion})"><i class="bi bi-trash"></i></button>`;
             console.log("idProducto:", idProducto, "tipo de dato:", typeof idProducto)
             console.log("cantidad:", cantidad, "tipo de dato:", typeof cantidad)
             console.log("total_detalle:", totalDetalle, "tipo de dato:", typeof totalDetalle)
@@ -79,10 +105,10 @@ function agregarProductoATabla() {
                 cantidad: cantidad,
                 total_detalle: totalDetalle.toFixed(0)
             };
-            productosSeleccionados .push(productoObj);
+            productosSeleccionados.push(productoObj);
         }
 
-        document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados );
+        document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados);
 
         actualizarTotal(totalDetalle);
         document.getElementById('cantidad').value = 1;
@@ -95,7 +121,7 @@ function agregarProductoATabla() {
 
 }
 
-function eliminarProducto(idProducto, totalDetalle, iva, idIva) {
+function eliminarProducto(idProducto, totalDetalle, iva, ivaDescripcion) {
     // Buscar la fila por el id_producto
     const tabla = document.getElementById("tablaProductos").querySelector("tbody");
     const fila = document.querySelector(`tr[data-producto-id='${idProducto}']`);
@@ -105,18 +131,18 @@ function eliminarProducto(idProducto, totalDetalle, iva, idIva) {
     tabla.removeChild(fila);
 
     // Eliminar producto de la lista de productos
-    productosSeleccionados  = productosSeleccionados .filter(prod => prod.id_producto !== idProducto);
+    productosSeleccionados = productosSeleccionados.filter(prod => prod.id_producto !== idProducto);
 
     // Actualizar el campo oculto con los productos restantes
-    document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados );
+    document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados);
 
     // Restar el total detalle del total de la venta
     actualizarTotal(-total_detalle_a_eliminar);
 
     // Restar el IVA correspondiente
-    if (idIva === 10) {
+    if (ivaDescripcion === 10) {
         actualizarTotalIVA(-total_iva, 0);
-    } else if (idIva === 5) {
+    } else if (ivaDescripcion === 5) {
         actualizarTotalIVA(0, -total_iva);
     }
 }
@@ -131,8 +157,9 @@ function actualizarTotal(nuevoTotalDetalle) {
 function actualizarTotalIVA(iva10, iva5) {
     const totalIva10 = document.getElementById('total_iva_10');
     const totalIva5 = document.getElementById('total_iva_5');
-
+    console.log("iva10: ", iva10)
     totalIva10.value = ((parseFloat(totalIva10.value) || 0) + iva10).toFixed(0);
+    console.log("totalIva10: ", totalIva10.value)
     totalIva5.value = ((parseFloat(totalIva5.value) || 0) + iva5).toFixed(0);
 }
 

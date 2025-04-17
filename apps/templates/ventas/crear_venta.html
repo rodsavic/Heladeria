@@ -23,8 +23,9 @@
                             id="selectProducto">
                             <option value=""></option>
                             {% for producto in productos %}
-                            <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio_actual }}"
-                                data-idiva="{{ producto.id_iva.descripcion }}">
+                            <option value="{{ producto.id_producto }}" 
+                                data-precio="{{ producto.precio_actual }}"
+                                data-descripcionIva="{{ producto.id_iva.descripcion }}">
                                 {{ producto.nombre }}
                             </option>
                             {% endfor %}
