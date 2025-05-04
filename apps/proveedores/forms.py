@@ -40,6 +40,6 @@ class ProveedorForm(ModelForm):
         queryset = Proveedor.objects.filter(documento=documento).exclude(id_proveedor=instance.id_proveedor)
         
         if queryset.exists():
-            raise ValidationError('El nombre ya existe!')
+            raise ValidationError('Un proveedor con ese documento ya existe!')
         return documento
         #fields = ['documento', 'nombre', 'telefono', 'direccion', 'correo']

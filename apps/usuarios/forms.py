@@ -1,6 +1,9 @@
 from django.forms import CharField, CheckboxSelectMultiple, ModelForm, ModelMultipleChoiceField, PasswordInput, SelectMultiple, TextInput
 from apps.usuarios.models import *
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import Group, Permission
+
+from django import forms
 
 
 class UsuarioForm(ModelForm):
@@ -97,21 +100,17 @@ class PermisoForm(ModelForm):
 
 
 class RolForm(ModelForm):
-    permisos = ModelMultipleChoiceField(
-        queryset=Permiso.objects.all(),
-        widget=CheckboxSelectMultiple,
+    permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-control',
+            'placeholder': 'Selecciona uno o más permisos'
+        }),
         required=False
     )
 
     class Meta:
-        model = Rol
-        fields = ['descripcion', 'permisos']
-
-    # Validación para evitar duplicados en la descripción del rol
-    def clean_descripcion(self):
-        descripcion = self.cleaned_data.get('descripcion')
-        if Rol.objects.filter(descripcion=descripcion).exists():
-            raise ValidationError("Ya existe un rol con esta descripción.")
-        return descripcion
+        model = Group
+        fields = ['name', 'permissions']
 
 

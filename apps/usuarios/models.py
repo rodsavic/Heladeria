@@ -1,4 +1,5 @@
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -18,7 +19,6 @@ class Usuario(models.Model):
         self.contrasena = make_password(raw_password)
 
     class Meta:
-        managed = False
         db_table = 'usuarios'
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
@@ -31,13 +31,28 @@ class Usuario(models.Model):
         return reverse("_detail", kwargs={"pk": self.pk})
     '''
 
+class User(AbstractUser):
+    telefono = models.CharField(max_length=20, null=True, blank=True)
+    direccion = models.CharField(max_length=255, null=True, blank=True)
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    usuario_creacion = models.IntegerField(null=True)
+    usuario_modificacion = models.IntegerField(null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(null=True)
+    
+    class Meta:
+        db_table = 'usuarios_user'
+        verbose_name = 'user_model'
+        verbose_name_plural = 'users_models'
+
+
+
 
 class Rol(models.Model):
     id_rol = models.AutoField(primary_key=True)
     descripcion = models.CharField(max_length=100, null= False)
 
     class Meta:
-        managed = False
         db_table = 'roles'
         # Para la vista en el admin
         verbose_name = 'Rol'
@@ -52,7 +67,6 @@ class Permiso(models.Model):
     descripcion = models.CharField(max_length=100, null=False)
 
     class Meta:
-        managed = False
         db_table = 'permisos'
         verbose_name = 'Permiso'
         verbose_name_plural = 'Permisos'
@@ -67,7 +81,6 @@ class UsuarioRol(models.Model):
     id_rol = models.ForeignKey(Rol, on_delete=models.CASCADE, db_column='id_rol', null=False)
 
     class Meta:
-        managed = False
         db_table = 'usuario_rol'
         unique_together = (('id_rol', 'id_usuario'),)
         verbose_name = 'UsuarioRol'
@@ -83,7 +96,6 @@ class RolPermiso(models.Model):
     id_permiso = models.ForeignKey(Permiso, on_delete=models.CASCADE, db_column='id_permiso', null=False)
 
     class Meta:
-        managed = False
         db_table = 'rol_permiso'
         unique_together = (('id_rol', 'id_permiso'),)
         verbose_name = 'RolPermiso'

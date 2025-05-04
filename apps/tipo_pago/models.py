@@ -6,7 +6,6 @@ class TipoPago(models.Model):
     descripcion = models.CharField(max_length=50, null=False, db_column='descripcion')
 
     class Meta:
-        managed = False
         db_table = 'tipo_pago'
         verbose_name = 'Tipo Pago'
         verbose_name_plural = 'Tipos de Pago'

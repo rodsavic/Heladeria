@@ -2,24 +2,26 @@
 {% load static %}
 {% load humanize %}
 {% load custom_filters %}
-{% block title %}Detalle{% endblock title %}
+{% block title %}Detalle de venta{% endblock title %}
 
 {% block content %}
 
-<section class="content">
-    <div class="container-fluid"><!-- INICO DEL CONTENEDOR -->
-        <h2>Venta</h2>
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Detalle de venta</h2>
+        <a href="{% url 'ventas:ventas' %}" class="card-link mb-3">Volver a la lista de ventas</a>
         <div class="row"><!-- INICIO DE LA FILA -->
             <div class="col-md-8 mt-3"><!-- INICIO PRIMERA COLUMNA -->
                 <div class="table-responsive p-0"><!-- INICIO DE TABLA -->
                     <table class="table table-hover text-nowrap" id="tablaProductos" border="1">
-                        <thead class="text-center">
+                        <thead class="table-head-color">
                             <tr>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Precio Unitario</th>
-                                <th>Total Detalle</th>
-                                <th>IVA</th>
+                                <th class="text-center" style="color: white;">Producto</th>
+                                <th class="text-center" style="color: white;width: 7%">Cantidad</th>
+                                <th class="text-center" style="color: white;">Precio Unitario</th>
+                                <th class="text-center" style="color: white;">Total Detalle</th>
+                                <th class="text-center" style="color: white;width: 7%">IVA 10</th>
+                                <th class="text-center" style="color: white;width: 7%">IVA 5</th>
                             </tr>
                         </thead>
                         <tbody class="text-center">
@@ -29,15 +31,8 @@
                                 <td>{{ detalle.cantidad_producto|punto_comma }}</td>
                                 <td>{{ detalle.id_producto.precio_actual|punto_comma }}</td>
                                 <td>{{ detalle.total_detalle|punto_comma }}</td>
-                                <td>
-                                    {% if detalle.iva_10 > 0 %}
-                                    {{ detalle.iva_10|punto_comma }}
-                                    {% elif detalle.iva_5 > 0 %}
-                                    {{ detalle.iva_5|punto_comma }}
-                                    {% else %}
-                                    0
-                                    {% endif %}
-                                </td>
+                                <td>{{ detalle.total_iva_10|punto_comma }}</td>
+                                <td>{{ detalle.total_iva_5|punto_comma }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -70,7 +65,7 @@
                 </div><!-- FIN DE PILA DE DATOS -->
             </div><!-- FIN DE SEGUNDA COLUMNA -->
         </div><!-- FIN DE LA FILA -->
-    </div><!-- FIN DEL CONTENEDOR -->
-</section>
+    </div>
+</div>
 
 {% endblock content %}

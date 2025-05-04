@@ -33,12 +33,14 @@ class ProductosForm(ModelForm):
         widgets = {
             'nombre': TextInput(attrs={
                 'class':'form-control',
-                'placeholder': 'Ingrese el nombre del producto'
+                'placeholder': 'Ingrese el nombre del producto',
+                'aria-label': 'Nombre de producto'
             }),
             'precio_actual':NumberInput(attrs={
                 'class':'form-control',
                 'placeholder': 'Ingrese el precio actual',
-                'min':1
+                'min':1,
+                'aria-label': 'Precio actual'
             }),
             'costo_actual': NumberInput(attrs={
                 'class':'form-control',
@@ -62,7 +64,7 @@ class ProductosForm(ModelForm):
                 'min':0
             }),
             'id_iva': Select(attrs={
-                'class':'form-control'}),
+                'class':'form-control',}),
             'id_medida': Select(attrs={
                 'class':'form-control'}),
         }
@@ -81,3 +83,8 @@ class ProductosForm(ModelForm):
         if queryset.exists():
             raise ValidationError('El nombre ya existe!')
         return nombre
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['id_iva'].empty_label = 'Seleccione un IVA'
+        self.fields['id_medida'].empty_label = 'Seleccione una medida'

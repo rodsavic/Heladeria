@@ -45,6 +45,13 @@ DJANGO_APPS = [
 
 LOCAL_APPS = [
     'apps',
+    'apps.authentication',
+    'apps.clientes',
+    'apps.productos',
+    'apps.proveedores',
+    'apps.tipo_pago',
+    'apps.usuarios',
+    'apps.ventas',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
@@ -68,7 +75,7 @@ TEMPLATE_DIR = os.path.join(
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMPLATE_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -95,7 +102,7 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'heladeriApp',
+            'NAME': 'heladeria',
             'USER': 'postgres',
             'PASSWORD': '1234',
             'HOST': 'localhost',
@@ -155,4 +162,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'usuarios.User'
 

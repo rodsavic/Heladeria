@@ -1,0 +1,99 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Crear Usuario{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+
+    <div class="card-body">
+        <h2 class="card-title">Crear Usuario</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de creación de usuario</h6>
+        <p class="card-text">Completa los campos para crear un nuevo usuario.</p>
+        <a href="{% url 'usuarios:usuarios' %}" class="card-link mb-3">Volver a la lista de usuarios</a>
+
+        <form class="mt-3" method="POST" action="{% url 'usuarios:usuarios_create' %}">
+            {% csrf_token %}
+            
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="nombre">Nombre</span>
+                <input id="nombre" name="nombre" type="text" class="form-control" placeholder="Nombre" aria-label="Nombre">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1">Apellido</span>
+                <input name="apellido" type="text" class="form-control" placeholder="Apellido" aria-label="Apellido">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1">Username</span>
+                <input name="username" type="text" class="form-control" placeholder="Username" aria-label="Username">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon2">Correo</span>
+                <input name="correo" type="email" class="form-control" placeholder="Correo" aria-label="Correo">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon3">Teléfono</span>
+                <input name="telefono" type="text" class="form-control" placeholder="Teléfono" aria-label="Teléfono">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon4">Dirección</span>
+                <input name="direccion" type="text" class="form-control" placeholder="Dirección" aria-label="Dirección">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon5">Fecha de Nacimiento</span>
+                <input name="fecha_nacimiento" type="date" class="form-control" placeholder="Fecha de Nacimiento" aria-label="Fecha de Nacimiento">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon6">Contraseña</span>
+                <input name="password" type="password" class="form-control" placeholder="Contraseña" aria-label="Contraseña">
+            </div>
+    
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon7">Repetir Contraseña</span>
+                <input name="password_repetir" type="password" class="form-control" placeholder="Repetir Contraseña" aria-label="Repetir Contraseña">
+            </div>
+    
+            <div class="input-group mb-3" style="width: 100%;">
+                <span class="input-group-text" style="width:4%;">Rol</span>
+                <select name="grupo" id="buscador_grupos" class="form-select" multiple="multiple" style="width:90%;">
+                    
+                </select>
+            </div>
+            
+    
+            <div class="text-center mb-3">
+                <button type="submit" class="btn-crear mt-3">Guardar</button>
+                <button type="reset" class="btn-limpiar mt-3">Limpiar</button>
+                <button type="button" class="btn-cancelar mt-3" onclick="window.location.href='{% url 'usuarios:usuarios' %}'">Cancelar</button>
+            </div>
+        </form>
+    
+    </div>
+</div>
+    
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    const gruposData = {{ grupos_json|safe }};
+    $(document).ready(function() {
+        $('#buscador_grupos').select2(
+            {
+                placeholder: "Selecciona uno o mas grupos",
+                data: gruposData,
+                width: '96%',
+                height: '100%',
+            }
+        );
+    });
+  </script>
+{% endblock scripts%}

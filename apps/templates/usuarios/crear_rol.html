@@ -3,9 +3,47 @@
 {% block title %} Crear Rol {% endblock %}
 
 {% block content %}
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-</form>
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Crear Rol</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de creación de rol</h6>
+        <p class="card-text">Completa los campos para crear un nuevo rol.</p>
+        <a href="{% url 'usuarios:roles' %}" class="card-link mb-3">Volver a la lista de roles</a>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="nombre">Nombre</span>
+                <input id="nombre" name="name" type="text" class="form-control" placeholder="Nombre"
+                    aria-label="Nombre">
+            </div>
+            <div class="input-group mb-3" style="width: 100%;">
+                <span class="input-group-text" style="width:8%;">Permisos</span>
+                <select name="permissions" id="buscador_permisos" class="form-select" multiple="multiple"
+                    style="width:90%;">
+                    <!-- No hace falta rellenar acá, Select2 los carga por JS -->
+                </select>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn-crear mt-3">Guardar</button>
+                <button type="reset" class="btn-limpiar mt-3">Limpiar</button>
+                <button type="button" class="btn-cancelar mt-3" onclick="window.location.href='{% url 'usuarios:roles' %}'">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    const permisosData = {{ permisos_json| safe }};
+    $(document).ready(function () {
+        $('#buscador_permisos').select2({
+            placeholder: "Selecciona uno o más permisos",
+            data: permisosData,
+            width: 'resolve'
+        });
+    });
+</script>
 {% endblock %}

@@ -8,13 +8,12 @@ class Proveedor(models.Model):
     direccion = models.CharField(max_length=100, db_column='direccion', null=False)
     correo = models.CharField(max_length=255, db_column='correo', null=False)
     usuario_creacion = models.IntegerField(db_column='usuario_creacion', null=False)
-    usuario_modificacion = models.IntegerField(db_column='usuario_modificacion', null=False)
+    usuario_modificacion = models.IntegerField(db_column='usuario_modificacion', null=True)
     fecha_creacion = models.DateTimeField(db_column='fecha_creacion', auto_now_add=True)
     fecha_modificacion = models.DateTimeField(db_column='fecha_modificacion', null=True)
     estado =  models.CharField(max_length=15, db_column='estado', null=False, default='activo')
     
     class Meta:
-        managed = False
         db_table = 'proveedores'
         verbose_name = 'Proveedor'
         verbose_name_plural = 'Proveedores'

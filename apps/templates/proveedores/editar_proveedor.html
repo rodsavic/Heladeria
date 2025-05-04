@@ -6,17 +6,46 @@
 
 {% block content %}
 
-<div class="container-fluid">
-    <h1>Editar</h1>
-    <form method="POST">
-        
-        {% csrf_token %}
-        {{form.as_p}}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Editar proveedor</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de edición de proveedor</h6>
+        <a href="{% url 'proveedores:proveedores' %}" class="card-link mb-3">Volver a la lista de proveedores</a>
+        <form method="POST">
 
-        <div class="text-center mb-3">
-            <button type="submit" class="btn btn-primary mt-3 ">Guardar</button>
-        </div>
-    </form>
+            {% csrf_token %}
+            <div class="input-group mb-3">
+                <span class="input-group-text">Nombre</span>
+                {{ form.nombre }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Documento</span>
+                {{ form.documento }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Correo</span>
+                {{ form.correo }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Telefono</span>
+                {{ form.telefono }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Dirección</span>
+                {{ form.direccion }}
+            </div>
+
+            <div class="text-center mb-3">
+                <button type="submit" class="btn-crear mt-3 ">Guardar cambios</button>
+                <button type="button" class="btn-cancelar mt-3"
+                    onclick="window.location.href='{% url 'proveedores:proveedores' %}'">Cancelar</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 {% endblock content %}

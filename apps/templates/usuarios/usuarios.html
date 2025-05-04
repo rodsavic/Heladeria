@@ -1,42 +1,51 @@
 {% extends "base/base.html" %}
-
+{% load static %}
 {% block title %}Lista de Usuarios {% endblock %}
 {% block body_class %} sidebar-mini {% endblock body_class %}
 {% block content %}
 
 
-<div class="row mb-3">
-    <div class="col-8">
-        <h3>Lista de Usuarios</h3>
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <div class="row justify-content-between mb-4">
+            <div class="col-4">
+                <h4 class="card-title fw-bold">Lista de usuarios</h4>
+            </div>
+            <div class="col-2">
+                <a class="btn-crear" href="{% url 'usuarios:usuarios_create' %}" role="button">Crear usuario</a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="text-center table-head-color">
+                    <tr>
+                        {% for columna in columnas %}
+                        <th style="color: white;">{{ columna }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios_por_pagina %}
+                    <tr>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.first_name }}</td>
+                        <td>{{ usuario.last_name }}</td>
+                        <td class="text-center"><a type="button" class="btn-crear"
+                            href="{% url 'usuarios:usuarios_modificar' usuario.id %}"><i
+                                class="bi bi-pen"></i></a>
+                        <a type="button" class="btn-cancelar"
+                            href="#"><i
+                                class="bi bi-trash"></i></a>
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% include 'base/pagination.html' with items_page=usuarios_por_pagina%}
+        </div>
     </div>
-    <div class="col-4">
-        <a class="btn btn-primary" href="{% url 'usuarios:crear_usuario' %}" role="button">Crear usuario</a>
-    </div>
+
 </div>
-<div class="table-responsive">
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                {% for columna in columnas %}
-                <th>{{ columna|title }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for usuario in usuarios_por_pagina %}
-            <tr>
-                <td>{{ usuario.nombre_usuario }}</td>
-                <td>{{ usuario.nombre }}</td>
-                <td>{{ usuario.apellido }}</td>
-                <td></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% include 'base/pagination.html' with items_page=usuarios_por_pagina%}
-</div>
-
-
-
 
 {% endblock %}

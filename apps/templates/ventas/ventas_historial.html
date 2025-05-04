@@ -8,35 +8,41 @@
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h1>Historial de ventas</h1>
+        <div class="grid-container">
+            {% if ventas_agrupadas %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="text-center table-head-color">
+                        <tr>
+                            <th style="color: white;">Fecha</th>
+                            <th style="color: white;">Total de ventas</th>
+                            <th style="color: white;">Accion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in ventas_agrupadas %}
+                        <tr>
 
-    <h2>Lista de Ventas</h2>
-<div class="grid-container">
+                            <td>{{venta.fecha}}</td>
+                            <td>{{venta.total_ventas|floatformat:0|intcomma}}</td>
+                            <td class="text-center">
+                                <a href="{% url 'ventas:ventas' venta.fecha|date:'Y-m-d' %}" class="btn-crear">Ver
+                                    ventas</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
 
-<div class="table-responsive">
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                
-                <th>Fecha</th>
-                <th>TOTAL</th>
-                <th>Accion</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for venta in ventas_agrupadas %}
-        <tr>
-
-            <td>{{venta.fecha}}</td>
-            <td>{{venta.total_ventas|floatformat:0|intcomma}}</td>
-            <td>
-                <a href="{% url 'ventas:ventas' venta.fecha|date:'Y-m-d' %}" class="btn btn-primary">Ver ventas</a>
-            </td>
-        </tr>
-        {% endfor %}
-
-        </tbody>
-    </table>
-    {% include "base/pagination.html" with items_page=ventas_agrupadas %}
+                    </tbody>
+                </table>
+                {% include "base/pagination.html" with items_page=ventas_agrupadas %}
+            </div>
+            {% else %}
+                {% include "base/sin_registro.html" %}
+            {% endif %}
+        </div>
+    </div>
 </div>
-</div>    
 {% endblock %}

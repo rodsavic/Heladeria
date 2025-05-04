@@ -5,43 +5,57 @@
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <div class="row justify-content-between mb-4">
+            <div class="col-4">
+                <h1>Lista de Proveedores</h1>
+            </div>
+            <div class="col-2">
+                <a class="btn-crear" href="{% url 'proveedores:crear_proveedor' %}" role="button">Registrar
+                    proveedor</a>
+            </div>
+        </div>
+        {% if proveedores_por_pagina %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="text-center table-head-color">
+                    <tr>
+                        {% for columna in columnas %}
+                        <th style="color: white;">{{columna}}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proveedor in proveedores_por_pagina %}
+                    <tr>
+                        <td>{{proveedor.documento}}</td>
+                        <td>{{proveedor.nombre}}</td>
+                        <td>{{proveedor.direccion}}</td>
+                        <td>{{proveedor.correo}}</td>
+                        <td>{{proveedor.estado}}</td>
+                        <td>{{proveedor.telefono}}</td>
+                        <td class="text-center"><a type="button" class="btn-crear"
+                                href="{% url 'proveedores:editar_proveedor' proveedor.id_proveedor %}"><i
+                                    class="bi bi-pen"></i></a>
+                            <a type="button" class="btn-cancelar"
+                                href="{% url 'proveedores:eliminar_proveedor' proveedor.id_proveedor %}"><i
+                                    class="bi bi-trash"></i></a>
+                        </td>
 
-    <h1>Lista de Proveedores</h1>
+                    </tr>
+                    {% endfor %}
 
-<div class="table-responsive">
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                {% for columna in columnas %}
-                <th>{{columna}}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-        {% for proveedor in proveedores_por_pagina %}
-        <tr>
-            <td>{{proveedor.documento}}</td>
-            <td>{{proveedor.nombre}}</td>
-            <td>{{proveedor.direccion}}</td>
-            <td>{{proveedor.correo}}</td>
-            <td>{{proveedor.estado}}</td>
-            <td>{{proveedor.telefono}}</td>
-            <td class="text-center"><a type="button" class="btn btn-primary"
-                href="{% url 'proveedores:editar_proveedor' proveedor.id_proveedor %}"><i class="bi bi-pen"></i></a>
-                <a type="button" class="btn btn-danger"
-                            href="{% url 'proveedores:eliminar_proveedor' proveedor.id_proveedor %}"><i class="bi bi-trash"></i></a>
-            </td>
-            
-        </tr>
-        {% endfor %}
-
-        </tbody>
-    </table>
-    {% include "base/pagination.html" with items_page=proveedores_por_pagina %}
+                </tbody>
+            </table>
+            {% include "base/pagination.html" with items_page=proveedores_por_pagina %}
+        </div>
+        {% else %}
+            {% include "base/sin_registro.html" %}
+        {% endif %}
+    </div>
 </div>
 
 
-
-    <a class="btn btn-primary" href="{% url 'proveedores:crear_proveedor' %}" role="button">Registrar Proveedor</a>
 
 {% endblock %}

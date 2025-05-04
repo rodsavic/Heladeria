@@ -42,6 +42,7 @@ def createProveedorView(request):
 
                 nuevo_proveedor.save()
                 messages.success(request,'Proveedor creado exitosamente')
+                return redirect('proveedores:proveedores')
             except Exception as e:
                 error_message = str(e) 
                 messages.error(request, f'Error en el servidor: {error_message}')

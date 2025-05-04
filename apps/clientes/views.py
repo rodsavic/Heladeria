@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
+from django.core.paginator import Paginator
 from .forms import *
 from .models import *
 
@@ -8,9 +9,13 @@ from .models import *
 def clienteReadView(request):
     clientes = Cliente.objects.all().order_by('nombre')
     columnas = ["Nombre", "Apellido", "Correo","Cédula","Número", "Dirección", "Estado"]
+    paginator = Paginator(clientes,10)
+    page_number = request.GET.get('page')
+    items_page=paginator.get_page(page_number)
     context = {
         'columnas':columnas,
-        'clientes':clientes
+        'clientes':clientes,
+        'items_page': items_page
     }
     return render(request, "clientes/clientes.html", context=context)
 

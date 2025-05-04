@@ -1,0 +1,99 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Editar Usuario{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+
+    <div class="card-body">
+        <h2 class="card-title">Editar Usuario</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de edición de usuario</h6>
+        <p class="card-text">Modifica los campos necesarios.</p>
+        <a href="{% url 'usuarios:usuarios' %}" class="card-link mb-3">Volver a la lista de usuarios</a>
+
+        <form class="mt-3" method="POST" action="">
+            {% csrf_token %}
+            
+            <div class="input-group mb-3">
+                <span class="input-group-text">Nombre</span>
+                <input id="nombre" name="nombre" type="text" class="form-control" value="{{ usuario.first_name }}" placeholder="Nombre">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Apellido</span>
+                <input name="apellido" type="text" class="form-control" value="{{ usuario.last_name }}" placeholder="Apellido">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Username</span>
+                <input name="username" type="text" class="form-control" value="{{ usuario.username }}" placeholder="Username">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Correo</span>
+                <input name="correo" type="email" class="form-control" value="{{ usuario.email }}" placeholder="Correo">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Teléfono</span>
+                <input name="telefono" type="text" class="form-control" value="{{ usuario.telefono }}" placeholder="Teléfono">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Dirección</span>
+                <input name="direccion" type="text" class="form-control" value="{{ usuario.direccion }}" placeholder="Dirección">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Fecha de Nacimiento</span>
+                <input name="fecha_nacimiento" type="date" class="form-control" value="{{ usuario.fecha_nacimiento|date:'Y-m-d' }}" placeholder="Fecha de Nacimiento">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Contraseña</span>
+                <input name="password" type="password" class="form-control" placeholder="Nueva contraseña (opcional)">
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Repetir Contraseña</span>
+                <input name="password_repetir" type="password" class="form-control" placeholder="Repetir contraseña">
+            </div>
+
+            <div class="input-group mb-3" style="width: 100%;">
+                <span class="input-group-text" style="width:4%;">Rol</span>
+                <select name="grupo" id="buscador_grupos" class="form-select" multiple="multiple" style="width:90%;">
+                    <!-- Opciones cargadas vía JS -->
+                </select>
+            </div>
+
+            <div class="text-center mb-3">
+                <button type="submit" class="btn-crear mt-3">Guardar Cambios</button>
+                <button type="button" class="btn-cancelar mt-3" onclick="window.location.href='{% url 'usuarios:usuarios' %}'">Cancelar</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    const gruposData = {{ grupos_json|safe }};
+    const gruposUsuario = {{ grupos_usuario|safe }};
+
+    $(document).ready(function() {
+        $('#buscador_grupos').select2({
+            placeholder: "Selecciona uno o más grupos",
+            data: gruposData,
+            width: '96%',
+            height: '100%',
+        });
+
+        // Seleccionamos los grupos que el usuario ya tiene
+        $('#buscador_grupos').val(gruposUsuario).trigger('change');
+    });
+</script>
+{% endblock %}

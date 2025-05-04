@@ -11,7 +11,6 @@ class Cliente(models.Model):
     estado = models.CharField(max_length=16, db_column= 'estado', null=True)
 
     class Meta:
-        managed = False
         db_table = 'clientes'
         verbose_name = 'Cliente'
         verbose_name_plural = 'Clientes'

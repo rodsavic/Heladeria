@@ -1,26 +1,65 @@
 {% extends "base/base.html" %}
 
-{% block title %}Crear Productos{% endblock %}
+{% block title %}Editar Producto{% endblock %}
 
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
-<section class="content">
-    <div class="container-fluid">
-        <h1>Ingresar datos del producto</h1>
-        <div class="vstack gap-2"><!-- INICIO DE PILA DE DATOS -->
-            <div class="p-2">
-                <form method="POST">
-                    {% csrf_token %}
-                    
-                    {{ form }}
-                
-                    <div class="text-center mb-3">
-                        <button type="submit" class="btn btn-primary mt-3 ">Guardar</button>
-                    </div>
-                </form>
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Editar producto</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de edición de producto</h6>
+        <a href="{% url 'productos:productos' %}" class="card-link mb-3">Volver a la lista de productos</a>
+        <form class="mt-3" method="POST">
+            {% csrf_token %}
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Nombre</span>
+                {{ form.nombre }}
             </div>
-        </div><!-- FIN DE PILA DE DATOS -->
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Precio actual</span>
+                {{ form.precio_actual }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Costo actual</span>
+                {{ form.costo_actual }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Vencimiento</span>
+                {{ form.vencimiento }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Stock actual</span>
+                {{ form.stock_actual }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Stock mínimo</span>
+                {{ form.stock_minimo }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">IVA</span>
+                {{ form.id_iva }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Medida</span>
+                {{ form.id_medida }}
+            </div>
+
+            <div class="text-center mb-3">
+                <button type="submit" class="btn-crear mt-3 ">Guardar cambios</button>
+                <button type="button" class="btn-cancelar mt-3"
+                    onclick="window.location.href='{% url 'productos:productos' %}'">Cancelar</button>
+            </div>
+        </form>
+
     </div>
-</section>
+</div>
 {% endblock %}

@@ -14,7 +14,6 @@ class Venta(models.Model):
     id_cliente = models.ForeignKey(Cliente, models.DO_NOTHING, db_column='id_cliente', null=False)
 
     class Meta:
-        managed = False
         db_table = 'ventas'
         verbose_name = 'Venta'
         verbose_name_plural = 'Ventas'
@@ -29,9 +28,10 @@ class VentaDetalle(models.Model):
     cantidad_producto = models.FloatField(db_column='cantidad_producto', null=False)
     id_venta = models.ForeignKey(Venta, models.DO_NOTHING, db_column='id_venta')
     id_producto = models.ForeignKey(Producto, models.DO_NOTHING, db_column='id_producto')
+    total_iva_10 = models.FloatField(db_column='total_iva_10', null=False, default=0.0)
+    total_iva_5 = models.FloatField(db_column='total_iva_5', null=False, default=0.0)
     
     class Meta:
-        managed = False
         db_table = 'venta_detalle'
         verbose_name = 'Venta Detalle'
         verbose_name_plural = 'Ventas Detalles'
@@ -46,7 +46,6 @@ class VentaTipoDePago(models.Model):
     monto = models.IntegerField(db_column='monto', null=False)
 
     class Meta:
-        managed = False
         db_table = 'ventas_tipo_de_pago'
         verbose_name = 'Venta Tipo de Pago'
         verbose_name_plural = 'Ventas Tipos de Pago'

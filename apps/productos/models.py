@@ -6,7 +6,6 @@ class Medida(models.Model):
     prefijo = models.CharField(max_length=20, db_column='prefijo', null=False)
 
     class Meta:
-        managed = False
         db_table = 'medidas'
         verbose_name = 'Medida'
         verbose_name_plural = 'Medidas'
@@ -20,7 +19,6 @@ class Categoria(models.Model):
     descripcion = models.CharField(max_length=50, db_column='descripcion', null=False)
 
     class Meta:
-        managed = False
         db_table = 'categoria'
         verbose_name = 'Categoria'
         verbose_name_plural = 'Categorias'
@@ -34,7 +32,6 @@ class Iva(models.Model):
     descripcion = models.CharField(max_length=10,db_column='descripcion', null=False)
 
     class Meta:
-        managed = False
         db_table = 'iva'
         verbose_name = 'Iva'
         verbose_name_plural = 'Ivas'
@@ -58,7 +55,6 @@ class Producto(models.Model):
     id_iva = models.ForeignKey(Iva, models.DO_NOTHING, db_column='id_iva', null=False)
 
     class Meta:
-        managed = False
         db_table = 'productos'
         verbose_name = 'Producto'
         verbose_name_plural = 'Productos'
@@ -73,7 +69,6 @@ class CategoriaProducto(models.Model):
     id_producto = models.ForeignKey(Producto, models.DO_NOTHING, db_column='id_producto', null=False)
 
     class Meta:
-        managed = False
         db_table = 'categoria_producto'
         verbose_name = 'CategoriaProducto'
         verbose_name_plural = 'CategoriasProductos'

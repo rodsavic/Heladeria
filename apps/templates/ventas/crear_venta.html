@@ -9,10 +9,11 @@
 </head>
 
 {% block content %}
-<section class="content">
-    <div class="container-fluid"><!-- INICO DEL CONTENEDOR -->
-        <h2>Registrar nueva venta</h2>
-
+<div class="card" style="width: 100%;">
+    <div class="card-body"><!-- INICO DEL CONTENEDOR -->
+        <h2 class="card-title">Registrar nueva venta</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de creación de ventas</h6>
+        <a href="{% url 'ventas:ventas' %}" class="card-link mb-3">Volver a la lista de ventas</a>
         <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();"><!-- INICO DE FORMULARIO -->
             {% csrf_token %}
             <div class="row"><!-- INICIO DE LA FILA -->
@@ -37,7 +38,7 @@
                         </div>
                         <div class="vr"></div>
                         <div class="">
-                            <button class="btn btn-success w-100" type="button" onclick="agregarProductoATabla()">
+                            <button class="btn-crear w-100" type="button" onclick="agregarProductoATabla()">
                                 <i class="bi bi-plus-circle"></i>
                             </button>
                         </div>
@@ -46,14 +47,15 @@
                     <br>
                     <div class="table-responsive p-0">
                         <table class="table table-hover text-nowrap" id="tablaProductos" border="1">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Producto</th>
-                                    <th class="text-center" style="width: 7%">Cantidad</th>
-                                    <th class="text-center">Precio Unitario</th>
-                                    <th class="text-center">Total Detalle</th>
-                                    <th class="text-center" style="width: 7%">IVA</th>
-                                    <th class="text-center" style="width: 7%">Accion</th>
+                            <thead class="table-head-color">
+                                <tr style="color: white;">
+                                    <th class="text-center" style="color: white;">Producto</th>
+                                    <th class="text-center" style="color: white;width: 7%">Cantidad</th>
+                                    <th class="text-center" style="color: white;">Precio Unitario</th>
+                                    <th class="text-center" style="color: white;">Total Detalle</th>
+                                    <th class="text-center" style="color: white;width: 7%">IVA 10</th>
+                                    <th class="text-center" style="color: white;width: 7%">IVA 5</th>
+                                    <th class="text-center" style="color: white;width: 7%">Accion</th>
                                 </tr>
                             </thead>
                             <tbody class="text-center">
@@ -98,7 +100,7 @@
 
 
                         <div class="text-center mb-3">
-                            <button type="submit" class="btn btn-primary mt-3 ">Guardar</button>
+                            <button type="submit" class="btn-crear mt-3 ">Guardar</button>
                         </div>
                     </div>
                 </div><!-- FIN SEGUNDA COLUMNA -->
@@ -131,9 +133,9 @@
 
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-warning" data-bs-dismiss="modal"
+                            <button type="button" class="btn-crear" data-bs-dismiss="modal"
                                 onclick="enviarFormulario()">Guardar</button>
-                            <button type="button" class="btn btn-primary" onclick="calcularVuelto()">Calcular
+                            <button type="button" class="btn-cancelar" onclick="calcularVuelto()">Calcular
                                 Vuelto</button>
                         </div>
                     </div>
@@ -142,7 +144,7 @@
         </form><!-- FIN DE FORMULARIO -->
     </div><!-- FIN DEL CONTENEDOR -->
 
-</section>
+</div>
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

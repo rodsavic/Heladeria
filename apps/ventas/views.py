@@ -88,13 +88,17 @@ def ventasCreateView(request):
                 id_producto = detalle['id_producto']
                 cantidad_producto = detalle['cantidad']
                 total_detalle = detalle['total_detalle']
+                total_iva_10 = detalle['total_detalle_iva_10']
+                total_iva_5 = detalle['total_detalle_iva_5']
                 
                 # Crear y guardar cada detalle de venta
                 venta_detalle = VentaDetalle.objects.create(
                     id_venta=nueva_venta,
                     id_producto=Producto.objects.get(id_producto=id_producto),
                     cantidad_producto=cantidad_producto,
-                    total_detalle=total_detalle
+                    total_detalle=total_detalle,
+                    total_iva_5=total_iva_5,
+                    total_iva_10=total_iva_10
                 )
                 venta_detalle.save()
 
@@ -169,13 +173,17 @@ def ventasEditView(request,id_venta):
                 id_producto = detalle['id_producto']
                 cantidad_producto = detalle['cantidad']
                 total_detalle = detalle['total_detalle']
+                total_iva_10 = detalle['total_detalle_iva_10']
+                total_iva_5 = detalle['total_detalle_iva_5']
                 
                 # Crear y guardar cada detalle de venta 
                 venta_detalle = VentaDetalle.objects.create(
                     id_venta=venta,
                     id_producto=Producto.objects.get(id_producto=id_producto),
                     cantidad_producto=cantidad_producto,
-                    total_detalle=total_detalle
+                    total_detalle=total_detalle,
+                    total_iva_5=total_iva_5,
+                    total_iva_10=total_iva_10
                 )
                 venta_detalle.save()
 
@@ -191,23 +199,14 @@ def ventasEditView(request,id_venta):
         detalle_tipo_pago = VentaTipoDePago.objects.filter(id_venta = id_venta)
         detalles_serializados = []
         for detalle in detalle_venta:
-            if detalle.id_producto.id_iva.descripcion == 10:
-                detalle.iva_10 = detalle.total_detalle / 11  # Calcula IVA 10%
-                detalle.iva_5 = 0  # No tiene IVA 5%
-            elif detalle.id_producto.id_iva.descripcion == 5:
-                detalle.iva_5 = detalle.total_detalle / 21  # Calcula IVA 5%
-                detalle.iva_10 = 0  # No tiene IVA 10%
-            else:
-                detalle.iva_10 = 0  # No tiene IVA 10
-                detalle.iva_5 = 0   # No tiene IVA 5
             detalles_serializados.append({
                 'id_producto': detalle.id_producto.id_producto,
                 'cantidad': detalle.cantidad_producto,
                 'precioUnitario': float(detalle.id_producto.precio_actual),
                 'totalDetalle': float(detalle.total_detalle),
                 'ivaDescripcion': int(detalle.id_producto.id_iva.descripcion),
-                'iva_10': float(detalle.iva_10),
-                'iva_5': float(detalle.iva_5),
+                'total_iva_10': float(detalle.total_iva_10),
+                'total_iva_5': float(detalle.total_iva_5),
                 'nombre': detalle.id_producto.nombre
             })
 
@@ -245,17 +244,6 @@ def ventasDeleteView(request, id_venta):
 def ventaDetalleView(request, id_venta):
     venta = get_object_or_404(Venta, id_venta=id_venta)
     detalle_venta = VentaDetalle.objects.filter(id_venta = id_venta)
-    for detalle in detalle_venta:
-        if detalle.id_producto.id_iva.descripcion == 10:
-            detalle.iva_10 = detalle.total_detalle / 11  # Calcula IVA 10%
-            detalle.iva_5 = 0  # No tiene IVA 5%
-        elif detalle.id_producto.id_iva.descripcion == 5:
-            detalle.iva_5 = detalle.total_detalle / 21  # Calcula IVA 5%
-            detalle.iva_10 = 0  # No tiene IVA 10%
-        else:
-            detalle.iva_10 = 0  # No tiene IVA 10
-            detalle.iva_5 = 0   # No tiene IVA 5
-
     context = {
         'venta':venta,
         'detalle_venta':detalle_venta,
