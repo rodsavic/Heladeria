@@ -140,6 +140,8 @@ function actualizarTotal(nuevoTotalDetalle) {
     const totalVentaActual = parseFloat(total_venta.value) || 0;
     const nuevoTotalVenta = totalVentaActual + nuevoTotalDetalle;
     total_venta.value = nuevoTotalVenta.toFixed(0);
+    const totalVentaModal = document.getElementById("totalVentaModal");
+    totalVentaModal.value = nuevoTotalVenta.toLocaleString('es-ES');
 }
 
 function actualizarTotalIVA(iva10, iva5) {
@@ -155,10 +157,12 @@ function abrirModalVuelto() {
         window.alert("Por favor, selecciona un cliente antes de continuar.");
         return;
     }
-    if(document.getElementById("total_venta").value == 0){
+    const totalVenta_ = parseFloat(document.getElementById("total_venta").value) || 0;
+    if(totalVenta_ == 0){
         window.alert("No hay productos en la venta.");
         return;
     }
+    
     $('#modalCobro').modal('show');
     setTimeout(() => document.getElementById("efectivo").focus(), 500);
 }
@@ -166,6 +170,9 @@ function abrirModalVuelto() {
 // Función para calcular el vuelto
 function calcularVuelto() {
     const totalVenta = parseFloat(document.getElementById("total_venta").value) || 0;
+    const totalVentaModal = document.getElementById("totalVentaModal");
+    totalVentaModal.value = totalVenta.toLocaleString('es-ES');
+    console.log("totalVentaModal:", totalVentaModal.value, "tipo de dato:", typeof totalVentaModal.value)
     const montoEfectivo = parseFloat(document.getElementById("efectivo").value) || 0;
     const montoPos = parseFloat(document.getElementById("pos").value) || 0;
     const montoTransferencia = parseFloat(document.getElementById("transferencia").value) || 0;
@@ -209,6 +216,8 @@ function enviarFormulario() {
             };
             productosSeleccionados.push(productoObj);
         }
+
+        document.getElementById('efectivo').value = totalVenta - montoPos - montoTransferencia;
 
         document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados);
 

@@ -22,7 +22,7 @@ def ventasReadView(request,fecha=None):
     else:
         fecha_venta = timezone.localdate()
 
-    ventas = Venta.objects.filter(fecha_venta__date=fecha_venta).order_by('id_venta')
+    ventas = Venta.objects.filter(fecha_venta__date=fecha_venta).order_by('-fecha_venta')
     # Obtener los id_venta de las ventas filtradas
     ids_ventas = ventas.values_list('id_venta', flat=True)
 
