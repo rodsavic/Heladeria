@@ -1,66 +1,53 @@
-{% extends "base/base.html" %} {% load humanize %}
+{% extends "base/base.html" %}
+{% load static %}
+{% load humanize %}
 {% block title %}Productos{%endblock %}
 {% block body_class %} sidebar-mini {% endblock body_class %}
 {% block content %}
 <div class="card" style="width: 100%;">
     <div class="card-body">
-        <div class="row justify-content-between mb-4">
-            <div class="col-4">
-                <h1>Lista de Productos</h1>
+        <h1>Lista de Productos</h1>
+
+        <!-- Buscador -->
+        <div class="row p-3 card-title align-items-center">
+            <div class="col-md-8 col-12 mb-2 mb-md-0">
+                <div class="d-flex">
+                    <input type="text" id="searchInput" class="form-control form-control-sm me-2"
+                           placeholder="Buscar producto...">
+                </div>
             </div>
-            <div class="col-2">
-                <a class="btn-crear" href="{% url 'productos:crear_producto' %}" role="button">Registrar
-                    Producto</a>
+            <div class="col-md-4 col-12 d-flex justify-content-md-end justify-content-center">
+                <a class="btn btn-crear btn-sm" href="{% url 'productos:crear_producto' %}" role="button">
+                    <i class="bi bi-plus-circle"></i> Registrar Producto
+                </a>
             </div>
         </div>
 
-        {% if items_page %}
+        <!-- Tabla de productos -->
         <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="productosTable">
                 <thead class="text-center table-head-color">
-                    <tr>
-                        {% for columna in columnas %}
-                        <th style="color: white;">{{columna}}</th>
-                        {% endfor %}
-                        <th style="color: white;">Operaciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for producto in items_page %}
-                    <tr>
-                        <td>{{producto.nombre}}</td>
-                        <td class="text-center">
-                            {{producto.precio_actual|floatformat:0|intcomma}}
-                        </td>
-                        <td class="text-center">
-                            {{producto.stock_minimo|floatformat:0|intcomma}}
-                        </td>
-                        <td class="text-center">
-                            {{producto.stock_actual|floatformat:0|intcomma}}
-                        </td>
-                        <td class="text-center">{{producto.vencimiento}}</td>
-                        <td class="text-center">
-                            {{producto.costo_actual|floatformat:0|intcomma}}
-                        </td>
-                        <td class="text-center">{{producto.id_medida.descripcion}}</td>
-                        <td class="text-center">
-                            <a type="button" class="btn-crear"
-                                href="{% url 'productos:editar_producto' producto.id_producto %}"><i
-                                    class="bi bi-pen"></i></a>
-                            <a type="button" class="btn-cancelar"
-                                href="{% url 'productos:eliminar_producto' producto.id_producto %}"><i
-                                    class="bi bi-trash"></i></a>
-                        </td>
-                    </tr>
+                <tr>
+                    {% for columna in columnas %}
+                    <th style="color: white;">{{columna}}</th>
                     {% endfor %}
+                    <th style="color: white;">Operaciones</th>
+                </tr>
+                </thead>
+                <tbody id="productosBody">
+                <!-- JS insertará los productos -->
                 </tbody>
             </table>
-            {% include "base/pagination.html" with items_page=items_page %}
         </div>
-        {% else %}
-            {% include "base/sin_registro.html" %}
-        {% endif %}
+
+        <!-- Paginación -->
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+
     </div>
 </div>
-
+{% block scripts %}
+<script src="{% static 'js/productos.js' %}"></script>
+{% endblock scripts %}
 {% endblock %}

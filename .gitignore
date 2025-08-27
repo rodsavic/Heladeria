@@ -29,6 +29,7 @@ env/
 
 # other
 .DS_Store
+.idea
 
 # javascript
 package-lock.json

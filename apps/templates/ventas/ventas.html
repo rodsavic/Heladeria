@@ -10,25 +10,33 @@
 {% block content %}
 
 <div class="card" style="width: 100%;">
-    <div class="card-body">
+     <div class="card-body">
         <h1>Ventas registradas</h1>
-        <div class="row p-3 card-title">
-            <div class="col-4">
-                <h5 class="text-right">Total del día: {{total_ventas|floatformat:0|intcomma }}</h5>
+        <div class="row p-3 card-title align-items-center">
+            <!-- Totales -->
+            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                <h5 class="text-md-end text-center">
+                    Total del día: {{ total_ventas|floatformat:0|intcomma }}
+                </h5>
             </div>
-            <div class="col">
-                <h5 class="text-right">Total ventas en efectivo: {{total_efectivo|floatformat:0|intcomma }}</h5>
-            </div>
-            <div class="col-2">
-                <a role="button" class="btn-limpiar btn-sm" href="{% url 'ventas:ventas_historial' %}"><i
-                        class="bi bi-clock-history  mt-3"></i>Historial</a>
-            </div>
-
-            <div class="col-2">
-                <a role="button" class="btn-crear btn-sm" href="{% url 'ventas:crear_venta' %}"><i
-                        class="bi bi-plus-circle mt-3"></i> Nueva Venta</a>
+            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                <h5 class="text-md-end text-center">
+                    Total ventas en efectivo: {{ total_efectivo|floatformat:0|intcomma }}
+                </h5>
             </div>
 
+            <!-- Botones -->
+            <div class="col-md-4 col-12 d-flex justify-content-md-end justify-content-center gap-2">
+                <a role="button" class="btn-limpiar btn-sm"
+                   href="{% url 'ventas:ventas_historial' %}">
+                    <i class="bi bi-clock-history"></i> Historial
+                </a>
+
+                <a role="button" class="btn-crear btn-sm"
+                   href="{% url 'ventas:crear_venta' %}">
+                    <i class="bi bi-plus-circle"></i> Nueva Venta
+                </a>
+            </div>
         </div>
         <br>
         {% if ventas_por_pagina %}

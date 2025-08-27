@@ -1,11 +1,18 @@
 import logging
+
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
 from .forms import *
 from django.core.paginator import Paginator
 
 def productosReadView(request):
+    query = request.GET.get('q')
     productos = Producto.objects.select_related('id_medida').all().order_by('nombre')
+
+    if query:
+        productos = productos.filter(nombre__icontains=query)
+
     columnas = ['Nombre','Precio Actual','Stock Minimo','Stock Actual','Vencimiento','Costo Actual','Medida']
     paginator = Paginator(productos,10)
     page_number = request.GET.get('page')
@@ -13,9 +20,10 @@ def productosReadView(request):
     context = {
         'columnas':columnas,
         'productos':productos,
-        'items_page': items_page
+        'items_page': items_page,
+        'query': query
     }
-    
+
     return render(request, 'productos/productos.html', context=context)
 
 def createProductosView(request):
@@ -36,7 +44,7 @@ def createProductosView(request):
                     nombre =nombre,
                     precio_actual = precio_actual,
                     stock_minimo= stock_minimo,
-                    stock_actual = stock_actual, 
+                    stock_actual = stock_actual,
                     vencimiento = vencimiento,
                     costo_actual = costo_actual,
                     usuario_creacion = request.user.id,
@@ -101,3 +109,19 @@ def productoDeleteView(request, id_producto):
     producto.delete()
     messages.success(request,"Producto eliminado correctamente")
     return redirect('productos:productos')
+
+
+def productos_json(request):
+    productos = list(
+        Producto.objects.select_related("id_medida").order_by('nombre').values(
+            "id_producto",
+            "nombre",
+            "precio_actual",
+            "stock_minimo",
+            "stock_actual",
+            "vencimiento",
+            "costo_actual",
+            "id_medida__descripcion",
+        )
+    )
+    return JsonResponse(productos, safe=False)

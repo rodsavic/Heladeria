@@ -8,4 +8,5 @@ urlpatterns = [
     path('crear_producto/', createProductosView, name='crear_producto'),
     path('eliminar_producto/<str:id_producto>',productoDeleteView, name='eliminar_producto'),
     path('editar_producto/<str:id_producto>',ProductoUpdateView, name='editar_producto'),
+    path('productos_json/', productos_json, name='productos_json'),
 ]

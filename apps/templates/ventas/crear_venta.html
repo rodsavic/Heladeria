@@ -5,162 +5,324 @@
 
 <head>
     {% block title %}Crear Venta{% endblock title %}
-    {% block stylesheets %}{% endblock stylesheets %}
+    {% block stylesheets %}
+    <style>
+        /* Estilos responsive personalizados */
+        @media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+
+            .hstack {
+                flex-direction: column !important;
+                gap: 1rem !important;
+            }
+
+            .hstack > * {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .table th, .table td {
+                padding: 0.3rem !important;
+                font-size: 0.75rem;
+            }
+
+            .card-sidebar {
+                margin-top: 2rem;
+            }
+
+            .modal-dialog {
+                margin: 1rem;
+            }
+
+            .input-group-text {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .card-body {
+                padding: 1rem 0.5rem;
+            }
+
+            h2.card-title {
+                font-size: 1.5rem;
+            }
+
+            .table th:nth-child(5),
+            .table th:nth-child(6),
+            .table td:nth-child(5),
+            .table td:nth-child(6) {
+                display: none;
+            }
+
+            .vstack > div {
+                padding: 0.5rem !important;
+            }
+        }
+
+        /* Mejoras generales */
+        .product-selector-container {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-card {
+            position: sticky;
+            top: 2rem;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        @media (min-width: 768px) {
+            .action-buttons {
+                justify-content: flex-end;
+            }
+        }
+    </style>
+    {% endblock stylesheets %}
 </head>
 
 {% block content %}
-<div class="card" style="width: 100%;">
-    <div class="card-body"><!-- INICO DEL CONTENEDOR -->
-        <h2 class="card-title">Registrar nueva venta</h2>
-        <h6 class="card-subtitle mb-2 text-muted">Formulario de creación de ventas</h6>
-        <a href="{% url 'ventas:ventas' %}" class="card-link mb-3">Volver a la lista de ventas</a>
-        <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();"><!-- INICO DE FORMULARIO -->
-            {% csrf_token %}
-            <div class="row"><!-- INICIO DE LA FILA -->
-                <div class="col-md-8 mt-3"><!-- INICIO PRIMERA COLUMNA -->
+<div class="container-fluid">
+    <div class="card" style="width: 100%;">
+        <div class="card-body">
+            <!-- Header responsive -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+                <div>
+                    <h2 class="card-title mb-1">Registrar nueva venta</h2>
+                    <h6 class="card-subtitle text-muted">Formulario de creación de ventas</h6>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="{% url 'ventas:ventas' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Volver a la lista
+                    </a>
+                </div>
+            </div>
 
-                    <div class="hstack gap-5">
-                        <select class="selectProducto form-control" style="max-width: 50%;" name="selectProducto"
-                            id="selectProducto">
-                            <option value=""></option>
-                            {% for producto in productos %}
-                            <option value="{{ producto.id_producto }}" 
-                                data-precio="{{ producto.precio_actual }}"
-                                data-descripcionIva="{{ producto.id_iva.descripcion }}">
-                                {{ producto.nombre }}
-                            </option>
-                            {% endfor %}
+            <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();">
+                {% csrf_token %}
 
-                        </select>
-                        <div class="input-group input-group-sm" style="max-width: 20%;">
-                            <label class="input-group-text" for="cantidad">Cantidad </label>
-                            <input class="form-control" type="number" name="cantidad" id="cantidad" min="1" value=1>
-                        </div>
-                        <div class="vr"></div>
-                        <div class="">
-                            <button class="btn-crear w-100" type="button" onclick="agregarProductoATabla()">
-                                <i class="bi bi-plus-circle"></i>
-                            </button>
-                        </div>
-                    </div>
+                <div class="row">
+                    <!-- Columna principal - Productos -->
+                    <div class="col-12 col-lg-8 order-2 order-lg-1">
+                        <!-- Selector de productos responsive -->
+                        <div class="product-selector-container">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-12 col-md-6 col-lg-5">
+                                    <label for="selectProducto" class="form-label fw-semibold">Producto</label>
+                                    <select class="selectProducto form-control" name="selectProducto" id="selectProducto">
+                                        <option value="">Seleccionar producto...</option>
+                                        {% for producto in productos %}
+                                        <option value="{{ producto.id_producto }}"
+                                            data-precio="{{ producto.precio_actual }}"
+                                            data-descripcionIva="{{ producto.id_iva.descripcion }}">
+                                            {{ producto.nombre }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
 
-                    <br>
-                    <div class="table-responsive p-0">
-                        <table class="table table-hover text-nowrap" id="tablaProductos" border="1">
-                            <thead class="table-head-color">
-                                <tr style="color: white;">
-                                    <th class="text-center" style="color: white;">Producto</th>
-                                    <th class="text-center" style="color: white;width: 7%">Cantidad</th>
-                                    <th class="text-center" style="color: white;">Precio Unitario</th>
-                                    <th class="text-center" style="color: white;">Total Detalle</th>
-                                    <th class="text-center" style="color: white;width: 7%">IVA 10</th>
-                                    <th class="text-center" style="color: white;width: 7%">IVA 5</th>
-                                    <th class="text-center" style="color: white;width: 7%">Accion</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-center">
-                                <!-- Aquí se agregarán las filas dinámicamente -->
-                            </tbody>
-                        </table>
-                        <input type="hidden" name="productos_json" id="productos_json">
-                    </div>
+                                <div class="col-12 col-md-4 col-lg-3">
+                                    <label for="cantidad" class="form-label fw-semibold">Cantidad</label>
+                                    <input class="form-control" type="number" name="cantidad" id="cantidad" min="1" value="1">
+                                </div>
 
-                </div> <!-- FIN PRIMERA COLUMNA -->
-
-
-                <div class="col-md-3 card"><!-- INICIO SEGUNDA COLUMNA -->
-                    <div class="vstack gap-2">
-                        <div class="p-2">
-                            <label class="card-title" for="cliente">Cliente</label>
-                            <br>
-                            <select class="form-control" name="cliente" id="cliente">
-                                <option value=""></option>
-                                {% for cliente in clientes %}
-                                <option value="{{ cliente.id_cliente }}">
-                                    {{ cliente.nombre }} - {{cliente.documento}}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="p-2">
-                            <label class="card-title" for="total_venta">Total venta</label>
-                            <input class="form-control" type="number" name="total_venta" id="total_venta" value="0"
-                                readonly>
-                        </div>
-                        <div class="p-2">
-                            <label class="card-title" for="total_iva_10">Total IVA 10</label>
-                            <input class="form-control" type="number" name="total_iva_10" id="total_iva_10" value="0"
-                                readonly>
-                        </div>
-                        <div class="p-2">
-                            <label class="card-title" for="total_iva_5">Total IVA 5</label>
-                            <input class="form-control" type="number" name="total_iva_5" id="total_iva_5" value="0"
-                                readonly>
+                                <div class="col-12 col-md-2 col-lg-2">
+                                    <button class="btn btn-crear w-100" type="button" onclick="agregarProductoATabla()">
+                                        <i class="bi bi-plus-circle"></i>
+                                        <span class="d-none d-sm-inline"> Agregar</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-
-                        <div class="text-center mb-3">
-                            <button type="submit" class="btn-crear mt-3 ">Guardar</button>
+                        <!-- Tabla de productos responsive -->
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped" id="tablaProductos">
+                                <thead class="table-head-color">
+                                    <tr>
+                                        <th class="text-center">Producto</th>
+                                        <th class="text-center">Cant.</th>
+                                        <th class="text-center">Precio Unit.</th>
+                                        <th class="text-center">Total</th>
+                                        <th class="text-center d-none d-sm-table-cell">IVA 10</th>
+                                        <th class="text-center d-none d-sm-table-cell">IVA 5</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-center">
+                                    <!-- Filas dinámicas aquí -->
+                                </tbody>
+                            </table>
+                            <input type="hidden" name="productos_json" id="productos_json">
                         </div>
                     </div>
-                </div><!-- FIN SEGUNDA COLUMNA -->
-            </div><!-- FIN DE LA FILA -->
 
+                    <!-- Columna lateral - Resumen -->
+                    <div class="col-12 col-lg-4 order-1 order-lg-2">
+                        <div class="summary-card card-sidebar">
+                            <h5 class="mb-3 text-center text-lg-start">Resumen de Venta</h5>
 
-            <!-- Modal para ingresar el monto recibido -->
-            <div class="modal fade" id="modalCobro" tabindex="-1" aria-labelledby="modalCobroLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalCobroLabel">Forma de pago</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="Cerrar"></button>
-                        </div>
-                        <div class="modal-body">
-                            <label for="totalVentaModal">Total de Venta</label>
-                            <input type="number" id="totalVentaModal" class="form-control" disabled>             
-
-                            <label for="efectivo">Efectivo:</label>
-                            <input type="number" id="efectivo" name="efectivo" class="form-control" placeholder="Ingrese el monto"
-                                min="0">
-                            <div class="mt-3">
-                                <span id="mensajeVuelto" class="fw-bold"></span>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="cliente">Cliente</label>
+                                <select class="form-control" name="cliente" id="cliente">
+                                    <option value="">Seleccionar cliente...</option>
+                                    {% for cliente in clientes %}
+                                    <option value="{{ cliente.id_cliente }}">
+                                        {{ cliente.nombre }} - {{ cliente.documento }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
                             </div>
 
-                            <label for="pos">POS:</label>
-                            <input type="number" id="pos" name="pos" class="form-control" placeholder="Ingrese el monto" min="0">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold" for="total_venta">Total Venta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₲</span>
+                                        <input class="form-control fw-bold" type="number" name="total_venta" id="total_venta" value="0" readonly>
+                                    </div>
+                                </div>
 
-                            <label for="transferencia">Transferencia:</label>
-                            <input type="number" id="transferencia" name="transferencia" class="form-control" placeholder="Ingrese el monto"
-                                min="0">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold" for="total_iva_10">IVA 10%</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₲</span>
+                                        <input class="form-control" type="number" name="total_iva_10" id="total_iva_10" value="0" readonly>
+                                    </div>
+                                </div>
 
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn-crear" data-bs-dismiss="modal"
-                                onclick="enviarFormulario()">Guardar</button>
-                            <button type="button" class="btn-cancelar" onclick="calcularVuelto()">Calcular
-                                Vuelto</button>
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold" for="total_iva_5">IVA 5%</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₲</span>
+                                        <input class="form-control" type="number" name="total_iva_5" id="total_iva_5" value="0" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-crear btn-lg">
+                                    <i class="bi bi-save"></i> Guardar Venta
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </form><!-- FIN DE FORMULARIO -->
-    </div><!-- FIN DEL CONTENEDOR -->
 
+                <!-- Modal responsive para forma de pago -->
+                <div class="modal fade" id="modalCobro" tabindex="-1" aria-labelledby="modalCobroLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalCobroLabel">
+                                    <i class="bi bi-credit-card"></i> Forma de pago
+                                </h5>
+                                <button onclick="cerrarModal()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="totalVentaModal" class="form-label fw-semibold">Total de Venta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₲</span>
+                                        <input type="number" id="totalVentaModal" class="form-control fw-bold" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                        <label for="efectivo" class="form-label">
+                                            <i class="bi bi-cash"></i> Efectivo
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₲</span>
+                                            <input type="number" id="efectivo" name="efectivo" class="form-control"
+                                                   placeholder="0" min="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-md-4">
+                                        <label for="pos" class="form-label">
+                                            <i class="bi bi-credit-card-2-front"></i> POS
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₲</span>
+                                            <input type="number" id="pos" name="pos" class="form-control"
+                                                   placeholder="0" min="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-md-4">
+                                        <label for="transferencia" class="form-label">
+                                            <i class="bi bi-bank"></i> Transferencia
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₲</span>
+                                            <input type="number" id="transferencia" name="transferencia" class="form-control"
+                                                   placeholder="0" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 p-3 bg-light rounded">
+                                    <span id="mensajeVuelto" class="fw-bold d-block text-center"></span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <div class="action-buttons w-100">
+                                    <!--
+                                    <button type="button" class="btn btn-outline-primary" onclick="calcularVuelto()">
+                                        <i class="bi bi-calculator"></i> Calcular Vuelto
+                                    </button>
+                                    -->
+                                    <button type="button" class="btn btn-crear" data-bs-dismiss="modal" onclick="enviarFormulario()">
+                                        <i class="bi bi-check-circle"></i> Guardar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    
+<script src="{% static 'js/sidebar.js' %}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         inicializarSelects();
+
+        // Inicializar Select2 responsive
+        $('.selectProducto').select2({
+            placeholder: "Buscar producto...",
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('#cliente').select2({
+            placeholder: "Buscar cliente...",
+            allowClear: true,
+            width: '100%'
+        });
     });
 </script>
 
-<script src={% static 'js/ventas.js' %}></script>
+<script src="{% static 'js/ventas.js' %}"></script>
 {% endblock scripts %}
-
-
 
 {% endblock content %}

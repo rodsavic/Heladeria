@@ -1,11 +1,5 @@
-.table-head-color{
-    background-color: rgb(235, 146, 83); 
-}
-
 .table-head-color th{
-    color: white;
-    text-align: center;
-}
-.table-head-color th:hover{
-    background-color: rgb(235, 146, 83); 
+    color: white !important;
+    background-color: chocolate !important;
+    text-align: center !important;
 }

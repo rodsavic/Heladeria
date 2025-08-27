@@ -151,21 +151,91 @@ function actualizarTotalIVA(iva10, iva5) {
     totalIva5.value = ((parseFloat(totalIva5.value) || 0) + iva5).toFixed(0);
 }
 
-// Función para abrir el modal del vuelto
 function abrirModalVuelto() {
+    // Validaciones
     if(document.getElementById("cliente").value == ""){
-        window.alert("Por favor, selecciona un cliente antes de continuar.");
+        alert("Por favor, selecciona un cliente antes de continuar.");
         return;
     }
+
     const totalVenta_ = parseFloat(document.getElementById("total_venta").value) || 0;
     if(totalVenta_ == 0){
-        window.alert("No hay productos en la venta.");
+        alert("No hay productos en la venta.");
         return;
     }
-    
-    $('#modalCobro').modal('show');
-    setTimeout(() => document.getElementById("efectivo").focus(), 500);
+
+    // Actualizar el total en el modal
+    document.getElementById("totalVentaModal").value = totalVenta_;
+
+    // Limpiar campos anteriores
+    document.getElementById("efectivo").value = "";
+    document.getElementById("pos").value = "";
+    document.getElementById("transferencia").value = "";
+    document.getElementById("mensajeVuelto").textContent = "";
+
+    // Obtener el modal y mostrarlo
+    const modalElement = document.getElementById('modalCobro');
+    modalElement.style.display = 'block';
+    modalElement.classList.add('show');
+    modalElement.setAttribute('aria-modal', 'true');
+    modalElement.setAttribute('aria-hidden', 'false');
+
+    // Agregar backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    backdrop.id = 'modal-backdrop';
+    document.body.appendChild(backdrop);
+
+    // Prevenir scroll del body
+    document.body.classList.add('modal-open');
+
+    // Enfocar campo
+    setTimeout(() => {
+        document.getElementById("efectivo").focus();
+    }, 500);
 }
+
+function cerrarModal() {
+    const modalElement = document.getElementById('modalCobro');
+    const backdrop = document.getElementById('modal-backdrop');
+
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('show');
+    modalElement.setAttribute('aria-hidden', 'true');
+    modalElement.removeAttribute('aria-modal');
+
+    if (backdrop) {
+        backdrop.remove();
+    }
+
+    document.body.classList.remove('modal-open');
+}
+
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar modal al hacer clic en el backdrop
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-backdrop')) {
+            cerrarModal();
+        }
+    });
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModal();
+        }
+    });
+
+    // Auto-cálculo del vuelto
+    ['efectivo', 'pos', 'transferencia'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', calcularVuelto);
+        }
+    });
+});
 
 // Función para calcular el vuelto
 function calcularVuelto() {

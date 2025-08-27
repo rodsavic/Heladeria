@@ -12,20 +12,20 @@
     padding: 5px 15px;
     white-space: initial;
     border-radius: 5px;
-    background-color: chocolate;
-    color: white;
-    border: 2px solid chocolate;
+    background-color: chocolate !important;
+    color: white !important;
+    border: 2px solid chocolate !important;
     font-weight: 500;
     text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    display: inline-block;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    display: inline-block !important;
 }
 
 .btn-crear:hover {
-    background-color: white;
-    color: chocolate;
-    border: 2px solid chocolate;
+    background-color: white !important;
+    color: chocolate !important;
+    border: 2px solid chocolate !important;
 }
 
 

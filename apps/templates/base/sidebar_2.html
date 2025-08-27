@@ -1,101 +1,87 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
+<!-- Sidebar Template for Django -->
+<nav id="sidebar">
+    <!-- Header del sidebar -->
+    <div class="sidebar-header">
+        <a href="{% url 'home:index' %}" class="sidebar-logo">
+            <i class="bi bi-shop"></i>
+            <span>Mi Tienda</span>
+        </a>
+        <button class="toggle-btn" id="sidebarToggle" type="button">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-    <link href={% static 'css/style.css' %} rel="stylesheet" />
-</head>
+    <!-- Navegación -->
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="lni lni-user"></i>
+                <span>Perfil</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{% url 'ventas:ventas' %}" class="sidebar-link">
+                <i class="bi bi-receipt"></i>
+                <span>Ventas</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="lni lni-agenda"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
 
-<body>
-    <div class="wrapper">
-        <aside id="sidebar">
-            <div class="d-flex">
-                <button class="toggle-btn" type="button">
-                    <i class="lni lni-grid-alt"></i>
-                </button>
-                <div class="sidebar-logo">
-                    <a href="{% url 'home:index' %}">HeladeriApp</a>
-                </div>
-            </div>
-            <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm" aria-expanded="false" aria-controls="adm">
+                <i class="lni lni-protection"></i>
+                <span>Administración</span>
+            </a>
+            <ul id="adm" class="sidebar-dropdown list-unstyled collapse">
                 <li class="sidebar-item">
-                    <a href="#" class="sidebar-link">
-                        <i class="lni lni-user"></i>
-                        <span>Perfil</span>
+                    <a href="{% url 'usuarios:usuarios' %}" class="sidebar-link">
+                        <span>Usuarios</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="{% url 'ventas:ventas' %}" class="sidebar-link">
-                        <i class="bi bi-receipt"></i>
-                        <span>Ventas</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="#" class="sidebar-link">
-                        <i class="lni lni-agenda"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                
-                <li class="sidebar-item" id="sidebar-item-2">
-                    <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm" aria-expanded="false" aria-controls="adm">
-                        <i class="lni lni-protection"></i>
-                        <span>Administración</span>
-                    </a>
-                    <ul id="adm" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar-item-2">
-                        <li class="sidebar-item">
-                            <a href="{% url 'usuarios:usuarios' %}" class="sidebar-link">Usuarios</a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a href="{% url 'usuarios:roles' %}" class="sidebar-link">Roles</a>
-                        </li>
-                    </ul>
-                </li>
-                
-                <li class="sidebar-item">
-                    <a href="{% url 'productos:productos' %}" class="sidebar-link">
-                        <i class="bi bi-boxes"></i>
-                        <span>Productos</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="{% url 'proveedores:proveedores' %}" class="sidebar-link">
-                        <i class="bi bi-truck"></i>
-                        <span>Proveedor</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="{% url 'clientes:clientes' %}" class="sidebar-link">
-                        <i class="bi bi-people"></i>
-                        <span>Clientes</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="#" class="sidebar-link">
-                        <i class="bi bi-gear"></i>
-                        <span>Setting</span>
+                    <a href="{% url 'usuarios:roles' %}" class="sidebar-link">
+                        <span>Roles</span>
                     </a>
                 </li>
             </ul>
-            <div class="sidebar-footer">
-                <a href="{% url 'authentication:logout' %}" class="sidebar-link">
-                    <i class="bi bi-box-arrow-left"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </aside>
-        
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-        crossorigin="anonymous"></script>
-    <script src={% static 'js/script.js' %}></script>
-</body>
+        </li>
 
-</html>
+        <li class="sidebar-item">
+            <a href="{% url 'productos:productos' %}" class="sidebar-link">
+                <i class="bi bi-boxes"></i>
+                <span>Productos</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{% url 'proveedores:proveedores' %}" class="sidebar-link">
+                <i class="bi bi-truck"></i>
+                <span>Proveedor</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{% url 'clientes:clientes' %}" class="sidebar-link">
+                <i class="bi bi-people"></i>
+                <span>Clientes</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="bi bi-gear"></i>
+                <span>Setting</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Footer del sidebar -->
+    <div class="sidebar-footer">
+        <a href="{% url 'authentication:logout' %}" class="sidebar-link">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</nav>
