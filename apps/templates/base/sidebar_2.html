@@ -1,10 +1,11 @@
+{% load static %}
 <!-- Sidebar Template for Django -->
 <nav id="sidebar">
     <!-- Header del sidebar -->
     <div class="sidebar-header">
         <a href="{% url 'home:index' %}" class="sidebar-logo">
-            <i class="bi bi-shop"></i>
-            <span>Mi Tienda</span>
+            <img src="{% static 'images/logo_grande.png' %}" alt="Zu Heladería" style="height: 40px;">
+            <span class="m-3">Zu Heladería</span>
         </a>
         <button class="toggle-btn" id="sidebarToggle" type="button">
             <i class="bi bi-list"></i>
