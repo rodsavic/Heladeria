@@ -34,7 +34,8 @@
         </li>
 
         <li class="sidebar-item">
-            <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm" aria-expanded="false" aria-controls="adm">
+            <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm"
+               aria-expanded="false" aria-controls="adm">
                 <i class="lni lni-protection"></i>
                 <span>Administración</span>
             </a>
@@ -77,12 +78,13 @@
             </a>
         </li>
     </ul>
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a href="{% url 'authentication:logout' %}" class="sidebar-link" style="color:red">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </li>
+    </ul>
 
-    <!-- Footer del sidebar -->
-    <div class="sidebar-footer">
-        <a href="{% url 'authentication:logout' %}" class="sidebar-link">
-            <i class="bi bi-box-arrow-left"></i>
-            <span>Logout</span>
-        </a>
-    </div>
 </nav>
