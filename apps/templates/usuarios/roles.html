@@ -5,12 +5,11 @@
 {% block content %}
 <div class="card" style="width: 100%;">
     <div class="card-body">
-        <div class="row justify-content-between mb-4">
-            <div class="col-4">
-                <h4 class="card-title fw-bold">Lista de roles</h4>
-            </div>
-            <div class="col-2">
-                <a class="btn-crear" href="{% url 'usuarios:crear_rol' %}" role="button">Crear rol</a>
+        <h1>Lista de roles</h1>
+        <div class="row p-3 card-title align-items-center">
+            <div class="col-12 d-flex justify-content-md-end justify-content-center">
+                <a class="btn btn-crear btn-sm" href="{% url 'usuarios:crear_rol' %}" role="button">
+                    <i class="bi bi-plus-circle"></i> Crear rol</a>
             </div>
         </div>
         

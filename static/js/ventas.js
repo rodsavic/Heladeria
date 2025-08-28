@@ -157,15 +157,16 @@ function abrirModalVuelto() {
         alert("Por favor, selecciona un cliente antes de continuar.");
         return;
     }
+    const totalVenta = parseFloat(document.getElementById("total_venta").value) || 0;
+    const totalVentaModal = document.getElementById("totalVentaModal");
 
-    const totalVenta_ = parseFloat(document.getElementById("total_venta").value) || 0;
-    if(totalVenta_ == 0){
+    if(totalVenta == 0){
         alert("No hay productos en la venta.");
         return;
     }
 
     // Actualizar el total en el modal
-    document.getElementById("totalVentaModal").value = totalVenta_;
+    totalVentaModal.value = totalVenta.toLocaleString('es-ES');
 
     // Limpiar campos anteriores
     document.getElementById("efectivo").value = "";
@@ -267,6 +268,8 @@ function enviarFormulario() {
     const montoPagado = montoEfectivo + montoPos + montoTransferencia;
     if (montoPagado < totalVenta) {
         window.alert('No se ha pagado el total de la venta');
+    } else if (montoPagado > totalVenta) {
+        window.alert('Se ha ingresado un monto mayor al total de la venta');
     } else {
         const tabla = document.getElementById("tablaProductos").querySelector("tbody");
         const productosSeleccionados = [];

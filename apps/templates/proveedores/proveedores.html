@@ -7,13 +7,11 @@
 {% block content %}
 <div class="card" style="width: 100%;">
     <div class="card-body">
-        <div class="row justify-content-between mb-4">
-            <div class="col-4">
-                <h1>Lista de Proveedores</h1>
-            </div>
-            <div class="col-2">
-                <a class="btn-crear" href="{% url 'proveedores:crear_proveedor' %}" role="button">Registrar
-                    proveedor</a>
+        <h1>Lista de Proveedores</h1>
+        <div class="row p-3 card-title align-items-center">
+            <div class="col-12 d-flex justify-content-md-end justify-content-center">
+                <a class="btn btn-crear btn-sm" href="{% url 'proveedores:crear_proveedor' %}" role="button">
+                    <i class="bi bi-plus-circle"></i> Registrar proveedor</a>
             </div>
         </div>
         {% if proveedores_por_pagina %}
