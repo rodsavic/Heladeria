@@ -55,6 +55,7 @@ def crearCliente(request):
 
     return render(request, "clientes/crear_cliente.html", {'form':form})
 
+@login_required(login_url="/authentication/login")
 def clienteUpdateView(request, id_cliente):
     """Vista para modificar cliente"""
     cliente = Cliente.objects.get(id_cliente=id_cliente)
@@ -87,6 +88,7 @@ def clienteUpdateView(request, id_cliente):
         }
         return render(request, 'clientes/editar_cliente.html', context=context)
 
+@login_required(login_url="/authentication/login")
 def clienteDeleteView(request, id_cliente):
     cliente = get_object_or_404(Cliente, pk=id_cliente)
     cliente.delete()

@@ -1,0 +1,652 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Ventas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f7f4ef 0%, #fff8f0 100%); /* tonos chocolate */
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px;
+            background: linear-gradient(45deg, #E95420, #FF7F50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-header h1 {
+            color: #E95420;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #E95420, #FF7F50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-header p {
+            color: #7f4e2f;
+            font-size: 1.1rem;
+        }
+
+        .controls-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .date-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .date-controls label {
+            font-weight: 600;
+            color: #E95420;
+            margin-right: 8px;
+        }
+
+        .date-controls input, .date-controls select {
+            padding: 10px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .date-controls input:focus, .date-controls select:focus {
+            outline: none;
+            border-color: #FF7F50;
+            box-shadow: 0 0 10px rgba(233, 84, 32, 0.2);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #E95420, #FF7F50);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #FFA65C, #FFB380);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #FFEDE2 0%, #FFD1B3 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .summary-card h3 {
+            color: #E95420;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-card .value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #E95420, #FF7F50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #E95420, #FF7F50);
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .payment-chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .report-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #FFA65C, #FFB380);
+        }
+
+        .report-section h3 {
+            color: #E95420;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .report-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+            }
+
+            .controls-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .date-controls {
+                justify-content: center;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Dashboard de Ventas</h1>
+        <p>Panel de control y análisis de ventas</p>
+    </div>
+
+    <div class="controls-section">
+        <div class="date-controls">
+            <div>
+                <label for="periodSelect">Período:</label>
+                <select id="periodSelect">
+                    <option value="day">Día</option>
+                    <option value="week">Semana</option>
+                    <option value="month" selected>Mes</option>
+                    <option value="year">Año</option>
+                </select>
+            </div>
+            <div>
+                <label for="startDate">Desde:</label>
+                <input type="date" id="startDate">
+            </div>
+            <div>
+                <label for="endDate">Hasta:</label>
+                <input type="date" id="endDate">
+            </div>
+            <button class="btn btn-primary" onclick="updateDashboard()">🔍 Actualizar</button>
+        </div>
+        <div>
+            <button class="btn btn-success" onclick="downloadDailyReport()">📥 Reporte Diario</button>
+        </div>
+    </div>
+
+    <div class="summary-cards">
+        <div class="summary-card">
+            <h3>Ventas Totales</h3>
+            <div class="value" id="totalSales">₲ 0</div>
+        </div>
+        <div class="summary-card">
+            <h3>Cantidad de Ventas</h3>
+            <div class="value" id="salesCount">0</div>
+        </div>
+        <div class="summary-card">
+            <h3>IVA 10%</h3>
+            <div class="value" id="totalIVA10">₲ 0</div>
+        </div>
+        <div class="summary-card">
+            <h3>IVA 5%</h3>
+            <div class="value" id="totalIVA5">₲ 0</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h3>📈 Ventas por Período</h3>
+            <div class="chart-wrapper">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>💳 Ventas por Tipo de Pago</h3>
+            <div class="payment-chart-wrapper">
+                <canvas id="paymentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-section">
+        <h3>📋 Generar Reporte</h3>
+        <div class="report-controls">
+            <div>
+                <label for="reportDate">Fecha del reporte:</label>
+                <input type="date" id="reportDate">
+            </div>
+            <button class="btn btn-success" onclick="downloadDailyReport()">
+                📊 Descargar Reporte Diario
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Variables globales para los gráficos
+    let salesChart;
+    let paymentChart;
+
+    // Datos de ejemplo (en producción estos vendrían del backend)
+    const sampleData = {
+        salesByPeriod: {
+            day: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                data: [12000, 15000, 8000, 22000, 18000, 25000, 16000]
+            },
+            week: {
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                data: [45000, 52000, 38000, 48000]
+            },
+            month: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                data: [120000, 150000, 180000, 145000, 165000, 190000]
+            },
+            year: {
+                labels: ['2022', '2023', '2024', '2025'],
+                data: [1200000, 1450000, 1680000, 890000]
+            }
+        },
+        paymentTypes: {
+            labels: ['Efectivo', 'Tarjeta', 'Transferencia', 'Cheque'],
+            data: [45, 30, 20, 5],
+            colors: ['#f60909', '#edda05', '#ff4e02', '#23e404']
+        },
+        summary: {
+            totalSales: 850000,
+            salesCount: 156,
+            totalIVA10: 85000,
+            totalIVA5: 42500
+        }
+    };
+
+    // Inicializar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        // Establecer fechas por defecto
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        document.getElementById('reportDate').value = today.toISOString().split('T')[0];
+
+        // Cargar dashboard inicial
+        updateDashboard();
+    });
+
+    // Función para formatear números como moneda paraguaya
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('es-PY', {
+            style: 'currency',
+            currency: 'PYG',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
+
+    // Actualizar resumen
+    function updateSummary(data = sampleData.summary) {
+        document.getElementById('totalSales').textContent = formatCurrency(data.totalSales);
+        document.getElementById('salesCount').textContent = data.salesCount.toLocaleString();
+        document.getElementById('totalIVA10').textContent = formatCurrency(data.totalIVA10);
+        document.getElementById('totalIVA5').textContent = formatCurrency(data.totalIVA5);
+    }
+
+    // Crear gráfico de ventas por período
+    function createSalesChart(period = 'month', data = null) {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const chartData = data || sampleData.salesByPeriod[period];
+
+        if (salesChart) {
+            salesChart.destroy();
+        }
+
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Ventas (₲)',
+                    data: chartData.data,
+                    borderColor: 'rgb(191,112,27)',
+                    backgroundColor: 'rgba(241,166,125,0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgb(191,112,27)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return formatCurrency(value);
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Crear gráfico de tipos de pago
+    function createPaymentChart(data = null) {
+        const ctx = document.getElementById('paymentChart').getContext('2d');
+        const chartData = data || sampleData.paymentTypes;
+
+        if (paymentChart) {
+            paymentChart.destroy();
+        }
+
+        paymentChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.data,
+                    backgroundColor: chartData.colors,
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    hoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // Actualizar dashboard
+    function updateDashboard() {
+        const period = document.getElementById('periodSelect').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        // Mostrar loading
+        showLoading();
+
+        // Llamada AJAX al backend
+        fetch(`/dashboard/api/dashboard-data/?period=${period}&start=${startDate}&end=${endDate}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Actualizar resumen con datos reales
+                updateSummary(data.summary);
+
+                // Actualizar gráficos con datos reales
+                createSalesChart(period, data.salesByPeriod);
+                createPaymentChart(data.paymentTypes);
+
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Mostrar datos de ejemplo en caso de error
+                updateSummary();
+                createSalesChart(period);
+                createPaymentChart();
+                hideLoading();
+
+                // Mostrar mensaje de error al usuario
+                showErrorMessage('Error al cargar los datos. Mostrando datos de ejemplo.');
+            });
+    }
+
+    // Funciones de loading
+    function showLoading() {
+        // Agregar indicadores de carga a las tarjetas de resumen
+        document.querySelectorAll('.summary-card .value').forEach(el => {
+            el.innerHTML = '<span style="color: #999;">Cargando...</span>';
+        });
+    }
+
+    function hideLoading() {
+        // Loading se oculta automáticamente al actualizar los valores
+    }
+
+    // Función para mostrar mensajes de error
+    function showErrorMessage(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #ff4757;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                z-index: 1000;
+                max-width: 300px;
+            `;
+        errorDiv.textContent = message;
+
+        document.body.appendChild(errorDiv);
+
+        // Remover después de 5 segundos
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 5000);
+    }
+
+    // Descargar reporte diario
+    function downloadDailyReport() {
+        const reportDate = document.getElementById('reportDate').value || new Date().toISOString().split('T')[0];
+
+        // Crear enlace de descarga
+        const downloadLink = document.createElement('a');
+        downloadLink.href = `/dashboard/api/daily-report/?date=${reportDate}`;
+        downloadLink.download = `reporte_ventas_${reportDate}.csv`;
+
+        // Mostrar loading en el botón
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '⏳ Descargando...';
+        button.disabled = true;
+
+        // Simular click para descargar
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        // Restaurar botón después de un segundo
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 1000);
+
+        // También ofrecer descarga en PDF
+        setTimeout(() => {
+            if (confirm('¿Deseas también descargar el reporte en PDF?')) {
+                const pdfLink = document.createElement('a');
+                pdfLink.href = `/dashboard/api/daily-report-pdf/?date=${reportDate}`;
+                pdfLink.download = `reporte_ventas_${reportDate}.pdf`;
+                document.body.appendChild(pdfLink);
+                pdfLink.click();
+                document.body.removeChild(pdfLink);
+            }
+        }, 1500);
+    }
+
+    // Manejar cambio de período
+    document.getElementById('periodSelect').addEventListener('change', function () {
+        updateDashboard();
+    });
+</script>
+</body>
+</html>
+{% endblock %}

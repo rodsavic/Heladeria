@@ -11,5 +11,6 @@ urlpatterns = [
     path("roles/", views.rolReadView, name="roles"),
     path("crear_rol/", views.crearRol, name="crear_rol"),
     path("permisos/", views.permisoReadView, name="permisos"),
-    path("crear_permiso/", views.crearPermiso, name="crear_permiso")
+    path("crear_permiso/", views.crearPermiso, name="crear_permiso"),
+    path("perfil/", views.usuarioReadView, name="perfil"),
 ]

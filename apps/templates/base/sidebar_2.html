@@ -3,7 +3,7 @@
 <nav id="sidebar">
     <!-- Header del sidebar -->
     <div class="sidebar-header">
-        <a href="{% url 'home:index' %}" class="sidebar-logo">
+        <a href="{% url 'dashboard:dashboard' %}" class="sidebar-logo">
             <img src="{% static 'images/logo_grande.png' %}" alt="Zu Heladería" style="height: 40px;">
             <span class="m-3">Zu Heladería</span>
         </a>
@@ -15,24 +15,27 @@
     <!-- Navegación -->
     <ul class="sidebar-nav">
         <li class="sidebar-item">
-            <a href="#" class="sidebar-link">
+            <a href="{% url 'usuarios:perfil' %}" class="sidebar-link">
                 <i class="lni lni-user"></i>
-                <span>Perfil</span>
+                <span>{{ request.user.username }}</span>
             </a>
         </li>
+
+        {% if perms.ventas.view_venta %}
         <li class="sidebar-item">
             <a href="{% url 'ventas:ventas' %}" class="sidebar-link">
                 <i class="bi bi-receipt"></i>
                 <span>Ventas</span>
             </a>
         </li>
+        {% endif %}
         <li class="sidebar-item">
-            <a href="#" class="sidebar-link">
+            <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link">
                 <i class="lni lni-agenda"></i>
                 <span>Dashboard</span>
             </a>
         </li>
-
+        {% if perms.auth %}
         <li class="sidebar-item">
             <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm"
                aria-expanded="false" aria-controls="adm">
@@ -40,19 +43,24 @@
                 <span>Administración</span>
             </a>
             <ul id="adm" class="sidebar-dropdown list-unstyled collapse">
+                {% if perms.usuarios.view_usuario %}
                 <li class="sidebar-item">
                     <a href="{% url 'usuarios:usuarios' %}" class="sidebar-link">
                         <span>Usuarios</span>
                     </a>
                 </li>
+                {% endif %}
+
+                {% if perms.auth.view_group %}
                 <li class="sidebar-item">
                     <a href="{% url 'usuarios:roles' %}" class="sidebar-link">
                         <span>Roles</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </li>
-
+        {% endif %}
         <li class="sidebar-item">
             <a href="{% url 'productos:productos' %}" class="sidebar-link">
                 <i class="bi bi-boxes"></i>
@@ -71,12 +79,14 @@
                 <span>Clientes</span>
             </a>
         </li>
+        <!--
         <li class="sidebar-item">
             <a href="#" class="sidebar-link">
                 <i class="bi bi-gear"></i>
                 <span>Setting</span>
             </a>
         </li>
+        -->
 
         <li class="sidebar-item mt-5">
             <a href="{% url 'authentication:logout' %}" class="sidebar-link" style="color:red">

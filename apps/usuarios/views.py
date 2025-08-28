@@ -25,6 +25,19 @@ def usuariosReadView(request):
     }
     return render(request, "usuarios/usuarios.html", context=context)
 
+
+@login_required(login_url="/authentication/login")
+def usuarioReadView(request):
+
+    usuario_q = User.objects.filter(username=request.user.username).first()
+
+    context = {
+        "usuario": usuario_q,
+    }
+
+    return render(request, "usuarios/perfil.html", context=context)
+
+
 @login_required(login_url="/authentication/login")
 def createUserView(request):
 

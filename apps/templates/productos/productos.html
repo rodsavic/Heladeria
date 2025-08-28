@@ -17,9 +17,11 @@
                 </div>
             </div>
             <div class="col-md-4 col-12 d-flex justify-content-md-end justify-content-center">
+                {% if perms.productos.view_producto %}
                 <a class="btn btn-crear btn-sm" href="{% url 'productos:crear_producto' %}" role="button">
                     <i class="bi bi-plus-circle"></i> Registrar Producto
                 </a>
+                {% endif %}
             </div>
         </div>
 

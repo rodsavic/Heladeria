@@ -28,7 +28,7 @@ def login_view(request):
             user = form.get_user()
             auth_login(request, user)
             messages.success(request, "Has iniciado sesión exitosamente.")
-            return redirect('home:index')
+            return redirect('dashboard:dashboard')
         else:
             messages.error(request, "Nombre de usuario o contraseña incorrectos.")
     else:
