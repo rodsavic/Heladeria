@@ -266,10 +266,13 @@ function enviarFormulario() {
     const montoPos = parseFloat(document.getElementById("pos").value) || 0;
     const montoTransferencia = parseFloat(document.getElementById("transferencia").value) || 0;
     const montoPagado = montoEfectivo + montoPos + montoTransferencia;
+
     if (montoPagado < totalVenta) {
         window.alert('No se ha pagado el total de la venta');
-    } else if (montoPagado > totalVenta) {
-        window.alert('Se ha ingresado un monto mayor al total de la venta');
+    } else if(montoPos > totalVenta){
+        window.alert("El monto en POS excede al monto total de la venta.")
+    } else if(montoTransferencia > totalVenta){
+        window.alert("El monto en Transferencia excede al monto total de la venta.")
     } else {
         const tabla = document.getElementById("tablaProductos").querySelector("tbody");
         const productosSeleccionados = [];
