@@ -404,3 +404,15 @@ body {
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.5);
 }
+
+#sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 15px 0;
+    background: #242628;
+}

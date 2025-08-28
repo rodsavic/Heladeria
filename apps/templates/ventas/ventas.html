@@ -10,7 +10,7 @@
 {% block content %}
 
 <div class="card" style="width: 100%;">
-     <div class="card-body">
+    <div class="card-body">
         <h1>Ventas registradas</h1>
         <div class="row p-3 card-title align-items-center">
             <!-- Totales -->
@@ -43,38 +43,67 @@
         <div class="table-responsive card-body">
             <table class="table table-bordered">
                 <thead class="text-center table-head-color">
-                    <tr>
-                        {% for columna in columnas %}
-                        <th style="color: white;">{{columna}}</th>
-                        {% endfor %}
-                        <th style="color: white;">Operaciones</th>
-                    </tr>
+                <tr>
+                    {% for columna in columnas %}
+                    <th style="color: white;">{{columna}}</th>
+                    {% endfor %}
+                    <th style="color: white;">Operaciones</th>
+                </tr>
                 </thead>
                 <tbody>
-                    {% for venta in ventas_por_pagina %}
-                    <tr>
+                {% for venta in ventas_por_pagina %}
+                <tr>
 
-                        <td>{{venta.id_cliente.nombre}}</td>
-                        <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
-                        <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
-                        <td>{{venta.total_iva_5|floatformat:0|intcomma}}</td>
-                        <td>{{venta.fecha_venta}}</td>
-                        <td class="text-center"> <a type="button" class="btn-cancelar"
-                                href="{% url 'ventas:eliminar_venta' venta.id_venta %}"><i class="bi bi-trash"></i></a>
-                            <a type="button" class="btn-crear"
-                                href="{% url 'ventas:editar_venta' venta.id_venta %}"><i class="bi bi-pen"></i></a>
-                            <a type="button" class="btn-limpiar"
-                                href="{% url 'ventas:detalle_venta' venta.id_venta %}"><i class="bi bi-eye"></i></a>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                    <td>{{venta.id_cliente.nombre}}</td>
+                    <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
+                    <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
+                    <td>{{venta.total_iva_5|floatformat:0|intcomma}}</td>
+                    <td>{{venta.fecha_venta}}</td>
+                    <td class="text-center">
+                        <a type="button" class="btn-cancelar"
+                           data-bs-toggle="modal"
+                           data-bs-target="#confirmarEliminarModal{{ venta.id_venta }}">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        <div class="modal fade" id="confirmarEliminarModal{{ venta.id_venta }}" tabindex="-1"
+                             aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmar eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Cerrar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que deseas eliminar la venta?
+                                        Esta acción no se puede deshacer.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Cancelar
+                                        </button>
+                                        <a href="{% url 'ventas:eliminar_venta' venta.id_venta %}"
+                                           class="btn btn-danger">Eliminar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--
+                        <a type="button" class="btn-crear"
+                           href="{% url 'ventas:editar_venta' venta.id_venta %}"><i class="bi bi-pen"></i></a>
+                         -->
+                        <a type="button" class="btn-limpiar"
+                           href="{% url 'ventas:detalle_venta' venta.id_venta %}"><i class="bi bi-eye"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
 
                 </tbody>
             </table>
             {% include "base/pagination.html" with items_page=ventas_por_pagina %}
         </div>
         {% else %}
-            {% include "base/sin_registro.html" %}
+        {% include "base/sin_registro.html" %}
         {% endif %}
     </div>
 </div>
