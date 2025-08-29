@@ -47,7 +47,7 @@
                     {% for columna in columnas %}
                     <th style="color: white;">{{columna}}</th>
                     {% endfor %}
-                    <th style="color: white;">Operaciones</th>
+                    <th style="color: white;">Acciones</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -57,10 +57,12 @@
                     <td>{{venta.id_cliente.nombre}}</td>
                     <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
                     <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
+                    <!--
                     <td>{{venta.total_iva_5|floatformat:0|intcomma}}</td>
+                    -->
                     <td>{{venta.fecha_venta}}</td>
                     <td class="text-center">
-                        <a type="button" class="btn-cancelar"
+                        <a type="button" class="btn btn-cancelar btn-sm"
                            data-bs-toggle="modal"
                            data-bs-target="#confirmarEliminarModal{{ venta.id_venta }}">
                             <i class="bi bi-trash"></i>
@@ -92,7 +94,7 @@
                         <a type="button" class="btn-crear"
                            href="{% url 'ventas:editar_venta' venta.id_venta %}"><i class="bi bi-pen"></i></a>
                          -->
-                        <a type="button" class="btn-limpiar"
+                        <a type="button" class="btn btn-limpiar btn-sm"
                            href="{% url 'ventas:detalle_venta' venta.id_venta %}"><i class="bi bi-eye"></i></a>
                     </td>
                 </tr>

@@ -3,3 +3,8 @@
     background-color: chocolate !important;
     text-align: center !important;
 }
+
+.table {
+
+    box-shadow: 5px 5px 5px rgba(244, 79, 32, 0.45) !important;
+}

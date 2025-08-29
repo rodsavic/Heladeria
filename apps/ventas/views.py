@@ -37,7 +37,7 @@ def ventasReadView(request,fecha=None):
     print(f'fecha: {fecha_venta}, ventas: {ventas}')
     total_ventas = ventas.aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
     
-    columnas = ['Cliente','Total venta', 'Total IVA 10', 'Total IVA 5','Fecha']
+    columnas = ['Cliente','Total', 'IVA 10', 'Fecha']
     paginator = Paginator(ventas,10)
     page_number = request.GET.get('page',1)
     ventas_por_pagina=paginator.get_page(page_number)

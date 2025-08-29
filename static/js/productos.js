@@ -39,12 +39,37 @@ function renderTable() {
                 <td class="text-center">${p.costo_actual?.toLocaleString() ?? ''}</td>
                 <td class="text-center">${p.id_medida__descripcion ?? ''}</td>
                 <td class="text-center">
-                    <a type="button" class="btn-crear" href="/productos/editar_producto/${p.id_producto}">
+                    <a type="button" class="btn btn-crear btn-sm" href="/productos/editar_producto/${p.id_producto}">
                         <i class="bi bi-pen"></i>
                     </a>
-                    <a type="button" class="btn-cancelar" href="/productos/eliminar_producto/${p.id_producto}">
-                        <i class="bi bi-trash"></i>
-                    </a>
+                    <a type="button" class="btn btn-cancelar btn-sm"
+                           data-bs-toggle="modal"
+                           data-bs-target="#confirmarEliminarModal${p.id_producto}">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        <div class="modal fade" id="confirmarEliminarModal${p.id_producto}" tabindex="-1"
+                             aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmar eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Cerrar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que deseas eliminar el producto <span class="fw-bold">${p.nombre}</span>?
+                                        Esta acción no se puede deshacer.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Cancelar
+                                        </button>
+                                        <a href="/productos/eliminar_producto/${p.id_producto}"
+                                           class="btn btn-danger">Eliminar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                 </td>
             </tr>
         `;
@@ -65,7 +90,7 @@ function renderPagination() {
         li.classList.add("page-item");
         if (i === currentPage) li.classList.add("active");
 
-        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.innerHTML = `<a class="page-link m-1" href="#">${i}</a>`;
         li.addEventListener("click", function (e) {
             e.preventDefault();
             currentPage = i;

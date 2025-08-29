@@ -15,43 +15,66 @@
             </div>
         </div>
         {% if items_page %}
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="text-center table-head-color">
-                        <tr>
-                            {% for columna in columnas %}
-                            <th style="color: white;">{{columna}}</th>
-                            {% endfor %}
-                            <th style="color: white;">Operaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cliente in clientes %}
-                        <tr>
-                            <td>{{cliente.nombre}}</td>
-                            <td>{{cliente.apellido}}</td>
-                            <td>{{cliente.correo}}</td>
-                            <td>{{cliente.documento}}</td>
-                            <td>{{cliente.celular}}</td>
-                            <td>{{cliente.direccion}}</td>
-                            <td>{{cliente.estado}}</td>
-                            <td class="text-center"><a type="button" class="btn-crear"
-                                    href="{% url 'clientes:editar_cliente' cliente.id_cliente %}"><i
-                                        class="bi bi-pen"></i></a>
-                                <a type="button" class="btn-cancelar"
-                                    href="{% url 'clientes:eliminar_cliente' cliente.id_cliente %}"><i
-                                        class="bi bi-trash"></i></a>
-                            </td>
-                        </tr>
-                        {% endfor %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="text-center table-head-color">
+                <tr>
+                    {% for columna in columnas %}
+                    <th style="color: white;">{{columna}}</th>
+                    {% endfor %}
+                    <th style="color: white;">Operaciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for cliente in clientes %}
+                <tr>
+                    <td>{{cliente.nombre}}</td>
+                    <td>{{cliente.apellido}}</td>
+                    <td>{{cliente.correo}}</td>
+                    <td>{{cliente.documento}}</td>
+                    <td>{{cliente.celular}}</td>
+                    <td>{{cliente.direccion}}</td>
+                    <td>{{cliente.estado}}</td>
+                    <td class="text-center"><a type="button" class="btn btn-crear btn-sm"
+                                               href="{% url 'clientes:editar_cliente' cliente.id_cliente %}"><i
+                            class="bi bi-pen"></i></a>
+                        <a type="button" class="btn btn-cancelar btn-sm" data-bs-toggle="modal"
+                           data-bs-target="#confirmarEliminarModal{{ cliente.id_cliente }}"><i
+                                class="bi bi-trash"></i></a>
+                        <div class="modal fade" id="confirmarEliminarModal{{ cliente.id_cliente }}" tabindex="-1"
+                             aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmar eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Cerrar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que deseas eliminar al cliente <span class="fw-bold">{{cliente.nombre}}</span>?
+                                        Esta acción no se puede deshacer.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Cancelar
+                                        </button>
+                                        <a href="{% url 'clientes:eliminar_cliente' cliente.id_cliente %}"
+                                           class="btn btn-danger">Eliminar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
 
-                    </tbody>
-                </table>
-                {% include "base/pagination.html" with items_page=items_page %}
-            
+                </tbody>
+            </table>
+            {% include "base/pagination.html" with items_page=items_page %}
+
         </div>
         {% else %}
-            {% include "base/sin_registro.html" %}
+        {% include "base/sin_registro.html" %}
         {% endif %}
     </div>
 </div>

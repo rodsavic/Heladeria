@@ -33,38 +33,38 @@
     padding: 5px 15px;
     white-space: initial;
     border-radius: 5px;
-    background-color: rgba(210, 105, 30, 0);
-    color: #242628;
-    border: 2px solid #242628;
+    background-color: rgba(210, 105, 30, 0) !important;
+    color: #242628 !important;
+    border: 2px solid #242628 !important;
     font-weight: 500;
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
     display: inline-block;
 }
 
 .btn-limpiar:hover {
-    background-color: white;
-    color: chocolate;
-    border: 2px solid chocolate;
+    background-color: white !important;
+    color: chocolate !important;
+    border: 2px solid chocolate !important;
 }
 
 .btn-cancelar {
     padding: 5px 15px;
     white-space: initial;
     border-radius: 5px;
-    background-color: #242628;
-    color: #f6f7f8;
-    border: 2px solid #242628;
+    background-color: #242628 !important;
+    color: #f6f7f8 !important;
+    border: 2px solid #242628 !important;
     font-weight: 500;
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
     display: inline-block;
 }
 
 .btn-cancelar:hover {
-    background-color: white;
-    color: #242628;
-    border: 2px solid #242628;
+    background-color: white !important;
+    color: #242628 !important;
+    border: 2px solid #242628 !important;
 }
