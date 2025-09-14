@@ -1,12 +1,13 @@
 from django.db import models
 
+from django.utils import timezone
 from apps.clientes.models import Cliente
 from apps.productos.models import Producto
 from apps.tipo_pago.models import TipoPago
 
 class Venta(models.Model):
     id_venta = models.BigAutoField(primary_key=True)
-    fecha_venta = models.DateTimeField(db_column='fecha_venta', auto_now_add=True)
+    fecha_venta = models.DateTimeField(db_column='fecha_venta', default=timezone.now)
     total_iva_10 = models.FloatField(db_column='total_iva_10', null=False)
     total_iva_5 = models.FloatField(db_column='total_iva_5', null=False)
     total_venta = models.FloatField(db_column='total_venta', null=False)

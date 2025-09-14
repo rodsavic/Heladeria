@@ -176,6 +176,12 @@
                             <h5 class="mb-3 text-center text-lg-start">Resumen de Venta</h5>
 
                             <div class="mb-3">
+                                <label class="form-label fw-semibold" for="fecha_venta">Fecha y hora de venta</label>
+                                <input type="datetime-local" class="form-control" name="fecha_venta" id="fecha_venta"
+                                       value="{{ now|date:'Y-m-d\\TH:i' }}">
+                            </div>
+
+                            <div class="mb-3">
                                 <label class="form-label fw-semibold" for="cliente">Cliente</label>
                                 <select class="form-control" name="cliente" id="cliente">
                                     <option value="">Seleccionar cliente...</option>

@@ -70,9 +70,17 @@ def ventasCreateView(request):
             pago_pos = float(request.POST.get('pos', 0) or 0)
             pago_efectivo = float(request.POST.get('efectivo', 0) or 0)
             pago_transferencia = float(request.POST.get('transferencia', 0) or 0)
+            fecha_venta_str = request.POST.get('fecha_venta')
+
+            # Si el usuario no toca nada, queda la actual
+            if fecha_venta_str:
+                fecha_venta = datetime.strptime(fecha_venta_str, "%Y-%m-%dT%H:%M")
+            else:
+                fecha_venta = timezone.now()
 
 
             nueva_venta = Venta.objects.create(
+                fecha_venta=fecha_venta,
                 total_iva_10 = total_iva_10,
                 total_iva_5 = total_iva_5,
                 id_cliente = Cliente.objects.get(id_cliente=id_cliente),
@@ -137,7 +145,8 @@ def ventasCreateView(request):
     context = {
         'productos':productos,
         'clientes':clientes,
-        'tipos_de_pago':tipos_de_pago
+        'tipos_de_pago':tipos_de_pago,
+        'now': timezone.now()
     }
         
     return render(request, 'ventas/crear_venta.html', context=context)
