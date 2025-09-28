@@ -1,11 +1,13 @@
 import logging
 
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
 from .forms import *
 from django.core.paginator import Paginator
 
+@login_required(login_url="/")
 def productosReadView(request):
     query = request.GET.get('q')
     productos = Producto.objects.select_related('id_medida').all().order_by('nombre')
@@ -26,6 +28,7 @@ def productosReadView(request):
 
     return render(request, 'productos/productos.html', context=context)
 
+@login_required(login_url="/")
 def createProductosView(request):
     if request.method == 'POST':
         form = ProductosForm(request.POST)
@@ -71,6 +74,7 @@ def createProductosView(request):
     return render(request,'productos/crear_productos.html',{'form':form})
 
 
+@login_required(login_url="/")
 def ProductoUpdateView(request, id_producto):
     """Vista para modificar producto"""
     producto = Producto.objects.get(id_producto=id_producto)
@@ -104,6 +108,7 @@ def ProductoUpdateView(request, id_producto):
         }
         return render(request, 'productos/editar_producto.html', context=context)
 
+@login_required(login_url="/")
 def productoDeleteView(request, id_producto):
     producto = get_object_or_404(Producto, pk=id_producto)
     producto.delete()

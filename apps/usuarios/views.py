@@ -8,7 +8,7 @@ from .forms import *
 from .models import *
 import json
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def usuariosReadView(request):
 
     # Obtener los campos de los usuarios
@@ -26,7 +26,7 @@ def usuariosReadView(request):
     return render(request, "usuarios/usuarios.html", context=context)
 
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def usuarioReadView(request):
 
     usuario_q = User.objects.filter(username=request.user.username).first()
@@ -38,7 +38,7 @@ def usuarioReadView(request):
     return render(request, "usuarios/perfil.html", context=context)
 
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def createUserView(request):
 
     # Obtenemos la lista de permisos
@@ -123,7 +123,7 @@ def createUserView(request):
         return render(request, 'usuarios/usuarios_create.html', context=context)
 
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def usuarioUpdateView(request, id):
     usuario = User.objects.get(id=id)
 
@@ -204,7 +204,7 @@ def usuarioUpdateView(request, id):
         return render(request, "usuarios/usuarios_modificar.html", context)
 
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def crearRol(request):
     if request.method == 'POST':
         nombre = request.POST.get('name')
@@ -228,7 +228,7 @@ def crearRol(request):
     return render(request, 'usuarios/crear_rol.html', context)
 
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def rolReadView(request):
     roles = Group.objects.all().prefetch_related('permissions')
 
@@ -238,7 +238,7 @@ def rolReadView(request):
     return render(request, 'usuarios/roles.html', context=context)
 
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def crearPermiso(request):
     if request.method == 'POST':
         form = PermisoForm(request.POST)
@@ -254,7 +254,7 @@ def crearPermiso(request):
 
     return render(request, 'usuarios/crear_permiso.html', {'form': form})
 
-@login_required(login_url="/authentication/login")
+@login_required(login_url="/")
 def permisoReadView(request):
     permisos = Permiso.objects.all()
     paginator = Paginator(permisos,10)

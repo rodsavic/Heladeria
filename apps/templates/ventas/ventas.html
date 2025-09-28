@@ -14,30 +14,37 @@
         <h1>Ventas registradas</h1>
         <div class="row p-3 card-title align-items-center">
             <!-- Totales -->
-            <div class="col-md-4 col-12 mb-2 mb-md-0">
-                <h5 class="text-md-end text-center">
+            <div class="col-md-3 col-12 mb-2 mb-md-0">
+                <h5 class="text-md-start text-center">
                     Total del día: {{ total_ventas|floatformat:0|intcomma }}
                 </h5>
             </div>
-            <div class="col-md-4 col-12 mb-2 mb-md-0">
-                <h5 class="text-md-end text-center">
+            <!--
+            <div class="col-md-3 col-12 mb-2 mb-md-0">
+                <h5 class="text-md-start text-center">
                     Total ventas en efectivo: {{ total_efectivo|floatformat:0|intcomma }}
+                </h5>
+            </div>
+            -->
+            <div class="col-md-3 col-12 mb-2 mb-md-0">
+                <h5 class="text-md-start text-center">
+                    Total ventas en Salón: {{ total_ventas_salon|floatformat:0|intcomma }}
                 </h5>
             </div>
 
             <!-- Botones -->
-            <div class="col-md-4 col-12 d-flex justify-content-md-end justify-content-center gap-2">
-                <a role="button" class="btn btn-limpiar btn-sm"
-                   href="{% url 'ventas:ventas_historial' %}">
+            <div class="col-md-3 col-12 d-flex justify-content-md-end justify-content-center gap-2">
+                <a class="btn btn-limpiar btn-sm" href="{% url 'ventas:ventas_historial' %}"
+                   role="button">
                     <i class="bi bi-clock-history"></i> Historial
                 </a>
-
-                <a role="button" class="btn btn-crear btn-sm"
-                   href="{% url 'ventas:crear_venta' %}">
+                <a class="btn btn-crear btn-sm" href="{% url 'ventas:crear_venta' %}"
+                   role="button">
                     <i class="bi bi-plus-circle"></i> Nueva Venta
                 </a>
             </div>
         </div>
+
         <br>
         {% if ventas_por_pagina %}
         <div class="table-responsive card-body">
@@ -57,35 +64,34 @@
                     <td>{{venta.id_cliente.nombre}}</td>
                     <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
                     <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
-                    <!--
-                    <td>{{venta.total_iva_5|floatformat:0|intcomma}}</td>
-                    -->
+                    <td>{{venta.formas_pago}}</td>
+                    <td>{{ venta.id_tipo_venta.nombre }}</td>
                     <td>{{venta.fecha_venta}}</td>
                     <td class="text-center">
-                        <a type="button" class="btn btn-cancelar btn-sm"
+                        <a class="btn btn-cancelar btn-sm" data-bs-target="#confirmarEliminarModal{{ venta.id_venta }}"
                            data-bs-toggle="modal"
-                           data-bs-target="#confirmarEliminarModal{{ venta.id_venta }}">
+                           type="button">
                             <i class="bi bi-trash"></i>
                         </a>
-                        <div class="modal fade" id="confirmarEliminarModal{{ venta.id_venta }}" tabindex="-1"
-                             aria-hidden="true">
+                        <div aria-hidden="true" class="modal fade" id="confirmarEliminarModal{{ venta.id_venta }}"
+                             tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title">Confirmar eliminación</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Cerrar"></button>
+                                        <button aria-label="Cerrar" class="btn-close" data-bs-dismiss="modal"
+                                                type="button"></button>
                                     </div>
                                     <div class="modal-body">
                                         ¿Estás seguro de que deseas eliminar la venta?
                                         Esta acción no se puede deshacer.
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
                                             Cancelar
                                         </button>
-                                        <a href="{% url 'ventas:eliminar_venta' venta.id_venta %}"
-                                           class="btn btn-danger">Eliminar</a>
+                                        <a class="btn btn-danger"
+                                           href="{% url 'ventas:eliminar_venta' venta.id_venta %}">Eliminar</a>
                                     </div>
                                 </div>
                             </div>
@@ -94,8 +100,8 @@
                         <a type="button" class="btn-crear"
                            href="{% url 'ventas:editar_venta' venta.id_venta %}"><i class="bi bi-pen"></i></a>
                          -->
-                        <a type="button" class="btn btn-limpiar btn-sm"
-                           href="{% url 'ventas:detalle_venta' venta.id_venta %}"><i class="bi bi-eye"></i></a>
+                        <a class="btn btn-limpiar btn-sm" href="{% url 'ventas:detalle_venta' venta.id_venta %}"
+                           type="button"><i class="bi bi-eye"></i></a>
                     </td>
                 </tr>
                 {% endfor %}

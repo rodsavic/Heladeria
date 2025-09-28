@@ -5,6 +5,19 @@ from apps.clientes.models import Cliente
 from apps.productos.models import Producto
 from apps.tipo_pago.models import TipoPago
 
+class TipoVenta(models.Model):
+    id= models.BigAutoField(primary_key=True)
+    nombre = models.CharField(db_column='nombre', max_length=50)
+
+    class Meta:
+        db_table = 'tipo_venta'
+        verbose_name = 'Tipo de Venta'
+        verbose_name_plural = 'Tipos de Ventas'
+
+    def __str__(self):
+        return super().__str__()
+
+
 class Venta(models.Model):
     id_venta = models.BigAutoField(primary_key=True)
     fecha_venta = models.DateTimeField(db_column='fecha_venta', default=timezone.now)
@@ -13,6 +26,7 @@ class Venta(models.Model):
     total_venta = models.FloatField(db_column='total_venta', null=False)
     usuario_creacion = models.BigIntegerField(db_column='usuario_creacion', null=False)
     id_cliente = models.ForeignKey(Cliente, models.DO_NOTHING, db_column='id_cliente', null=False)
+    id_tipo_venta = models.ForeignKey(TipoVenta, models.DO_NOTHING, db_column='id_tipo_venta', null=True, blank=True)
 
     class Meta:
         db_table = 'ventas'

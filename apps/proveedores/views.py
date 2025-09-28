@@ -1,10 +1,13 @@
 import logging
+
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from .forms import *
 from .models import Proveedor
 from django.core.paginator import Paginator
 
+@login_required(login_url="/")
 def proveedorReadView(request):
     proveedores = Proveedor.objects.all()
     columnas = ['Documento/RUC','Nombre','Direccion','Correo','Estado','Telefono','Operaciones']
@@ -19,6 +22,7 @@ def proveedorReadView(request):
 
     return render(request, 'proveedores/proveedores.html', context=context)
 
+@login_required(login_url="/")
 def createProveedorView(request):
     if request.method == 'POST':
         form = ProveedorForm(request.POST)
@@ -56,6 +60,7 @@ def createProveedorView(request):
 
     return render(request, 'proveedores/crear_proveedor.html', {'form':form})         
 
+@login_required(login_url="/")
 def proveedorUpdateView(request, id_proveedor):
     """Vista para modificar proveedor"""
     proveedor = Proveedor.objects.get(id_proveedor=id_proveedor)
@@ -88,6 +93,7 @@ def proveedorUpdateView(request, id_proveedor):
         }
         return render(request, 'proveedores/editar_proveedor.html', context=context)
 
+@login_required(login_url="/")
 def proveedorDeleteView(request, id_proveedor):
     proveedor = get_object_or_404(Proveedor, pk=id_proveedor)
     proveedor.delete()

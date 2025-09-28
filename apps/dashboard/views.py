@@ -15,13 +15,12 @@ from django.contrib.auth.decorators import login_required
 from apps.ventas.views import Venta, VentaDetalle, VentaTipoDePago, TipoPago
 
 
-@login_required
+@login_required(login_url="/")
 def dashboard_view(request):
     """Vista principal del dashboard"""
     return render(request, 'dashboard/dashboard.html')
 
 
-@login_required
 def dashboard_data_api(request):
     """API para obtener datos del dashboard"""
     try:
@@ -187,7 +186,6 @@ def get_payment_types_data(queryset):
     }
 
 
-@login_required
 def daily_report_view(request):
     """Generar reporte diario en CSV"""
     try:
@@ -266,7 +264,6 @@ def daily_report_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 def daily_report_pdf_view(request):
     """Generar reporte diario en PDF"""
     try:
@@ -396,7 +393,6 @@ def daily_report_pdf_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 def top_products_api(request):
     """API para obtener productos más vendidos"""
     try:
@@ -444,7 +440,6 @@ def top_products_api(request):
 
 
 # Vista para obtener estadísticas por cliente
-@login_required
 def customer_stats_api(request):
     """API para obtener estadísticas por cliente"""
     try:
