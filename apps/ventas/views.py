@@ -38,6 +38,7 @@ def ventasReadView(request, fecha=None):
     for p in pagos:
         formas_pago_dict.setdefault(p.id_venta_id, []).append(p.id_tipo_pago.descripcion)
 
+    total_efectivo_salon = 0
 
     # Agregar atributo dinámico a cada venta
     for venta in ventas:
@@ -54,7 +55,11 @@ def ventasReadView(request, fecha=None):
     print(f'fecha: {fecha_venta}, ventas: {ventas}')
     total_ventas = ventas.aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
     # Total de ventas de tipo 1 (Salón)
-    total_ventas_salon = ventas.filter(id_tipo_venta=1).aggregate(total=Sum('total_venta'))['total'] or 0
+    total_ventas_salon = VentaTipoDePago.objects.filter(
+        id_venta__id_tipo_venta=1,
+        id_tipo_pago=1,
+        id_venta__in = ids_ventas
+    ).aggregate(total=Sum('monto'))['total'] or 0
 
     columnas = ['Cliente', 'Total', 'IVA 10','Forma de Pago','Tipo de Venta', 'Fecha']
     paginator = Paginator(ventas, 10)
