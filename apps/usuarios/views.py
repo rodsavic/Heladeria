@@ -173,7 +173,7 @@ def usuarioUpdateView(request, id):
             usuario.fecha_nacimiento = fecha_nacimiento
 
             if password:
-                usuario.contrasena = make_password(password)
+                usuario.password  = make_password(password)
 
             usuario.save()
 
