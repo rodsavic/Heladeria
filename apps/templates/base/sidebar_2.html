@@ -29,12 +29,14 @@
             </a>
         </li>
         {% endif %}
+        {% if perms.auth %}
         <li class="sidebar-item">
             <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link">
                 <i class="lni lni-agenda"></i>
                 <span>Dashboard</span>
             </a>
         </li>
+        {% endif %}
         {% if perms.auth %}
         <li class="sidebar-item">
             <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm"

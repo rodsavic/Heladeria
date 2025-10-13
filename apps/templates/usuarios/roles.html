@@ -19,6 +19,7 @@
                     <tr>
                         <th style="color: white;">Nombre del Rol</th>
                         <th style="color: white;">Permisos Asociados</th>
+                        <th style="color: white;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,6 +36,11 @@
                             {% else %}
                             <span class="text-muted">Sin permisos asignados</span>
                             {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'usuarios:editar_rol' rol.id %}" class="btn btn-crear btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
                         </td>
                     </tr>
                     {% empty %}

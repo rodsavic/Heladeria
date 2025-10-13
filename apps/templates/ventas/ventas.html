@@ -34,10 +34,12 @@
 
             <!-- Botones -->
             <div class="col-md-3 col-12 d-flex justify-content-md-end justify-content-center gap-2">
+                {% if perms.auth %}
                 <a class="btn btn-limpiar btn-sm" href="{% url 'ventas:ventas_historial' %}"
                    role="button">
                     <i class="bi bi-clock-history"></i> Historial
                 </a>
+                {% endif %}
                 <a class="btn btn-crear btn-sm" href="{% url 'ventas:crear_venta' %}"
                    role="button">
                     <i class="bi bi-plus-circle"></i> Nueva Venta

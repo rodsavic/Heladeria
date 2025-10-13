@@ -239,6 +239,52 @@ def rolReadView(request):
 
 
 @login_required(login_url="/")
+def editarRolView(request, id):
+    # Obtenemos el rol a editar
+    rol = Group.objects.get(id=id)
+
+    if request.method == 'POST':
+        nombre = request.POST.get('name')
+        permisos_ids = request.POST.getlist('permissions')
+
+        if not nombre:
+            messages.error(request, "El nombre del rol no puede estar vacío.")
+            return redirect(reverse('usuarios:editar_rol', args=[id]))
+
+        try:
+            # Actualiza el nombre
+            rol.name = nombre
+            rol.save()
+
+            # Actualiza los permisos asociados
+            permisos = Permission.objects.filter(id__in=permisos_ids)
+            rol.permissions.set(permisos)
+
+            messages.success(request, f'El rol "{rol.name}" fue actualizado correctamente.')
+            return redirect('usuarios:roles')
+
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error al actualizar el rol: {e}")
+            return redirect(reverse('usuarios:editar_rol', args=[id]))
+
+    else:
+        # Obtenemos todos los permisos disponibles
+        permisos = Permission.objects.all()
+        permisos_data = [{"id": p.id, "text": p.name} for p in permisos]
+
+        # Permisos que ya tiene asignado el rol
+        permisos_rol = rol.permissions.values_list('id', flat=True)
+
+        context = {
+            "rol": rol,
+            "permisos_json": json.dumps(permisos_data),
+            "permisos_rol": list(permisos_rol)
+        }
+
+        return render(request, 'usuarios/editar_rol.html', context)
+
+
+@login_required(login_url="/")
 def crearPermiso(request):
     if request.method == 'POST':
         form = PermisoForm(request.POST)
