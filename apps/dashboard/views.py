@@ -11,11 +11,12 @@ from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from apps.ventas.views import Venta, VentaDetalle, VentaTipoDePago, TipoPago
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def dashboard_view(request):
     """Vista principal del dashboard"""
     return render(request, 'dashboard/dashboard.html')

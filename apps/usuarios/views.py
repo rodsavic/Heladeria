@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -9,6 +9,7 @@ from .models import *
 import json
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def usuariosReadView(request):
 
     # Obtener los campos de los usuarios
@@ -39,6 +40,7 @@ def usuarioReadView(request):
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def createUserView(request):
 
     # Obtenemos la lista de permisos
@@ -124,6 +126,7 @@ def createUserView(request):
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def usuarioUpdateView(request, id):
     usuario = User.objects.get(id=id)
 
@@ -205,6 +208,7 @@ def usuarioUpdateView(request, id):
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def crearRol(request):
     if request.method == 'POST':
         nombre = request.POST.get('name')
@@ -229,6 +233,7 @@ def crearRol(request):
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def rolReadView(request):
     roles = Group.objects.all().prefetch_related('permissions')
 
@@ -239,6 +244,7 @@ def rolReadView(request):
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def editarRolView(request, id):
     # Obtenemos el rol a editar
     rol = Group.objects.get(id=id)
