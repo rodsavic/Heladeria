@@ -26,9 +26,7 @@
                     <tr>
                         <th style="color: white;">Fecha</th>
                         <th style="color: white;">Total de ventas</th>
-                        <!--
                         <th style="color: white;">Accion</th>
-                        -->
                     </tr>
                     </thead>
                     <tbody>
@@ -37,12 +35,12 @@
 
                         <td>{{venta.fecha}}</td>
                         <td>{{venta.total_ventas|floatformat:0|intcomma}}</td>
-                        <!--
+                        {% if perms.auth %}
                         <td class="text-center">
                             <a href="{% url 'ventas:ventas' venta.fecha|date:'Y-m-d' %}" class="btn-crear">Ver
                                 ventas</a>
                         </td>
-                        -->
+                        {% endif %}
                     </tr>
                     {% endfor %}
 
