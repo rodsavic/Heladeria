@@ -54,11 +54,16 @@ def ventasReadView(request, fecha=None):
     total_monto_efectivo = pagos_efectivo.aggregate(total=Sum('monto'))['total']
     print(f'fecha: {fecha_venta}, ventas: {ventas}')
     total_ventas = ventas.aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
-    # Total de ventas de tipo 1 (Salón)
-    total_ventas_salon = VentaTipoDePago.objects.filter(
+    # Total de ventas de tipo 1 (Salón) y en efectivo
+    total_ventas_salon_efectivo = VentaTipoDePago.objects.filter(
         id_venta__id_tipo_venta=1,
         id_tipo_pago=1,
         id_venta__in = ids_ventas
+    ).aggregate(total=Sum('monto'))['total'] or 0
+
+    total_ventas_salon = VentaTipoDePago.objects.filter(
+        id_venta__id_tipo_venta=1,
+        id_venta__in=ids_ventas
     ).aggregate(total=Sum('monto'))['total'] or 0
 
     columnas = ['Cliente', 'Total', 'IVA 10','Forma de Pago','Tipo de Venta', 'Fecha']
@@ -70,8 +75,8 @@ def ventasReadView(request, fecha=None):
         'columnas': columnas,
         'ventas_por_pagina': ventas_por_pagina,
         'total_ventas': total_ventas,
-        'total_efectivo': total_monto_efectivo,
         'total_ventas_salon': total_ventas_salon,
+        'total_ventas_salon_efectivo': total_ventas_salon_efectivo,
     }
 
     return render(request, 'ventas/ventas.html', context=context)
