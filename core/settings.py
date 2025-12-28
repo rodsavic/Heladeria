@@ -49,7 +49,8 @@ LOCAL_APPS = [
     'apps.tipo_pago',
     'apps.usuarios',
     'apps.ventas',
-    'apps.dashboard'
+    'apps.dashboard',
+    'apps.inventario'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
