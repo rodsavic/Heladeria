@@ -12,27 +12,25 @@ from apps.inventario.models import Inventario
 @login_required(login_url='/')
 def inventarioReadView(request):
     listaInventario = Inventario.objects.all().order_by('nombre')
-    columnas = ["Nombre", "Tipo","Cantidad"]
     paginator = Paginator(listaInventario, 10)
     page = request.GET.get('page')
     items_page = paginator.get_page(page)
     context = {
-        "columnas": columnas,
         "items_page": items_page,
         "inventario": listaInventario,
     }
     return render(request, "inventario/inventario.html", context=context)
 
 def inventarioCreateView(request):
-    if(request.method == "POST"):
+    if request.method == "POST":
         nombre = request.POST.get("nombre")
-        tipo = request.POST.get("tipo")
-        cantidad = request.POST.get("cantidad")
+        cant_chico = request.POST.get("cant_chico")
+        cant_grande = request.POST.get("cant_grande")
 
         inventario_nuevo = Inventario(
             nombre = nombre,
-            tipo = tipo,
-            cantidad = int(cantidad)
+            cant_chico = int(cant_chico),
+            cant_grande = int(cant_grande)
         )
 
         inventario_nuevo.save()
@@ -50,8 +48,8 @@ def inventarioUpdateView(request, id):
         inventario = Inventario.objects.get(id=id)
 
         inventario.nombre = request.POST.get("nombre")
-        inventario.tipo = request.POST.get("tipo")
-        inventario.cantidad = int(request.POST.get("cantidad"))
+        inventario.cant_chico = int(request.POST.get("cant_chico"))
+        inventario.cant_grande = int(request.POST.get("cant_grande"))
         inventario.save()
 
         return JsonResponse({"success": True})

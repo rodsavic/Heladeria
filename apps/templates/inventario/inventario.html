@@ -44,8 +44,8 @@
                 <thead class="text-center table-head-color">
                 <tr>
                     <th style="color:white;">Nombre</th>
-                    <th style="color:white;">Tipo</th>
-                    <th style="color:white;" class="col-cantidad">#</th>
+                    <th style="color:white;">Chico</th>
+                    <th style="color:white;">Grande</th>
                     <th style="color:white;" class="col-operaciones"></th>
                 </tr>
                 </thead>
@@ -63,28 +63,23 @@
                                disabled>
                     </td>
 
-                    <!-- TIPO -->
-                    <td>
-                        <select class="form-control form-control-sm"
-                                id="tipo-{{ obj.id }}"
-                                data-original="{{ obj.tipo }}"
-                                disabled>
-                            <option value="G" {% if obj.tipo == "G" %}selected{% endif %}>
-                                Grande - 10L
-                            </option>
-                            <option value="C" {% if obj.tipo == "C" %}selected{% endif %}>
-                                Chico - 5L
-                            </option>
-                        </select>
-                    </td>
-
-                    <!-- CANTIDAD -->
+                    <!-- CANTIDAD CHICO-->
                     <td class="col-cantidad">
                         <input type="number"
                                class="form-control form-control-sm text-center"
-                               id="cantidad-{{ obj.id }}"
-                               value="{{ obj.cantidad }}"
-                               data-original="{{ obj.cantidad }}"
+                               id="cant_chico-{{ obj.id }}"
+                               value="{{ obj.cant_chico }}"
+                               data-original="{{ obj.cant_chico }}"
+                               disabled>
+                    </td>
+
+                    <!-- CANTIDAD GRANDE-->
+                    <td class="col-cantidad">
+                        <input type="number"
+                               class="form-control form-control-sm text-center"
+                               id="cant_grande-{{ obj.id }}"
+                               value="{{ obj.cant_grande }}"
+                               data-original="{{ obj.cant_grande }}"
                                disabled>
                     </td>
 
@@ -158,7 +153,7 @@
 
 <script>
 function habilitarEdicion(id) {
-    ["nombre", "tipo", "cantidad"].forEach(campo => {
+    ["nombre", "cant_chico", "cant_grande"].forEach(campo => {
         document.getElementById(`${campo}-${id}`).disabled = false;
     });
 
@@ -168,7 +163,7 @@ function habilitarEdicion(id) {
 }
 
 function cancelarEdicion(id) {
-    ["nombre", "tipo", "cantidad"].forEach(campo => {
+    ["nombre", "cant_chico", "cant_grande"].forEach(campo => {
         const input = document.getElementById(`${campo}-${id}`);
         input.value = input.dataset.original;
         input.disabled = true;
@@ -181,8 +176,8 @@ function cancelarEdicion(id) {
 
 function guardarEdicion(id) {
     const nombre = document.getElementById(`nombre-${id}`);
-    const tipo = document.getElementById(`tipo-${id}`);
-    const cantidad = document.getElementById(`cantidad-${id}`);
+    const cant_chico = document.getElementById(`cant_chico-${id}`);
+    const cant_grande = document.getElementById(`cant_grande-${id}`);
 
     fetch(`/inventario/editar/${id}/`, {
         method: "POST",
@@ -192,8 +187,8 @@ function guardarEdicion(id) {
         },
         body: new URLSearchParams({
             nombre: nombre.value,
-            tipo: tipo.value,
-            cantidad: cantidad.value,
+            cant_chico: cant_chico.value,
+            cant_grande: cant_grande.value,
             csrfmiddlewaretoken: "{{ csrf_token }}"
         })
     })
@@ -201,8 +196,8 @@ function guardarEdicion(id) {
     .then(data => {
         if (data.success) {
             nombre.dataset.original = nombre.value;
-            tipo.dataset.original = tipo.value;
-            cantidad.dataset.original = cantidad.value;
+            cant_chico.dataset.original = cant_chico.value;
+            cant_grande.dataset.original = cant_grande.value;
 
             cancelarEdicion(id);
         } else {
