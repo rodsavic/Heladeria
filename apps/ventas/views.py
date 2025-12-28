@@ -305,10 +305,13 @@ def historialDeVentasView(request):
     ventas_agrupadas = Venta.objects.annotate(fecha=TruncDate('fecha_venta')) \
         .values('fecha') \
         .annotate(total_ventas=Sum('total_venta')) \
-        .order_by('fecha')
-    print(ventas_agrupadas)
+        .order_by('-fecha')
+
+    paginator = Paginator(ventas_agrupadas, 10)
+    page_number = request.GET.get('page', 1)
+    ventas_por_pagina = paginator.get_page(page_number)
     context = {
-        'ventas_agrupadas': ventas_agrupadas
+        'ventas_agrupadas': ventas_por_pagina
     }
 
     return render(request, 'ventas/ventas_historial.html', context=context)
