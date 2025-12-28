@@ -5,149 +5,211 @@
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
+
+<style>
+    .col-cantidad {
+        width: 80px;
+        max-width: 80px;
+        text-align: center;
+    }
+
+    .col-operaciones {
+        width: 80px;
+        max-width: 80px;
+        text-align: center;
+    }
+
+    .col-operaciones .btn {
+        padding: 4px 6px;
+        margin: 1px;
+    }
+</style>
+
 <div class="card" style="width: 100%;">
     <div class="card-body">
         <h1>Inventario</h1>
+
         <div class="row p-3 card-title align-items-center">
             <div class="col-12 d-flex justify-content-md-end justify-content-center">
-                <a class="btn btn-crear btn-sm" href="{% url 'inventario:crear_inventario' %}" role="button">
-                    <i class="bi bi-plus-circle"></i> Nuevo Registro</a>
+                <a class="btn btn-crear btn-sm"
+                   href="{% url 'inventario:crear_inventario' %}">
+                    <i class="bi bi-plus-circle"></i> Nuevo Registro
+                </a>
             </div>
         </div>
+
         {% if items_page %}
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead class="text-center table-head-color">
                 <tr>
-                    {% for columna in columnas %}
-                    <th style="color: white;">{{columna}}</th>
-                    {% endfor %}
-                    <th style="color: white;">Operaciones</th>
+                    <th style="color:white;">Nombre</th>
+                    <th style="color:white;">Tipo</th>
+                    <th style="color:white;" class="col-cantidad">#</th>
+                    <th style="color:white;" class="col-operaciones"></th>
                 </tr>
                 </thead>
+
                 <tbody>
-                    {% for obj in items_page %}
-                    <tr id="row-{{ obj.id }}">
-                        <td>
-                            <input type="text" class="form-control form-control-sm"
-                                   value="{{ obj.nombre }}" disabled
-                                   id="nombre-{{ obj.id }}">
-                        </td>
+                {% for obj in items_page %}
+                <tr id="row-{{ obj.id }}">
+                    <!-- NOMBRE -->
+                    <td>
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               id="nombre-{{ obj.id }}"
+                               value="{{ obj.nombre }}"
+                               data-original="{{ obj.nombre }}"
+                               disabled>
+                    </td>
 
-                        <td>
-                            <select class="form-control form-control-sm"
-                                    disabled id="tipo-{{ obj.id }}">
-                                <option value="G" {% if obj.tipo == "G" %}selected{% endif %}>
-                                    Grande - 10L
-                                </option>
-                                <option value="C" {% if obj.tipo == "C" %}selected{% endif %}>
-                                    Chico - 5L
-                                </option>
-                            </select>
-                        </td>
+                    <!-- TIPO -->
+                    <td>
+                        <select class="form-control form-control-sm"
+                                id="tipo-{{ obj.id }}"
+                                data-original="{{ obj.tipo }}"
+                                disabled>
+                            <option value="G" {% if obj.tipo == "G" %}selected{% endif %}>
+                                Grande - 10L
+                            </option>
+                            <option value="C" {% if obj.tipo == "C" %}selected{% endif %}>
+                                Chico - 5L
+                            </option>
+                        </select>
+                    </td>
 
-                        <td>
-                            <input type="number" class="form-control form-control-sm"
-                                   value="{{ obj.cantidad }}" disabled
-                                   id="cantidad-{{ obj.id }}">
-                        </td>
+                    <!-- CANTIDAD -->
+                    <td class="col-cantidad">
+                        <input type="number"
+                               class="form-control form-control-sm text-center"
+                               id="cantidad-{{ obj.id }}"
+                               value="{{ obj.cantidad }}"
+                               data-original="{{ obj.cantidad }}"
+                               disabled>
+                    </td>
 
-                        <td class="text-center">
-                            <button class="btn btn-crear btn-sm"
-                                    onclick="habilitarEdicion({{ obj.id }})"
-                                    id="edit-{{ obj.id }}">
-                                <i class="bi bi-pen"></i>
-                            </button>
+                    <!-- OPERACIONES -->
+                    <td class="col-operaciones">
+                        <button class="btn btn-crear btn-sm"
+                                id="edit-{{ obj.id }}"
+                                onclick="habilitarEdicion({{ obj.id }})">
+                            <i class="bi bi-pen"></i>
+                        </button>
 
-                            <button class="btn-crear btn-sm d-none"
-                                    onclick="guardarEdicion({{ obj.id }})"
-                                    id="save-{{ obj.id }}">
-                                Guardar
-                            </button>
-                            <a class="btn btn-cancelar btn-sm" data-bs-target="#confirmarEliminarModal{{ obj.id }}"
-                               data-bs-toggle="modal"
-                               type="button">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                            <div aria-hidden="true" class="modal fade" id="confirmarEliminarModal{{ obj.id }}"
-                                 tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Confirmar eliminación</h5>
-                                            <button aria-label="Cerrar" class="btn-close" data-bs-dismiss="modal"
-                                                    type="button"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            ¿Estás seguro de que deseas eliminar el registro?
-                                            Esta acción no se puede deshacer.
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
-                                                Cancelar
-                                            </button>
-                                            <a class="btn btn-danger"
-                                               href="{% url 'inventario:eliminar_inventario' obj.id %}">Eliminar</a>
-                                        </div>
+                        <button class="btn btn-crear btn-sm d-none"
+                                id="save-{{ obj.id }}"
+                                onclick="guardarEdicion({{ obj.id }})">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+
+                        <button class="btn btn-secondary btn-sm d-none"
+                                id="cancel-{{ obj.id }}"
+                                onclick="cancelarEdicion({{ obj.id }})">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+
+                        <a class="btn btn-cancelar btn-sm"
+                           data-bs-toggle="modal"
+                           data-bs-target="#confirmarEliminarModal{{ obj.id }}">
+                            <i class="bi bi-trash"></i>
+                        </a>
+
+                        <!-- MODAL ELIMINAR -->
+                        <div class="modal fade"
+                             id="confirmarEliminarModal{{ obj.id }}"
+                             tabindex="-1"
+                             aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmar eliminación</h5>
+                                        <button class="btn-close"
+                                                data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que deseas eliminar este registro?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary"
+                                                data-bs-dismiss="modal">
+                                            Cancelar
+                                        </button>
+                                        <a class="btn btn-danger"
+                                           href="{% url 'inventario:eliminar_inventario' obj.id %}">
+                                            Eliminar
+                                        </a>
                                     </div>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
             </table>
-            {% include "base/pagination.html" with items_page=items_page %}
 
+            {% include "base/pagination.html" with items_page=items_page %}
         </div>
         {% else %}
-        {% include "base/sin_registro.html" %}
+            {% include "base/sin_registro.html" %}
         {% endif %}
     </div>
 </div>
+
 <script>
 function habilitarEdicion(id) {
-    document.getElementById(`nombre-${id}`).disabled = false;
-    document.getElementById(`tipo-${id}`).disabled = false;
-    document.getElementById(`cantidad-${id}`).disabled = false;
+    ["nombre", "tipo", "cantidad"].forEach(campo => {
+        document.getElementById(`${campo}-${id}`).disabled = false;
+    });
 
     document.getElementById(`edit-${id}`).classList.add("d-none");
     document.getElementById(`save-${id}`).classList.remove("d-none");
+    document.getElementById(`cancel-${id}`).classList.remove("d-none");
+}
+
+function cancelarEdicion(id) {
+    ["nombre", "tipo", "cantidad"].forEach(campo => {
+        const input = document.getElementById(`${campo}-${id}`);
+        input.value = input.dataset.original;
+        input.disabled = true;
+    });
+
+    document.getElementById(`edit-${id}`).classList.remove("d-none");
+    document.getElementById(`save-${id}`).classList.add("d-none");
+    document.getElementById(`cancel-${id}`).classList.add("d-none");
 }
 
 function guardarEdicion(id) {
-    const data = {
-        nombre: document.getElementById(`nombre-${id}`).value,
-        tipo: document.getElementById(`tipo-${id}`).value,
-        cantidad: document.getElementById(`cantidad-${id}`).value,
-        csrfmiddlewaretoken: '{{ csrf_token }}'
-    };
+    const nombre = document.getElementById(`nombre-${id}`);
+    const tipo = document.getElementById(`tipo-${id}`);
+    const cantidad = document.getElementById(`cantidad-${id}`);
 
     fetch(`/inventario/editar/${id}/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: new URLSearchParams(data)
+        body: new URLSearchParams({
+            nombre: nombre.value,
+            tipo: tipo.value,
+            cantidad: cantidad.value,
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
         if (data.success) {
-            alert("Registro actualizado correctamente");
+            nombre.dataset.original = nombre.value;
+            tipo.dataset.original = tipo.value;
+            cantidad.dataset.original = cantidad.value;
 
-            document.getElementById(`nombre-${id}`).disabled = true;
-            document.getElementById(`tipo-${id}`).disabled = true;
-            document.getElementById(`cantidad-${id}`).disabled = true;
-
-            document.getElementById(`edit-${id}`).classList.remove("d-none");
-            document.getElementById(`save-${id}`).classList.add("d-none");
+            cancelarEdicion(id);
         } else {
             alert("Error al guardar");
         }
     });
 }
 </script>
-
 
 {% endblock %}
