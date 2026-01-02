@@ -36,7 +36,7 @@ def ventasReadView(request, fecha=None):
     # Diccionario { id_venta: ["Efectivo", "Tarjeta"] }
     formas_pago_dict = {}
     for p in pagos:
-        formas_pago_dict.setdefault(p.id_venta_id, []).append(p.id_tipo_pago.descripcion)
+        formas_pago_dict.setdefault(p.id_venta, []).append(p.id_tipo_pago.descripcion)
 
     total_efectivo_salon = 0
 
