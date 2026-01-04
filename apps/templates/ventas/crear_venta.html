@@ -123,7 +123,7 @@
                                 <div class="col-12 col-md-6 col-lg-5">
                                     <label for="selectProducto" class="form-label fw-semibold">Producto</label>
                                     <select class="selectProducto form-control" name="selectProducto" id="selectProducto">
-                                        <option value="">Seleccionar producto...</option>
+                                        <option value="" disabled>Seleccionar producto...</option>
                                         {% for producto in productos %}
                                         <option value="{{ producto.id_producto }}"
                                             data-precio="{{ producto.precio_actual }}"
@@ -322,19 +322,31 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        inicializarSelects();
+        //inicializarSelects();
 
-        // Inicializar Select2 responsive
-        $('.selectProducto').select2({
-            placeholder: "Buscar producto...",
+        const $selectProducto = $('.selectProducto').select2({
+            placeholder:"Buscar producto...",
             allowClear: true,
             width: '100%'
         });
 
-        $('#cliente').select2({
+        // Forzar foco en el input de búsqueda al abrir
+        $selectProducto.on('select2:open', function () {
+            setTimeout(function () {
+                document.querySelector('.select2-container--open .select2-search__field').focus();
+            }, 0);
+        });
+
+        const $selectCliente = $('#cliente').select2({
             placeholder: "Buscar cliente...",
             allowClear: true,
             width: '100%'
+        });
+
+        $selectCliente.on('select2:open', function () {
+            setTimeout(function () {
+                document.querySelector('.select2-container--open .select2-search__field').focus();
+            }, 0);
         });
 
         $('#tipo_venta').select2({
