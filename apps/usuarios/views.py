@@ -2,7 +2,6 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
 from .forms import *
 from .models import *
@@ -83,19 +82,19 @@ def createUserView(request):
         if User.objects.filter(username=username).exists():
             messages.info(request, 'El username ya existe!',
                           extra_tags="Verifica el username e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios-create'))
+            return redirect(reverse('usuarios:usuarios_create'))
 
         # Verificamos que las contraseñas coincidan
         if password != password_repetir:
             messages.warning(request, 'Las contraseñas no coinciden!',
                           extra_tags="Verifica e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios-create'))            
+            return redirect(reverse('usuarios:usuarios_create'))
 
         # Verificamos que la contraseña no sea muy corta
         if len(password) < 5:
             messages.warning(request, 'La contraseña es demasiada corta!',
                           extra_tags="Verifica e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios-create'))                  
+            return redirect(reverse('usuarios:usuarios_create'))
 
         # Creamos y guardamos el usuario
         usuario_nuevo = User.objects.create(

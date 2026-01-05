@@ -1,6 +1,8 @@
 INSERT INTO categoria (descripcion) VALUES ('MATERIA PRIMA');
 INSERT INTO categoria (descripcion) VALUES ('PARA VENTA');
 
+INSERT INTO tipo_venta(nombre) VALUES('Salon'), ('Delivery'), ('Pedidos YA');
+
 INSERT INTO iva (descripcion) VALUES ('10');
 INSERT INTO iva (descripcion) VALUES ('5');
 
