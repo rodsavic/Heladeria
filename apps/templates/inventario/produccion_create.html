@@ -1,12 +1,49 @@
 {% extends "base/base.html" %}
 
-{% block title %}Nueva Producción{% endblock %}
+{% block title %}Nueva Produccion{% endblock %}
 
 {% block content %}
+<style>
+    .produccion-table th,
+    .produccion-table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .produccion-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .produccion-table input[type="number"] {
+        min-width: 90px;
+    }
+
+    .sabor-card {
+        border: 1px solid #e6e6e6;
+        border-radius: 12px;
+        background: #fff;
+        padding: 0.75rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .sabor-card h6 {
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .sabor-meta {
+        font-size: 0.82rem;
+        color: #666;
+        margin-bottom: 0.6rem;
+    }
+</style>
+
 <div class="card" style="width: 100%;">
     <div class="card-body">
-        <h2 class="card-title">Lista de producción</h2>
-        <h6 class="card-subtitle mb-2 text-muted">Selecciona cuánto fabricar por sabor para el día</h6>
+        <h2 class="card-title">Lista de produccion</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Selecciona cuanto fabricar por sabor para el dia</h6>
         <a href="{% url 'inventario:lista_produccion' %}" class="card-link mb-3">Ver listado por fecha</a>
 
         <form method="post" class="mt-3">
@@ -18,8 +55,8 @@
                 </div>
             </div>
 
-            <div class="table-responsive mb-4">
-                <table class="table table-bordered">
+            <div class="table-responsive mb-4 d-none d-md-block">
+                <table class="table table-bordered produccion-table">
                     <thead class="table-head-color text-center">
                     <tr>
                         <th style="color:white;">Sabor</th>
@@ -54,6 +91,30 @@
                 </table>
             </div>
 
+            <div class="d-md-none mb-4">
+                {% for item in inventario %}
+                <div class="sabor-card mb-2">
+                    <h6>{{ item.nombre }}</h6>
+                    <div class="sabor-meta">
+                        Stock chico: <strong>{{ item.cant_chico }}</strong> | Stock grande: <strong>{{ item.cant_grande }}</strong>
+                    </div>
+                    <input type="hidden" name="inventario_id[]" value="{{ item.id }}">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label mb-1">Fabricar chico</label>
+                            <input type="number" name="fabricar_chico[]" class="form-control text-center" min="0" value="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label mb-1">Fabricar grande</label>
+                            <input type="number" name="fabricar_grande[]" class="form-control text-center" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="alert alert-light border text-center">No hay sabores cargados en inventario.</div>
+                {% endfor %}
+            </div>
+
             <h5 class="mb-3">Agregar sabor nuevo (opcional)</h5>
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
@@ -78,7 +139,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn-crear">Guardar lista del día</button>
+            <button type="submit" class="btn-crear">Guardar lista del dia</button>
         </form>
     </div>
 </div>
