@@ -12,11 +12,21 @@ class Inventario(models.Model):
 
 
 class ProduccionDiaria(models.Model):
-    fecha = models.DateField(unique=True)
+    ESTADO_CREADO = 'CREADO'
+    ESTADO_REALIZADO = 'REALIZADO'
+    ESTADO_CANCELADO = 'CANCELADO'
+    ESTADOS = (
+        (ESTADO_CREADO, 'Creado'),
+        (ESTADO_REALIZADO, 'Realizado'),
+        (ESTADO_CANCELADO, 'Cancelado'),
+    )
+
+    fecha = models.DateField()
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=ESTADO_CREADO)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-fecha']
+        ordering = ['-fecha', '-fecha_creacion']
 
     def __str__(self):
         return f'Produccion {self.fecha}'

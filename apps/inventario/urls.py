@@ -7,6 +7,7 @@ from apps.inventario.views import (
     inventarioDeleteView,
     produccionCreateView,
     produccionListView,
+    produccionCambiarEstadoView,
 )
 
 app_name = 'inventario'
@@ -17,4 +18,5 @@ urlpatterns = [
     path('eliminar/<int:id>', inventarioDeleteView, name='eliminar_inventario'),
     path('produccion/', produccionListView, name='lista_produccion'),
     path('produccion/crear/', produccionCreateView, name='crear_produccion'),
+    path('produccion/<int:id>/estado/', produccionCambiarEstadoView, name='cambiar_estado_produccion'),
 ]

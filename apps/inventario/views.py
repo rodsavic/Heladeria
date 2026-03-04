@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
@@ -86,23 +87,17 @@ def produccionCreateView(request):
             messages.error(request, "Debes seleccionar una fecha de producción.")
             return redirect('inventario:crear_produccion')
 
-        produccion, _ = ProduccionDiaria.objects.get_or_create(fecha=fecha)
-        ProduccionDetalle.objects.filter(produccion=produccion).delete()
-
-        detalles_creados = 0
+        detalles_payload = []
         for idx, inventario_id in enumerate(inventario_ids):
             chico = int(fabricar_chicos[idx] or 0)
             grande = int(fabricar_grandes[idx] or 0)
             if chico <= 0 and grande <= 0:
                 continue
-
-            ProduccionDetalle.objects.create(
-                produccion=produccion,
-                inventario_id=int(inventario_id),
-                fabricar_chico=chico,
-                fabricar_grande=grande
-            )
-            detalles_creados += 1
+            detalles_payload.append({
+                'inventario_id': int(inventario_id),
+                'fabricar_chico': chico,
+                'fabricar_grande': grande,
+            })
 
         if nuevo_nombre:
             inventario_nuevo, _ = Inventario.objects.get_or_create(
@@ -113,20 +108,25 @@ def produccionCreateView(request):
                 }
             )
             if nuevo_fabricar_chico > 0 or nuevo_fabricar_grande > 0:
-                ProduccionDetalle.objects.update_or_create(
-                    produccion=produccion,
-                    inventario=inventario_nuevo,
-                    defaults={
-                        'fabricar_chico': nuevo_fabricar_chico,
-                        'fabricar_grande': nuevo_fabricar_grande,
-                    }
-                )
-                detalles_creados += 1
+                detalles_payload.append({
+                    'inventario_id': inventario_nuevo.id,
+                    'fabricar_chico': nuevo_fabricar_chico,
+                    'fabricar_grande': nuevo_fabricar_grande,
+                })
 
-        if detalles_creados == 0:
-            ProduccionDetalle.objects.filter(produccion=produccion).delete()
+        if len(detalles_payload) == 0:
             messages.warning(request, "No se registraron cantidades a fabricar.")
             return redirect('inventario:crear_produccion')
+
+        produccion = ProduccionDiaria.objects.create(fecha=fecha, estado=ProduccionDiaria.ESTADO_CREADO)
+
+        for detalle in detalles_payload:
+            ProduccionDetalle.objects.create(
+                produccion=produccion,
+                inventario_id=detalle['inventario_id'],
+                fabricar_chico=detalle['fabricar_chico'],
+                fabricar_grande=detalle['fabricar_grande']
+            )
 
         messages.success(request, "Lista de producción guardada correctamente.")
         return redirect('inventario:lista_produccion')
@@ -148,3 +148,41 @@ def produccionListView(request):
         'items_page': items_page
     }
     return render(request, 'inventario/produccion_lista.html', context=context)
+
+
+@login_required(login_url='/')
+@require_POST
+def produccionCambiarEstadoView(request, id):
+    produccion = get_object_or_404(ProduccionDiaria, id=id)
+    nuevo_estado = request.POST.get('estado')
+    estados_validos = {
+        ProduccionDiaria.ESTADO_REALIZADO,
+        ProduccionDiaria.ESTADO_CANCELADO,
+        ProduccionDiaria.ESTADO_CREADO
+    }
+
+    if nuevo_estado not in estados_validos:
+        messages.error(request, "Estado de producción no válido.")
+        return redirect('inventario:lista_produccion')
+
+    # Regla de irreversibilidad:
+    # Si ya está REALIZADO no puede pasar a CANCELADO y viceversa.
+    if produccion.estado in (ProduccionDiaria.ESTADO_REALIZADO, ProduccionDiaria.ESTADO_CANCELADO):
+        if nuevo_estado != produccion.estado:
+            messages.error(request, "No se puede cambiar el estado: la producción ya está cerrada.")
+            return redirect('inventario:lista_produccion')
+
+    # Aplicar al inventario solo la primera vez que pasa a REALIZADO.
+    if nuevo_estado == ProduccionDiaria.ESTADO_REALIZADO and produccion.estado != ProduccionDiaria.ESTADO_REALIZADO:
+        with transaction.atomic():
+            detalles = ProduccionDetalle.objects.select_related('inventario').filter(produccion=produccion)
+            for detalle in detalles:
+                inventario_item = detalle.inventario
+                inventario_item.cant_chico = int(inventario_item.cant_chico) + int(detalle.fabricar_chico)
+                inventario_item.cant_grande = int(inventario_item.cant_grande) + int(detalle.fabricar_grande)
+                inventario_item.save(update_fields=['cant_chico', 'cant_grande'])
+
+    produccion.estado = nuevo_estado
+    produccion.save()
+    messages.success(request, f"Estado actualizado a {nuevo_estado}.")
+    return redirect('inventario:lista_produccion')
