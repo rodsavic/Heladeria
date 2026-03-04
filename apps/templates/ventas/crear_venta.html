@@ -1,365 +1,77 @@
 {% extends 'base/base.html' %}
 {% load static %}
-{% load humanize %}
-{% load custom_filters %}
 
-<head>
-    {% block title %}Crear Venta{% endblock title %}
-    {% block stylesheets %}
-    <style>
-        /* Estilos responsive personalizados */
-        @media (max-width: 768px) {
-            .table-responsive {
-                font-size: 0.8rem;
-            }
+{% block title %}Crear Venta{% endblock title %}
 
-            .hstack {
-                flex-direction: column !important;
-                gap: 1rem !important;
-            }
+{% block stylesheets %}
+<style>
+  @media (max-width: 768px) {
+    .table-responsive { font-size: 0.8rem; }
+    .hstack { flex-direction: column !important; gap: 1rem !important; }
+    .hstack > * { max-width: 100% !important; width: 100% !important; }
+    .table th, .table td { padding: 0.3rem !important; font-size: 0.75rem; }
+    .card-sidebar { margin-top: 2rem; }
+    .modal-dialog { margin: 1rem; }
+    .input-group-text { font-size: 0.8rem; }
+  }
 
-            .hstack > * {
-                max-width: 100% !important;
-                width: 100% !important;
-            }
+  @media (max-width: 576px) {
+    .card-body { padding: 1rem 0.5rem; }
+    h2.card-title { font-size: 1.5rem; }
+    .table th:nth-child(5), .table th:nth-child(6),
+    .table td:nth-child(5), .table td:nth-child(6) { display: none; }
+    .vstack > div { padding: 0.5rem !important; }
+  }
 
-            .table th, .table td {
-                padding: 0.3rem !important;
-                font-size: 0.75rem;
-            }
+  .product-selector-container {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
 
-            .card-sidebar {
-                margin-top: 2rem;
-            }
+  .summary-card {
+    position: sticky;
+    top: 2rem;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
 
-            .modal-dialog {
-                margin: 1rem;
-            }
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
 
-            .input-group-text {
-                font-size: 0.8rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .card-body {
-                padding: 1rem 0.5rem;
-            }
-
-            h2.card-title {
-                font-size: 1.5rem;
-            }
-
-            .table th:nth-child(5),
-            .table th:nth-child(6),
-            .table td:nth-child(5),
-            .table td:nth-child(6) {
-                display: none;
-            }
-
-            .vstack > div {
-                padding: 0.5rem !important;
-            }
-        }
-
-        /* Mejoras generales */
-        .product-selector-container {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .summary-card {
-            position: sticky;
-            top: 2rem;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 0.5rem;
-            padding: 1rem;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        @media (min-width: 768px) {
-            .action-buttons {
-                justify-content: flex-end;
-            }
-        }
-    </style>
-    {% endblock stylesheets %}
-</head>
+  @media (min-width: 768px) {
+    .action-buttons { justify-content: flex-end; }
+  }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="card" style="width: 100%;">
-        <div class="card-body">
-            <!-- Header responsive -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-                <div>
-                    <h2 class="card-title mb-1">Registrar nueva venta</h2>
-                    <h6 class="card-subtitle text-muted">Formulario de creación de ventas</h6>
-                </div>
-                <div class="mt-2 mt-md-0">
-                    <a href="{% url 'ventas:ventas' %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-left"></i> Volver a la lista
-                    </a>
-                </div>
-            </div>
-
-            <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();">
-                {% csrf_token %}
-
-                <div class="row">
-                    <!-- Columna principal - Productos -->
-                    <div class="col-12 col-lg-8 order-2 order-lg-1">
-                        <!-- Selector de productos responsive -->
-                        <div class="product-selector-container">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-12 col-md-6 col-lg-5">
-                                    <label for="selectProducto" class="form-label fw-semibold">Producto</label>
-                                    <select class="selectProducto form-control" name="selectProducto" id="selectProducto">
-                                        <option value="" disabled>Seleccionar producto...</option>
-                                        {% for producto in productos %}
-                                        <option value="{{ producto.id_producto }}"
-                                            data-precio="{{ producto.precio_actual }}"
-                                            data-descripcionIva="{{ producto.id_iva.descripcion }}">
-                                            {{ producto.nombre }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <div class="col-12 col-md-4 col-lg-3">
-                                    <label for="cantidad" class="form-label fw-semibold">Cantidad</label>
-                                    <input class="form-control" type="number" name="cantidad" id="cantidad" min="1" value="1">
-                                </div>
-
-                                <div class="col-12 col-md-2 col-lg-2">
-                                    <button class="btn btn-crear w-100" type="button" onclick="agregarProductoATabla()">
-                                        <i class="bi bi-plus-circle"></i>
-                                        <span class="d-none d-sm-inline"> Agregar</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tabla de productos responsive -->
-                        <div class="table-responsive">
-                            <table class="table table-hover table-striped" id="tablaProductos">
-                                <thead class="table-head-color">
-                                    <tr>
-                                        <th class="text-center">Producto</th>
-                                        <th class="text-center">Cant.</th>
-                                        <th class="text-center">Precio Unit.</th>
-                                        <th class="text-center">Total</th>
-                                        <th class="text-center d-none d-sm-table-cell">IVA 10</th>
-                                        <th class="text-center d-none d-sm-table-cell">IVA 5</th>
-                                        <th class="text-center">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-center">
-                                    <!-- Filas dinámicas aquí -->
-                                </tbody>
-                            </table>
-                            <input type="hidden" name="productos_json" id="productos_json">
-                        </div>
-                    </div>
-
-                    <!-- Columna lateral - Resumen -->
-                    <div class="col-12 col-lg-4 order-1 order-lg-2">
-                        <div class="summary-card card-sidebar">
-                            <h5 class="mb-3 text-center text-lg-start">Resumen de Venta</h5>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold" for="fecha_venta">Fecha y hora de venta</label>
-                                <input type="datetime-local" class="form-control" name="fecha_venta" id="fecha_venta"
-                                       value="{{ now|date:'Y-m-d\\TH:i' }}">
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold" for="cliente">Cliente</label>
-                                <select class="form-control" name="cliente" id="cliente">
-                                    <option value="">Seleccionar cliente...</option>
-                                    {% for cliente in clientes %}
-                                    <option value="{{ cliente.id_cliente }}">
-                                        {{ cliente.nombre }} - {{ cliente.documento }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold" for="cliente">Tipo de Venta</label>
-                                <select class="form-control" name="tipo_venta" id="tipo_venta">
-                                    <option value="">Seleccionar tipo de venta...</option>
-                                    {% for tipo in tipo_venta %}
-                                    <option value="{{ tipo.id }}">
-                                        {{ tipo.nombre }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label fw-semibold" for="total_venta">Total Venta</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₲</span>
-                                        <input class="form-control fw-bold" type="number" name="total_venta" id="total_venta" value="0" readonly>
-                                    </div>
-                                </div>
-
-                                <div class="col-6">
-                                    <label class="form-label fw-semibold" for="total_iva_10">IVA 10%</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₲</span>
-                                        <input class="form-control" type="number" name="total_iva_10" id="total_iva_10" value="0" readonly>
-                                    </div>
-                                </div>
-
-                                <div class="col-6">
-                                    <label class="form-label fw-semibold" for="total_iva_5">IVA 5%</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₲</span>
-                                        <input class="form-control" type="number" name="total_iva_5" id="total_iva_5" value="0" readonly>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-crear btn-lg">
-                                    <i class="bi bi-save"></i> Guardar Venta
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Modal responsive para forma de pago -->
-                <div class="modal fade" id="modalCobro" tabindex="-1" aria-labelledby="modalCobroLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="modalCobroLabel">
-                                    <i class="bi bi-credit-card"></i> Forma de pago
-                                </h5>
-                                <button onclick="cerrarModal()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="totalVentaModal" class="form-label fw-semibold">Total de Venta</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₲</span>
-                                        <input type="number" id="totalVentaModal" class="form-control fw-bold" disabled>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3">
-                                    <div class="col-12 col-md-4">
-                                        <label for="efectivo" class="form-label">
-                                            <i class="bi bi-cash"></i> Efectivo
-                                        </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">₲</span>
-                                            <input type="number" id="efectivo" name="efectivo" class="form-control"
-                                                   placeholder="0" min="0">
-                                        </div>
-                                    </div>
-
-                                    <div class="col-12 col-md-4">
-                                        <label for="pos" class="form-label">
-                                            <i class="bi bi-credit-card-2-front"></i> POS
-                                        </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">₲</span>
-                                            <input type="number" id="pos" name="pos" class="form-control"
-                                                   placeholder="0" min="0">
-                                        </div>
-                                    </div>
-
-                                    <div class="col-12 col-md-4">
-                                        <label for="transferencia" class="form-label">
-                                            <i class="bi bi-bank"></i> Transferencia
-                                        </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">₲</span>
-                                            <input type="number" id="transferencia" name="transferencia" class="form-control"
-                                                   placeholder="0" min="0">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-3 p-3 bg-light rounded">
-                                    <span id="mensajeVuelto" class="fw-bold d-block text-center"></span>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <div class="action-buttons w-100">
-                                    <!--
-                                    <button type="button" class="btn btn-outline-primary" onclick="calcularVuelto()">
-                                        <i class="bi bi-calculator"></i> Calcular Vuelto
-                                    </button>
-                                    -->
-                                    <button type="button" class="btn btn-crear" data-bs-dismiss="modal" onclick="enviarFormulario()">
-                                        <i class="bi bi-check-circle"></i> Guardar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{% include 'ventas/partials/venta_form.html' with page_title='Registrar nueva venta' page_subtitle='Formulario de creación de ventas' save_button_text='Guardar Venta' is_edit=False %}
+{% endblock content %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        //inicializarSelects();
-
-        const $selectProducto = $('.selectProducto').select2({
-            placeholder:"Buscar producto...",
-            allowClear: true,
-            width: '100%'
-        });
-
-        // Forzar foco en el input de búsqueda al abrir
-        $selectProducto.on('select2:open', function () {
-            setTimeout(function () {
-                document.querySelector('.select2-container--open .select2-search__field').focus();
-            }, 0);
-        });
-
-        const $selectCliente = $('#cliente').select2({
-            placeholder: "Buscar cliente...",
-            allowClear: true,
-            width: '100%'
-        });
-
-        $selectCliente.on('select2:open', function () {
-            setTimeout(function () {
-                document.querySelector('.select2-container--open .select2-search__field').focus();
-            }, 0);
-        });
-
-        $('#tipo_venta').select2({
-            placeholder: "Seleccionar tipo de venta",
-            allowClear: true,
-            width: '100%',
-        });
-
-        $('#tipo_venta').val(1).trigger('change');
-    });
-</script>
-
 <script src="{% static 'js/ventas.js' %}"></script>
-{% endblock scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    $('.selectProducto').select2({
+      placeholder: "Buscar producto...",
+      allowClear: true,
+      width: '100%'
+    });
 
-{% endblock content %}
+    $('#cliente').select2({
+      placeholder: "Buscar cliente...",
+      allowClear: true,
+      width: '100%'
+    });
+
+  });
+</script>
+{% endblock scripts %}

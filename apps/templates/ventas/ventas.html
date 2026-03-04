@@ -8,28 +8,83 @@
 {% block body_class %} sidebar-mini {% endblock body_class %}
 
 {% block content %}
+<style>
+    .ventas-resumen .resumen-item {
+        background: #f8f9fa;
+        border: 1px solid #ececec;
+        border-radius: 10px;
+        padding: 0.6rem 0.8rem;
+        height: 100%;
+    }
+
+    .ventas-table th,
+    .ventas-table td {
+        vertical-align: middle;
+    }
+
+    .ventas-actions {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .venta-card-mobile {
+        border: 1px solid #e7e7e7;
+        border-radius: 12px;
+        padding: 0.75rem;
+        margin-bottom: 0.6rem;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .venta-card-mobile .venta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.6rem;
+        font-size: 0.88rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .venta-card-mobile .venta-row strong {
+        color: #4e4e4e;
+    }
+
+    .venta-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
 
 <div class="card" style="width: 100%;">
     <div class="card-body">
         <h1>Ventas registradas</h1>
-        <div class="row p-3 card-title align-items-center">
+        <div class="row p-3 card-title align-items-stretch ventas-resumen g-2">
             <!-- Totales -->
             <div class="col-md-3 col-12 mb-2 mb-md-0">
-                <h5 class="text-md-start text-center">
-                    Total del día: {{ total_ventas|floatformat:0|intcomma }}
-                </h5>
+                <div class="resumen-item">
+                    <h6 class="text-md-start text-center mb-0">
+                        Total del día: {{ total_ventas|floatformat:0|intcomma }}
+                    </h6>
+                </div>
             </div>
 
             <div class="col-md-3 col-12 mb-2 mb-md-0">
-                <h5 class="text-md-start text-center">
-                    Total Salon en efectivo: {{ total_ventas_salon_efectivo|floatformat:0|intcomma }}
-                </h5>
+                <div class="resumen-item">
+                    <h6 class="text-md-start text-center mb-0">
+                        Total Salon en efectivo: {{ total_ventas_salon_efectivo|floatformat:0|intcomma }}
+                    </h6>
+                </div>
             </div>
 
             <div class="col-md-3 col-12 mb-2 mb-md-0">
-                <h5 class="text-md-start text-center">
-                    Total Salón: {{ total_ventas_salon|floatformat:0|intcomma }}
-                </h5>
+                <div class="resumen-item">
+                    <h6 class="text-md-start text-center mb-0">
+                        Total Salón: {{ total_ventas_salon|floatformat:0|intcomma }}
+                    </h6>
+                </div>
             </div>
 
             <!-- Botones -->
@@ -49,8 +104,8 @@
 
         <br>
         {% if ventas_por_pagina %}
-        <div class="table-responsive card-body">
-            <table class="table table-bordered">
+        <div class="table-responsive card-body d-none d-md-block">
+            <table class="table table-bordered table-hover ventas-table">
                 <thead class="text-center table-head-color">
                 <tr>
                     {% for columna in columnas %}
@@ -68,8 +123,9 @@
                     <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
                     <td>{{venta.formas_pago}}</td>
                     <td>{{ venta.id_tipo_venta.nombre }}</td>
-                    <td>{{venta.fecha_venta}}</td>
+                    <td>{{venta.fecha_venta|date:"d/m/Y H:i"}}</td>
                     <td class="text-center">
+                        <div class="ventas-actions">
                         <a class="btn btn-cancelar btn-sm" data-bs-target="#confirmarEliminarModal{{ venta.id_venta }}"
                            data-bs-toggle="modal"
                            type="button">
@@ -98,20 +154,80 @@
                                 </div>
                             </div>
                         </div>
-                        <!--
-                        <a type="button" class="btn-crear"
+                        <a type="button" class="btn btn-crear btn-sm"
                            href="{% url 'ventas:editar_venta' venta.id_venta %}"><i class="bi bi-pen"></i></a>
-                         -->
+                         
                         <a class="btn btn-limpiar btn-sm" href="{% url 'ventas:detalle_venta' venta.id_venta %}"
                            type="button"><i class="bi bi-eye"></i></a>
+
+                        {% if venta.factura_emitida %}
+                        <a class="btn btn-secondary btn-sm" href="{% url 'factura:detalle_factura' venta.id_factura_emitida %}"
+                           type="button" title="Ver factura">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </a>
+                        <a class="btn btn-cancelar btn-sm" href="{% url 'factura:anular_factura' venta.id_venta %}"
+                           type="button" title="Anular factura">
+                            <i class="bi bi-file-earmark-x"></i>
+                        </a>
+                        {% else %}
+                        <a class="btn btn-crear btn-sm" href="{% url 'factura:emitir_factura' venta.id_venta %}"
+                           type="button" title="Emitir factura">
+                            <i class="bi bi-receipt"></i>
+                        </a>
+                        {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
 
                 </tbody>
             </table>
-            {% include "base/pagination.html" with items_page=ventas_por_pagina %}
         </div>
+
+        <div class="d-md-none">
+            {% for venta in ventas_por_pagina %}
+            <div class="venta-card-mobile">
+                <div class="venta-badges">
+                    {% if venta.factura_emitida %}
+                    <span class="badge bg-success">Facturada</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Sin factura</span>
+                    {% endif %}
+                    <span class="badge bg-light text-dark border">{{ venta.id_tipo_venta.nombre }}</span>
+                </div>
+                <div class="venta-row"><strong>Cliente</strong><span>{{ venta.id_cliente.nombre }}</span></div>
+                <div class="venta-row"><strong>Total</strong><span>{{ venta.total_venta|floatformat:0|intcomma }}</span></div>
+                <div class="venta-row"><strong>IVA 10</strong><span>{{ venta.total_iva_10|floatformat:0|intcomma }}</span></div>
+                <div class="venta-row"><strong>Forma de pago</strong><span>{{ venta.formas_pago }}</span></div>
+                <div class="venta-row"><strong>Fecha</strong><span>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</span></div>
+                <div class="ventas-actions mt-2">
+                    <a type="button" class="btn btn-crear btn-sm" href="{% url 'ventas:editar_venta' venta.id_venta %}">
+                        <i class="bi bi-pen"></i>
+                    </a>
+                    <a class="btn btn-limpiar btn-sm" href="{% url 'ventas:detalle_venta' venta.id_venta %}" type="button">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    {% if venta.factura_emitida %}
+                    <a class="btn btn-secondary btn-sm" href="{% url 'factura:detalle_factura' venta.id_factura_emitida %}" type="button" title="Ver factura">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </a>
+                    <a class="btn btn-cancelar btn-sm" href="{% url 'factura:anular_factura' venta.id_venta %}" type="button" title="Anular factura">
+                        <i class="bi bi-file-earmark-x"></i>
+                    </a>
+                    {% else %}
+                    <a class="btn btn-crear btn-sm" href="{% url 'factura:emitir_factura' venta.id_venta %}" type="button" title="Emitir factura">
+                        <i class="bi bi-receipt"></i>
+                    </a>
+                    {% endif %}
+                    <a class="btn btn-cancelar btn-sm" data-bs-target="#confirmarEliminarModal{{ venta.id_venta }}" data-bs-toggle="modal" type="button">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% include "base/pagination.html" with items_page=ventas_por_pagina %}
         {% else %}
         {% include "base/sin_registro.html" %}
         {% endif %}

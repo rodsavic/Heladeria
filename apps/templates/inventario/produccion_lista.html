@@ -1,0 +1,58 @@
+{% extends "base/base.html" %}
+
+{% block title %}Lista de Producción{% endblock %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Producción diaria</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Fecha y sabores a prepararse</h6>
+
+        <div class="d-flex justify-content-end mb-3">
+            <a class="btn btn-crear btn-sm" href="{% url 'inventario:crear_produccion' %}">
+                <i class="bi bi-plus-circle"></i> Nueva lista de producción
+            </a>
+        </div>
+
+        {% if items_page %}
+            {% for produccion in items_page %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <strong>Fecha:</strong> {{ produccion.fecha|date:"d/m/Y" }}
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0">
+                            <thead class="table-head-color text-center">
+                                <tr>
+                                    <th style="color:white;">Sabor</th>
+                                    <th style="color:white;">Fabricar Chico</th>
+                                    <th style="color:white;">Fabricar Grande</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detalle in produccion.detalles.all %}
+                                <tr>
+                                    <td>{{ detalle.inventario.nombre }}</td>
+                                    <td class="text-center">{{ detalle.fabricar_chico }}</td>
+                                    <td class="text-center">{{ detalle.fabricar_grande }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">Sin sabores para esta fecha.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% include "base/pagination.html" with items_page=items_page %}
+        {% else %}
+            {% include "base/sin_registro.html" %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

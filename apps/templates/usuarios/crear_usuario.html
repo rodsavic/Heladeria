@@ -6,13 +6,6 @@
 
 {% block content %}
     <h1>Crear Usuario</h1>
-    {% if messages %}
-      <ul>
-        {% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
     <section class="content">
       <div class="container-fluid">
         <div class="vstack gap-2"><!-- INICIO DE PILA DE DATOS -->

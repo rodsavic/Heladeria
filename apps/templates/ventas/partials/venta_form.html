@@ -1,0 +1,309 @@
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+<style>
+  .tipo-venta-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .tipo-venta-group .form-check {
+    margin: 0;
+    padding: 0;
+  }
+
+  .tipo-venta-group .form-check-input {
+    display: none;
+  }
+
+  .tipo-venta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid #d7d7d7;
+    border-radius: 999px;
+    background: #f8f9fa;
+    color: #4b4b4b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+  }
+
+  .tipo-venta-chip::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #c7c7c7;
+    transition: all 0.2s ease;
+  }
+
+  .tipo-venta-group .form-check-input:checked + .tipo-venta-chip {
+    border-color: #e95420;
+    background: #fff1eb;
+    color: #8a2f12;
+    box-shadow: 0 0 0 2px rgba(233, 84, 32, 0.12);
+  }
+
+  .tipo-venta-group .form-check-input:checked + .tipo-venta-chip::before {
+    background: #e95420;
+  }
+
+  .tipo-venta-group .form-check-input:focus-visible + .tipo-venta-chip {
+    outline: 2px solid #e95420;
+    outline-offset: 2px;
+  }
+</style>
+
+<div class="container-fluid">
+  <div class="card" style="width: 100%;">
+    <div class="card-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+        <div>
+          <h2 class="card-title mb-1">{{ page_title }}</h2>
+          <h6 class="card-subtitle text-muted">{{ page_subtitle }}</h6>
+        </div>
+        <div class="mt-2 mt-md-0">
+          <a href="{% url 'ventas:ventas' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+          </a>
+        </div>
+      </div>
+
+      <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();">
+        {% csrf_token %}
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <label class="form-label fw-semibold mb-2">Tipo de Venta</label>
+            <div class="tipo-venta-group">
+              {% for tipo in tipo_venta %}
+              <div class="form-check">
+                <input
+                  class="form-check-input tipo-venta-check"
+                  type="checkbox"
+                  id="tipo_venta_{{ tipo.id }}"
+                  value="{{ tipo.id }}"
+                  data-nombre="{{ tipo.nombre }}"
+                  {% if venta and venta.id_tipo_venta and tipo.id == venta.id_tipo_venta.id %}checked{% elif not venta and forloop.first %}checked{% endif %}
+                >
+                <label class="tipo-venta-chip" for="tipo_venta_{{ tipo.id }}">{{ tipo.nombre }}</label>
+              </div>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="tipo_venta" id="tipo_venta" value="{% if venta and venta.id_tipo_venta %}{{ venta.id_tipo_venta.id }}{% elif tipo_venta %}{{ tipo_venta.0.id }}{% endif %}">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-lg-8 order-2 order-lg-1">
+            <div class="product-selector-container">
+              <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-6 col-lg-5">
+                  <label for="selectProducto" class="form-label fw-semibold">Producto</label>
+                  <select class="selectProducto form-control" name="selectProducto" id="selectProducto">
+                    <option value="" disabled>Seleccionar producto...</option>
+                    {% for producto in productos %}
+                    <option value="{{ producto.id_producto }}"
+                            data-precio-normal="{{ producto.precio_actual }}"
+                            data-precio-pedidosya="{{ producto.precio_pedidos_ya|default_if_none:producto.precio_actual }}"
+                            data-descripcionIva="{{ producto.id_iva.descripcion }}">
+                      {{ producto.nombre }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4 col-lg-3">
+                  <label for="cantidad" class="form-label fw-semibold">Cantidad</label>
+                  <input class="form-control" type="number" name="cantidad" id="cantidad" min="1" value="1">
+                </div>
+
+                <div class="col-12 col-md-2 col-lg-2">
+                  <button class="btn btn-crear w-100" type="button" onclick="agregarProductoATabla()">
+                    <i class="bi bi-plus-circle"></i>
+                    <span class="d-none d-sm-inline"> Agregar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover table-striped" id="tablaProductos">
+                <thead class="table-head-color">
+                  <tr>
+                    <th class="text-center">Producto</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-center">Precio Unit.</th>
+                    <th class="text-center">Total</th>
+                    <th class="text-center d-none d-sm-table-cell">IVA 10</th>
+                    <th class="text-center d-none d-sm-table-cell">IVA 5</th>
+                    <th class="text-center">Accion</th>
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for detalle in detalle_venta %}
+                  <tr data-producto-id="{{ detalle.id_producto.id_producto }}">
+                    <td>{{ detalle.id_producto.nombre }}</td>
+                    <td>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        class="form-control form-control-sm text-center cantidad-producto-input"
+                        value="{{ detalle.cantidad_producto|floatformat:0 }}"
+                      >
+                    </td>
+                    <td>{{ detalle.precio_unitario_venta|floatformat:0 }}</td>
+                    <td>{{ detalle.total_detalle|floatformat:0 }}</td>
+                    <td>{{ detalle.total_iva_10|floatformat:0 }}</td>
+                    <td>{{ detalle.total_iva_5|floatformat:0 }}</td>
+                    <td>
+                      <button type="button" class="btn-cancelar btn-sm" title="Eliminar"
+                              onclick="eliminarProducto('{{ detalle.id_producto.id_producto }}', {{ detalle.id_producto.id_iva.descripcion|floatformat:0 }})">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <input type="hidden" name="productos_json" id="productos_json">
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-4 order-1 order-lg-2">
+            <div class="summary-card card-sidebar">
+              <h5 class="mb-3 text-center text-lg-start">Resumen de Venta</h5>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="fecha_venta">Fecha y hora de venta</label>
+                <input type="datetime-local" class="form-control" name="fecha_venta" id="fecha_venta"
+                  value="{% if venta %}{{ venta.fecha_venta|date:'Y-m-d\\TH:i' }}{% else %}{{ now|date:'Y-m-d\\TH:i' }}{% endif %}">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="cliente">Cliente</label>
+                <select class="form-control" name="cliente" id="cliente">
+                  <option value="">Seleccionar cliente...</option>
+                  {% for cliente in clientes %}
+                  <option value="{{ cliente.id_cliente }}" {% if venta and cliente.id_cliente == venta.id_cliente.id_cliente %}selected{% endif %}>
+                    {{ cliente.nombre }} - {{ cliente.documento }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-semibold" for="total_venta">Total Venta</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Gs</span>
+                    <input class="form-control fw-bold" type="number" name="total_venta" id="total_venta"
+                      value="{% if venta %}{{ venta.total_venta|floatformat:0 }}{% else %}0{% endif %}" readonly>
+                  </div>
+                </div>
+
+                <div class="col-6">
+                  <label class="form-label fw-semibold" for="total_iva_10">IVA 10%</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Gs</span>
+                    <input class="form-control" type="number" name="total_iva_10" id="total_iva_10"
+                      value="{% if venta %}{{ venta.total_iva_10|floatformat:0 }}{% else %}0{% endif %}" readonly>
+                  </div>
+                </div>
+
+                <div class="col-6">
+                  <label class="form-label fw-semibold" for="total_iva_5">IVA 5%</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Gs</span>
+                    <input class="form-control" type="number" name="total_iva_5" id="total_iva_5"
+                      value="{% if venta %}{{ venta.total_iva_5|floatformat:0 }}{% else %}0{% endif %}" readonly>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-crear btn-lg d-none d-lg-inline-block">
+                  <i class="bi bi-save"></i> {{ save_button_text }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-grid mt-3 d-lg-none">
+          <button type="submit" class="btn btn-crear btn-lg">
+            <i class="bi bi-save"></i> {{ save_button_text }}
+          </button>
+        </div>
+
+        <div class="modal fade" id="modalCobro" tabindex="-1" aria-labelledby="modalCobroLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalCobroLabel">
+                  <i class="bi bi-credit-card"></i> Forma de pago
+                </h5>
+                <button onclick="cerrarModal()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="totalVentaModal" class="form-label fw-semibold">Total de Venta</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Gs</span>
+                    <input type="number" id="totalVentaModal" class="form-control fw-bold" disabled>
+                  </div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12 col-md-4">
+                    <label for="efectivo" class="form-label"><i class="bi bi-cash"></i> Efectivo</label>
+                    <div class="input-group">
+                      <span class="input-group-text">Gs</span>
+                      <input type="number" id="efectivo" name="efectivo" class="form-control" placeholder="0" min="0"
+                             value="{{ monto_efectivo|default:0 }}" data-default="{{ monto_efectivo|default:0 }}">
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-4">
+                    <label for="pos" class="form-label"><i class="bi bi-credit-card-2-front"></i> POS</label>
+                    <div class="input-group">
+                      <span class="input-group-text">Gs</span>
+                      <input type="number" id="pos" name="pos" class="form-control" placeholder="0" min="0"
+                             value="{{ monto_pos|default:0 }}" data-default="{{ monto_pos|default:0 }}">
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-4">
+                    <label for="transferencia" class="form-label"><i class="bi bi-bank"></i> Transferencia</label>
+                    <div class="input-group">
+                      <span class="input-group-text">Gs</span>
+                      <input type="number" id="transferencia" name="transferencia" class="form-control" placeholder="0" min="0"
+                             value="{{ monto_transferencia|default:0 }}" data-default="{{ monto_transferencia|default:0 }}">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 p-3 bg-light rounded">
+                  <span id="mensajeVuelto" class="fw-bold d-block text-center"></span>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <div class="action-buttons w-100">
+                  <button type="button" class="btn btn-crear" data-bs-dismiss="modal" onclick="enviarFormulario()">
+                    <i class="bi bi-check-circle"></i> Guardar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

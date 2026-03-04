@@ -42,6 +42,12 @@ class ProductosForm(ModelForm):
                 'min':1,
                 'aria-label': 'Precio actual'
             }),
+            'precio_pedidos_ya':NumberInput(attrs={
+                'class':'form-control',
+                'placeholder': 'Ingrese el precio para Pedidos Ya',
+                'min':1,
+                'aria-label': 'Precio Pedidos Ya'
+            }),
             'costo_actual': NumberInput(attrs={
                 'class':'form-control',
                 'placeholder': 'Ingrese el costo actual',
@@ -83,6 +89,16 @@ class ProductosForm(ModelForm):
         if queryset.exists():
             raise ValidationError('El nombre ya existe!')
         return nombre
+
+    def clean(self):
+        cleaned_data = super().clean()
+        precio_actual = cleaned_data.get('precio_actual')
+        precio_pedidos_ya = cleaned_data.get('precio_pedidos_ya')
+
+        if precio_actual is not None and (precio_pedidos_ya is None or float(precio_pedidos_ya) <= 0):
+            cleaned_data['precio_pedidos_ya'] = float(precio_actual) * 1.30
+
+        return cleaned_data
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

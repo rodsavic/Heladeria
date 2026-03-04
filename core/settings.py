@@ -52,7 +52,9 @@ LOCAL_APPS = [
     'apps.usuarios',
     'apps.ventas',
     'apps.dashboard',
-    'apps.inventario'
+    'apps.inventario',
+    'apps.factura',
+    'apps.configuracion',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
@@ -95,15 +97,25 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 if 'DATABASE_URL' in os.environ:
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, engine='django.db.backends.postgresql')
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'railway',
+            'USER': 'postgres',
+            'PASSWORD': 'SHlWeISUyhFLghZcpfOrcDUJcGyQWpGh',
+            'HOST': 'turntable.proxy.rlwy.net',
+            'PORT': 12224,
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {'sslmode': 'require'}
+        }
     }
 else:
     DATABASES = {
+        #'default': dj_database_url.parse('postgresql://postgres:SiBHjChzvbjVgwJOYhHVzezhvQPJwUrf@centerbeam.proxy.rlwy.net:25265/railway') para ambiente de pruebas
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'heladeria',
-            'USER': 'postgres',
-            'PASSWORD': '1234',
+            'NAME': 'heladeria',  # Debes crearla antes en pgAdmin o SQL
+            'USER': 'postgres',  # Tu usuario (generalmente postgres)
+            'PASSWORD': '1234',  # Tu contraseña local
             'HOST': 'localhost',
             'PORT': '5432',
         }

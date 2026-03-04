@@ -60,6 +60,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if request.user.is_superuser %}
+                <li class="sidebar-item">
+                    <a href="{% url 'configuracion:empresa' %}" class="sidebar-link">
+                        <span>Configuración Empresa</span>
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </li>
         {% endif %}

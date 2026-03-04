@@ -1,0 +1,41 @@
+{% extends "base/base.html" %}
+{% load humanize %}
+
+{% block title %}Emitir Factura{% endblock %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Emitir factura</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Venta #{{ venta.id_venta }}</h6>
+        <a href="{% url 'ventas:ventas' %}" class="card-link mb-3">Volver a ventas</a>
+
+        <form method="post" class="mt-3">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Cliente</label>
+                    <input class="form-control" value="{{ cliente.nombre }} {{ cliente.apellido }}" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">RUC/Documento Cliente</label>
+                    <input class="form-control" value="{{ cliente.documento }}" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Total venta</label>
+                    <input class="form-control" value="{{ venta.total_venta|floatformat:0|intcomma }}" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de factura</label>
+                    <select class="form-control" name="tipo_factura" required>
+                        <option value="CONTADO">Al contado</option>
+                        <option value="CREDITO">Crédito</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-crear mt-4">Confirmar emisión</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

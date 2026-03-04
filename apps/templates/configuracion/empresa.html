@@ -1,0 +1,56 @@
+{% extends "base/base.html" %}
+
+{% block title %}Configuración de Empresa{% endblock %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Configuración de empresa</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Datos usados para la facturación</h6>
+
+        <form method="post" class="mt-3">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nombre empresa</label>
+                    <input type="text" class="form-control" name="nombre_empresa" value="{{ configuracion.nombre_empresa }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">RUC</label>
+                    <input type="text" class="form-control" name="ruc" value="{{ configuracion.ruc }}" required>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" class="form-control" name="direccion" value="{{ configuracion.direccion }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Nro Timbrado</label>
+                    <input type="text" class="form-control" name="nro_timbrado" value="{{ configuracion.nro_timbrado }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Vigencia timbrado desde</label>
+                    <input type="date" class="form-control" name="vigencia_timbrado_desde" value="{{ configuracion.vigencia_timbrado_desde|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Vigencia timbrado hasta</label>
+                    <input type="date" class="form-control" name="vigencia_timbrado_hasta" value="{{ configuracion.vigencia_timbrado_hasta|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Establecimiento</label>
+                    <input type="text" class="form-control" name="establecimiento" maxlength="3" value="{{ configuracion.establecimiento }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Punto de expedición</label>
+                    <input type="text" class="form-control" name="punto_expedicion" maxlength="3" value="{{ configuracion.punto_expedicion }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Siguiente secuencia factura</label>
+                    <input type="number" class="form-control" name="secuencia_actual" min="1" value="{{ configuracion.secuencia_actual }}" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-crear mt-4">Guardar configuración</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

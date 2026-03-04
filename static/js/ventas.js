@@ -9,15 +9,182 @@ function inicializarSelects() {
     });
 }
 
+function getTipoVentaSeleccionadoCheckbox() {
+    return document.querySelector('.tipo-venta-check:checked');
+}
+
+function syncTipoVentaHiddenInput() {
+    const hiddenTipoVenta = document.getElementById("tipo_venta");
+    const checked = getTipoVentaSeleccionadoCheckbox();
+    if (!hiddenTipoVenta) return;
+    hiddenTipoVenta.value = checked ? checked.value : "";
+}
+
+function esTipoVentaPedidosYaSeleccionado() {
+    const selected = getTipoVentaSeleccionadoCheckbox();
+    if (!selected) return false;
+    const texto = (selected.getAttribute('data-nombre') || "").toLowerCase();
+    return texto.includes("pedido");
+}
+
+function obtenerPrecioPorTipoDesdeOpcion(opcionProducto) {
+    if (!opcionProducto) return 0;
+    const precioNormal = parseFloat(opcionProducto.getAttribute('data-precio-normal')) || 0;
+    const precioPedidosYaRaw = parseFloat(opcionProducto.getAttribute('data-precio-pedidosya')) || 0;
+    const precioPedidosYa = precioPedidosYaRaw > 0 ? precioPedidosYaRaw : precioNormal;
+    return esTipoVentaPedidosYaSeleccionado() ? precioPedidosYa : precioNormal;
+}
+
+function filtrarProductosPorTipoVenta() {
+    const selectProducto = document.getElementById("selectProducto");
+    if (!selectProducto) return;
+
+    const esPedidosYa = esTipoVentaPedidosYaSeleccionado();
+    let seleccionSigueValida = false;
+
+    Array.from(selectProducto.options).forEach((option) => {
+        if (!option.value) return; // placeholder
+
+        const precioPedidosYa = parseFloat(option.getAttribute('data-precio-pedidosya')) || 0;
+        const habilitado = !esPedidosYa || precioPedidosYa > 0;
+
+        option.hidden = !habilitado;
+        option.disabled = !habilitado;
+
+        if (habilitado && option.value === selectProducto.value) {
+            seleccionSigueValida = true;
+        }
+    });
+
+    if (!seleccionSigueValida) {
+        selectProducto.value = "";
+        if (typeof $ !== "undefined" && $('.selectProducto').length) {
+            $('.selectProducto').val(null).trigger('change');
+        }
+    }
+}
+
+function serializarTablaProductos() {
+    const tabla = document.getElementById("tablaProductos")?.querySelector("tbody");
+    if (!tabla) return [];
+
+    const productosSeleccionados = [];
+    for (let fila of tabla.rows) {
+        const idProducto = fila.getAttribute('data-producto-id');
+        const cantidadInput = fila.querySelector('.cantidad-producto-input');
+        const cantidad = parseInt(cantidadInput?.value, 10) || 1;
+        const totalDetalle = parseFloat(fila.cells[3].innerText) || 0;
+        const iva10 = parseFloat(fila.cells[4].innerText) || 0;
+        const iva5 = parseFloat(fila.cells[5].innerText) || 0;
+        productosSeleccionados.push({
+            id_producto: idProducto,
+            cantidad: cantidad,
+            total_detalle: totalDetalle.toFixed(0),
+            total_detalle_iva_10: iva10.toFixed(0),
+            total_detalle_iva_5: iva5.toFixed(0),
+        });
+    }
+    return productosSeleccionados;
+}
+
+function recalcularTablaPorTipoVenta() {
+    const tabla = document.getElementById("tablaProductos")?.querySelector("tbody");
+    const selectProducto = document.getElementById("selectProducto");
+    if (!tabla || !selectProducto) return;
+
+    let totalVenta = 0;
+    let totalIva10 = 0;
+    let totalIva5 = 0;
+
+    for (let fila of tabla.rows) {
+        const idProducto = fila.getAttribute('data-producto-id');
+        const cantidadInput = fila.querySelector('.cantidad-producto-input');
+        const cantidad = parseInt(cantidadInput?.value, 10) || 1;
+        if (cantidadInput) {
+            cantidadInput.value = String(Math.max(1, cantidad));
+        }
+        const opcionProducto = Array.from(selectProducto.options).find(opt => opt.value === idProducto);
+        if (!opcionProducto) continue;
+
+        const precio = obtenerPrecioPorTipoDesdeOpcion(opcionProducto);
+        const ivaDescripcion = parseInt(opcionProducto.getAttribute('data-descripcionIva')) || 0;
+        const totalDetalle = cantidad * precio;
+        let iva10 = 0;
+        let iva5 = 0;
+
+        if (ivaDescripcion === 10) {
+            iva10 = totalDetalle / 11;
+        } else if (ivaDescripcion === 5) {
+            iva5 = totalDetalle / 21;
+        }
+
+        fila.cells[2].innerText = precio.toFixed(0);
+        fila.cells[3].innerText = totalDetalle.toFixed(0);
+        fila.cells[4].innerText = iva10.toFixed(0);
+        fila.cells[5].innerText = iva5.toFixed(0);
+
+        totalVenta += totalDetalle;
+        totalIva10 += iva10;
+        totalIva5 += iva5;
+    }
+
+    document.getElementById("total_venta").value = totalVenta.toFixed(0);
+    document.getElementById("total_iva_10").value = totalIva10.toFixed(0);
+    document.getElementById("total_iva_5").value = totalIva5.toFixed(0);
+    const totalVentaModal = document.getElementById("totalVentaModal");
+    if (totalVentaModal) {
+        totalVentaModal.value = totalVenta.toFixed(0);
+    }
+}
+
+function recalcularTotalesDesdeTabla() {
+    const tabla = document.getElementById("tablaProductos")?.querySelector("tbody");
+    const totalVentaInput = document.getElementById("total_venta");
+    const totalIva10Input = document.getElementById("total_iva_10");
+    const totalIva5Input = document.getElementById("total_iva_5");
+    if (!tabla || !totalVentaInput || !totalIva10Input || !totalIva5Input) return;
+
+    let totalVenta = 0;
+    let totalIva10 = 0;
+    let totalIva5 = 0;
+
+    for (let fila of tabla.rows) {
+        totalVenta += parseFloat(fila.cells[3].innerText) || 0;
+        totalIva10 += parseFloat(fila.cells[4].innerText) || 0;
+        totalIva5 += parseFloat(fila.cells[5].innerText) || 0;
+    }
+
+    totalVentaInput.value = totalVenta.toFixed(0);
+    totalIva10Input.value = totalIva10.toFixed(0);
+    totalIva5Input.value = totalIva5.toFixed(0);
+
+    const totalVentaModal = document.getElementById("totalVentaModal");
+    if (totalVentaModal) {
+        totalVentaModal.value = totalVenta.toFixed(0);
+    }
+}
+
 function agregarProductoATabla() {
 
     const selectProducto = document.getElementById("selectProducto");
+    syncTipoVentaHiddenInput();
+    const tipoVentaHidden = document.getElementById("tipo_venta");
+    if (!tipoVentaHidden || !tipoVentaHidden.value) {
+        alert("Selecciona el tipo de venta antes de agregar productos.");
+        return;
+    }
+
     const cantidadInput = parseFloat(document.getElementById("cantidad").value) || 0;
-    const precio = parseFloat(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-precio')) || 0;
+    const opcionSeleccionada = selectProducto.options[selectProducto.selectedIndex];
+    if (!opcionSeleccionada) {
+        alert("Selecciona un producto válido.");
+        return;
+    }
+    const precio = obtenerPrecioPorTipoDesdeOpcion(opcionSeleccionada);
     const cantidad = parseInt(cantidadInput, 10);
     const idProducto = selectProducto.value;
-    const ivaDescripcion = parseInt(selectProducto.options[selectProducto.selectedIndex].getAttribute('data-descripcionIva')) || 0;
-    const nombreProducto = selectProducto.options[selectProducto.selectedIndex].text;
+    const ivaDescripcion = parseInt(opcionSeleccionada.getAttribute('data-descripcionIva')) || 0;
+    const nombreProducto = opcionSeleccionada.text;
 
     console.log("idProducto:", idProducto, "tipo de dato:", typeof idProducto)
 
@@ -51,6 +218,9 @@ function agregarProductoATabla() {
             // Actualizar producto existente
             const totalDetalleNuevo = parseInt(filaExistente.cells[3].innerText) + totalDetalle;
             const ivaAnterior = parseFloat(filaExistente.cells[4].innerText) || 0;
+            const cantidadInputExistente = filaExistente.querySelector('.cantidad-producto-input');
+            const cantidadActual = parseInt(cantidadInputExistente?.value, 10) || 1;
+            const nuevaCantidad = cantidadActual + cantidad;
 
             if (ivaDescripcion === 10) {
                 actualizarTotalIVA(-ivaAnterior, 0);
@@ -63,8 +233,9 @@ function agregarProductoATabla() {
             }
 
             // Actualizar la fila en la tabla
-            //const fila = document.querySelector(`tr[data-producto-id='${idProducto}']`);
-            filaExistente.cells[1].innerText = parseInt(filaExistente.cells[1].innerText) + cantidad;
+            if (cantidadInputExistente) {
+                cantidadInputExistente.value = nuevaCantidad;
+            }
             filaExistente.cells[3].innerText = totalDetalleNuevo;
             filaExistente.cells[4].innerText = iva10.toFixed(0);
             filaExistente.cells[5].innerText = iva5.toFixed(0);
@@ -83,7 +254,7 @@ function agregarProductoATabla() {
             const celdaAccion = nuevaFila.insertCell(6);
 
             celdaProducto.innerText = nombreProducto;
-            celdaCantidad.innerText = cantidad;
+            celdaCantidad.innerHTML = `<input type="number" min="1" step="1" class="form-control form-control-sm text-center cantidad-producto-input" value="${cantidad}">`;
             celdaPrecio.innerText = precio.toFixed(0);
             celdaTotalDetalle.innerText = totalDetalle.toFixed(0);
 
@@ -97,7 +268,7 @@ function agregarProductoATabla() {
             }
             celdaIva10.innerText = iva10.toFixed(0);
             celdaIva5.innerText = iva5.toFixed(0);
-            celdaAccion.innerHTML = `<button class="btn-cancelar btn-sm" title="Eliminar" onclick="eliminarProducto('${idProducto}', ${ivaDescripcion})"><i class="bi bi-trash"></i></button>`;
+            celdaAccion.innerHTML = `<button type="button" class="btn-cancelar btn-sm" title="Eliminar" onclick="eliminarProducto('${idProducto}', ${ivaDescripcion})"><i class="bi bi-trash"></i></button>`;
             console.log("idProducto:", idProducto, "tipo de dato:", typeof idProducto)
             console.log("cantidad:", cantidad, "tipo de dato:", typeof cantidad)
             console.log("total_detalle:", totalDetalle, "tipo de dato:", typeof totalDetalle)
@@ -168,10 +339,13 @@ function abrirModalVuelto() {
     // Actualizar el total en el modal
     totalVentaModal.value = totalVenta.toLocaleString('es-ES');
 
-    // Limpiar campos anteriores
-    document.getElementById("efectivo").value = "";
-    document.getElementById("pos").value = "";
-    document.getElementById("transferencia").value = "";
+    // Restablecer campos de pago (en editar usa valores precargados)
+    ['efectivo', 'pos', 'transferencia'].forEach((id) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const defaultValue = input.getAttribute('data-default');
+        input.value = defaultValue !== null ? defaultValue : "";
+    });
     document.getElementById("mensajeVuelto").textContent = "";
 
     // Obtener el modal y mostrarlo
@@ -215,6 +389,46 @@ function cerrarModal() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    const tipoVentaChecks = Array.from(document.querySelectorAll('.tipo-venta-check'));
+    if (tipoVentaChecks.length > 0) {
+        if (!tipoVentaChecks.some(chk => chk.checked)) {
+            tipoVentaChecks[0].checked = true;
+        }
+
+        tipoVentaChecks.forEach((check) => {
+            check.addEventListener('change', function () {
+                if (this.checked) {
+                    tipoVentaChecks.forEach(other => {
+                        if (other !== this) other.checked = false;
+                    });
+                }
+                syncTipoVentaHiddenInput();
+                filtrarProductosPorTipoVenta();
+                recalcularTablaPorTipoVenta();
+            });
+        });
+    }
+
+    syncTipoVentaHiddenInput();
+    filtrarProductosPorTipoVenta();
+    recalcularTablaPorTipoVenta();
+    recalcularTotalesDesdeTabla();
+    const productosJsonInput = document.getElementById('productos_json');
+    if (productosJsonInput) {
+        productosJsonInput.value = JSON.stringify(serializarTablaProductos());
+    }
+
+    const form = document.querySelector('form');
+    if (form && productosJsonInput) {
+        form.addEventListener('submit', function() {
+            productosJsonInput.value = JSON.stringify(serializarTablaProductos());
+        });
+    }
+
+    if (productosJsonInput) {
+        productosJsonInput.value = JSON.stringify(serializarTablaProductos());
+    }
+
     // Cerrar modal al hacer clic en el backdrop
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal-backdrop')) {
@@ -236,6 +450,25 @@ document.addEventListener('DOMContentLoaded', function() {
             element.addEventListener('input', calcularVuelto);
         }
     });
+
+    const tbody = document.getElementById("tablaProductos")?.querySelector("tbody");
+    if (tbody) {
+        tbody.addEventListener('input', function (e) {
+            if (!e.target.classList.contains('cantidad-producto-input')) return;
+            let value = parseInt(e.target.value, 10);
+            if (Number.isNaN(value) || value < 1) value = 1;
+            e.target.value = value;
+            recalcularTablaPorTipoVenta();
+        });
+
+        tbody.addEventListener('change', function (e) {
+            if (!e.target.classList.contains('cantidad-producto-input')) return;
+            let value = parseInt(e.target.value, 10);
+            if (Number.isNaN(value) || value < 1) value = 1;
+            e.target.value = value;
+            recalcularTablaPorTipoVenta();
+        });
+    }
 });
 
 // Función para calcular el vuelto
@@ -279,7 +512,7 @@ function enviarFormulario() {
 
         for (let fila of tabla.rows) {
             const idProducto = fila.getAttribute('data-producto-id');
-            const cantidad = parseInt(fila.cells[1].innerText, 10);
+            const cantidad = parseInt(fila.querySelector('.cantidad-producto-input')?.value, 10) || 1;
             const totalDetalle = parseFloat(fila.cells[3].innerText) || 0;
             const iva10 = parseFloat(fila.cells[4].innerText) || 0;
             const iva5 = parseFloat(fila.cells[5].innerText) || 0;
