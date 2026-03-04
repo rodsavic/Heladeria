@@ -1,0 +1,238 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Factura {{ factura.nro_factura }}{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .ticket-wrapper {
+        margin: 0 auto;
+    }
+
+    .ticket-wrapper.ticket-80 {
+        max-width: 302px;
+    }
+
+    .ticket-wrapper.ticket-58 {
+        max-width: 219px;
+    }
+
+    .ticket-card {
+        border: 1px dashed #b9b9b9;
+        border-radius: 12px;
+        background: #fff;
+        padding: 1rem;
+        font-size: 0.86rem;
+    }
+
+    .ticket-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .ticket-subtitle {
+        text-align: center;
+        font-size: 0.8rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .ticket-logo {
+        display: block;
+        margin: 0 auto 0.8rem auto;
+        max-height: 65px;
+    }
+
+    .ticket-section {
+        border-top: 1px dashed #cfcfcf;
+        padding-top: 0.55rem;
+        margin-top: 0.55rem;
+    }
+
+    .ticket-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .ticket-products {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.4rem;
+    }
+
+    .ticket-products th,
+    .ticket-products td {
+        padding: 0.24rem 0;
+        border-bottom: 1px dotted #d6d6d6;
+        font-size: 0.8rem;
+    }
+
+    .ticket-products th:nth-child(2),
+    .ticket-products th:nth-child(3),
+    .ticket-products td:nth-child(2),
+    .ticket-products td:nth-child(3) {
+        text-align: right;
+    }
+
+    .ticket-products th:first-child,
+    .ticket-products td:first-child {
+        width: 65%;
+    }
+
+    .ticket-total {
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    .ticket-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .ticket-wrapper.ticket-58 .ticket-card {
+        font-size: 0.74rem;
+        padding: 0.7rem;
+    }
+
+    .ticket-wrapper.ticket-58 .ticket-title {
+        font-size: 0.92rem;
+    }
+
+    .ticket-wrapper.ticket-58 .ticket-subtitle {
+        font-size: 0.7rem;
+    }
+
+    .ticket-wrapper.ticket-58 .ticket-products th,
+    .ticket-wrapper.ticket-58 .ticket-products td {
+        font-size: 0.7rem;
+    }
+
+    @media print {
+        body, html {
+            background: #fff !important;
+        }
+
+        #sidebar,
+        .mobile-toggle,
+        .sidebar-overlay,
+        .messages-stack,
+        .ticket-actions {
+            display: none !important;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding: 0 !important;
+        }
+
+        .content {
+            padding: 0 !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .ticket-wrapper {
+            max-width: 100%;
+        }
+
+        .ticket-card {
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            font-size: 0.78rem;
+        }
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="ticket-actions">
+    <a href="{% url 'ventas:ventas' %}" class="btn btn-secondary btn-sm">Volver</a>
+    <button type="button" class="btn btn-crear btn-sm" onclick="imprimirTicket(80);">Imprimir 80mm</button>
+    <button type="button" class="btn btn-limpiar btn-sm" onclick="imprimirTicket(58);">Imprimir 58mm</button>
+</div>
+
+<div class="ticket-wrapper ticket-80" id="ticketWrapper">
+    <div class="ticket-card">
+        <img src="{% static 'images/logo.svg' %}" alt="Logo empresa" class="ticket-logo">
+        <div class="ticket-title">{{ factura.nombre_empresa }}</div>
+        <div class="ticket-subtitle">FACTURA N° {{ factura.nro_factura }}</div>
+
+        <div class="ticket-row"><span>RUC negocio:</span><strong>{{ factura.ruc_empresa }}</strong></div>
+        <div class="ticket-row"><span>Dirección:</span><strong>{{ factura.direccion_empresa }}</strong></div>
+        <div class="ticket-row"><span>Timbrado:</span><strong>{{ factura.nro_timbrado }}</strong></div>
+        <div class="ticket-row">
+            <span>Vigencia:</span>
+            <strong>{{ factura.vigencia_timbrado_desde|date:"d/m/Y" }} - {{ factura.vigencia_timbrado_hasta|date:"d/m/Y" }}</strong>
+        </div>
+
+        <div class="ticket-section">
+            <div class="ticket-row"><span>Fecha:</span><strong>{{ factura.fecha_emision|date:"d/m/Y H:i" }}</strong></div>
+            <div class="ticket-row"><span>Cliente:</span><strong>{{ cliente.nombre }} {{ cliente.apellido }}</strong></div>
+            <div class="ticket-row"><span>RUC/CI:</span><strong>{{ cliente.documento }}</strong></div>
+            <div class="ticket-row"><span>Tipo factura:</span><strong>{{ factura.get_tipo_factura_display }}</strong></div>
+            <div class="ticket-row"><span>Forma de pago:</span><strong>{{ factura.forma_pago }}</strong></div>
+            <div class="ticket-row"><span>Estado:</span><strong>{{ factura.estado }}</strong></div>
+        </div>
+
+        <div class="ticket-section">
+            <table class="ticket-products">
+                <thead>
+                    <tr>
+                        <th>Resumen compra</th>
+                        <th>Cant.</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td>{{ detalle.id_producto.nombre }}</td>
+                        <td>{{ detalle.cantidad_producto|floatformat:0 }}</td>
+                        <td>{{ detalle.total_detalle|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="ticket-section">
+            <div class="ticket-row"><span>IVA 10:</span><strong>{{ venta.total_iva_10|floatformat:0|intcomma }}</strong></div>
+            <div class="ticket-row"><span>IVA 5:</span><strong>{{ venta.total_iva_5|floatformat:0|intcomma }}</strong></div>
+            <div class="ticket-row ticket-total"><span>TOTAL:</span><strong>{{ venta.total_venta|floatformat:0|intcomma }}</strong></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function imprimirTicket(anchoMm) {
+        const wrapper = document.getElementById('ticketWrapper');
+        const styleId = 'ticket-page-size-style';
+        let pageStyle = document.getElementById(styleId);
+
+        wrapper.classList.remove('ticket-80', 'ticket-58');
+        wrapper.classList.add(anchoMm === 58 ? 'ticket-58' : 'ticket-80');
+
+        if (!pageStyle) {
+            pageStyle = document.createElement('style');
+            pageStyle.id = styleId;
+            document.head.appendChild(pageStyle);
+        }
+
+        const margin = anchoMm === 58 ? '3mm' : '5mm';
+        pageStyle.textContent = `@page { size: ${anchoMm}mm auto; margin: ${margin}; }`;
+
+        window.print();
+    }
+</script>
+{% endblock %}

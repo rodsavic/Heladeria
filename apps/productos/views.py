@@ -15,7 +15,7 @@ def productosReadView(request):
     if query:
         productos = productos.filter(nombre__icontains=query)
 
-    columnas = ['Nombre','Precio Actual','Stock Minimo','Stock Actual','Vencimiento','Costo Actual','Medida']
+    columnas = ['Nombre','Precio Actual','Precio Pedidos Ya','Stock Minimo','Stock Actual','Vencimiento','Costo Actual','Medida']
     paginator = Paginator(productos,10)
     page_number = request.GET.get('page')
     items_page=paginator.get_page(page_number)
@@ -36,6 +36,10 @@ def createProductosView(request):
             try:
                 nombre = request.POST['nombre']
                 precio_actual = request.POST['precio_actual']
+                precio_pedidos_ya_raw = request.POST.get('precio_pedidos_ya')
+                precio_pedidos_ya = float(precio_pedidos_ya_raw) if precio_pedidos_ya_raw else 0
+                if precio_pedidos_ya <= 0:
+                    precio_pedidos_ya = float(precio_actual) * 1.30
                 stock_minimo = request.POST['stock_minimo']
                 stock_actual = request.POST['stock_actual']
                 vencimiento = request.POST['vencimiento']
@@ -46,6 +50,7 @@ def createProductosView(request):
                 productoNuevo = Producto.objects.create(
                     nombre =nombre,
                     precio_actual = precio_actual,
+                    precio_pedidos_ya=precio_pedidos_ya,
                     stock_minimo= stock_minimo,
                     stock_actual = stock_actual,
                     vencimiento = vencimiento,
@@ -122,6 +127,7 @@ def productos_json(request):
             "id_producto",
             "nombre",
             "precio_actual",
+            "precio_pedidos_ya",
             "stock_minimo",
             "stock_actual",
             "vencimiento",

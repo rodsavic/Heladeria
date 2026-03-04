@@ -43,6 +43,7 @@ class Producto(models.Model):
     id_producto = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100, db_column='nombre', null=False)
     precio_actual = models.FloatField(db_column='precio_actual', null=False)
+    precio_pedidos_ya = models.FloatField(db_column='precio_pedidos_ya', null=True, blank=True, default=0)
     stock_minimo = models.IntegerField(db_column='stock_minimo', null=True)
     stock_actual = models.IntegerField(db_column='stock_actual', null=True)
     vencimiento = models.DateField(db_column='vencimiento', null=True)

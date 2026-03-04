@@ -30,7 +30,11 @@
         <h1>Inventario</h1>
 
         <div class="row p-3 card-title align-items-center">
-            <div class="col-12 d-flex justify-content-md-end justify-content-center">
+            <div class="col-12 d-flex justify-content-md-end justify-content-center gap-2">
+                <a class="btn btn-secondary btn-sm"
+                   href="{% url 'inventario:lista_produccion' %}">
+                    <i class="bi bi-calendar3"></i> Lista de Producción
+                </a>
                 <a class="btn btn-crear btn-sm"
                    href="{% url 'inventario:crear_inventario' %}">
                     <i class="bi bi-plus-circle"></i> Nuevo Registro

@@ -25,6 +25,11 @@
             </div>
 
             <div class="input-group mb-3">
+                <span class="input-group-text">Precio Pedidos Ya</span>
+                {{ form.precio_pedidos_ya }}
+            </div>
+
+            <div class="input-group mb-3">
                 <span class="input-group-text">Costo actual</span>
                 {{ form.costo_actual }}
             </div>
@@ -64,4 +69,32 @@
 
     </div>
 </div>
+<script>
+    (function () {
+        const precioActual = document.getElementById('id_precio_actual');
+        const precioPedidosYa = document.getElementById('id_precio_pedidos_ya');
+        if (!precioActual || !precioPedidosYa) return;
+        let autoPrecioPedidosYa = true;
+
+        function calcularPedidosYa(valorBase) {
+            const base = parseFloat(valorBase) || 0;
+            return base > 0 ? (base * 1.30).toFixed(0) : '';
+        }
+
+        function autocompletarDesdePrecio() {
+            if (autoPrecioPedidosYa) {
+                precioPedidosYa.value = calcularPedidosYa(precioActual.value);
+            }
+        }
+
+        precioActual.addEventListener('input', autocompletarDesdePrecio);
+        precioPedidosYa.addEventListener('input', function () {
+            const valorActual = parseFloat(precioPedidosYa.value) || 0;
+            const valorAuto = parseFloat(calcularPedidosYa(precioActual.value)) || 0;
+            autoPrecioPedidosYa = !(valorActual > 0 && valorActual !== valorAuto);
+        });
+
+        autocompletarDesdePrecio();
+    })();
+</script>
 {% endblock %}
