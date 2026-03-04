@@ -19,6 +19,15 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <strong>Fecha:</strong> {{ produccion.fecha|date:"d/m/Y" }}
+                    <span class="ms-2 text-muted">#{{ produccion.id }}</span>
+                    <span class="ms-2 text-muted">Creado: {{ produccion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    {% if produccion.estado == 'CREADO' %}
+                        <span class="badge bg-secondary ms-2">Creado</span>
+                    {% elif produccion.estado == 'REALIZADO' %}
+                        <span class="badge bg-success ms-2">Realizado</span>
+                    {% else %}
+                        <span class="badge bg-danger ms-2">Cancelado</span>
+                    {% endif %}
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -44,6 +53,83 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                    </div>
+                    <div class="p-2 d-flex justify-content-end gap-2">
+                        {% if produccion.estado == 'CREADO' %}
+                        <button type="button" class="btn btn-success btn-sm"
+                                title="Marcar como Realizado"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmarRealizadoModal{{ produccion.id }}">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm"
+                                title="Marcar como Cancelado"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmarCanceladoModal{{ produccion.id }}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% elif produccion.estado == 'REALIZADO' %}
+                        <button type="button" class="btn btn-success btn-sm" title="Ya realizado" disabled>
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" title="No permitido" disabled>
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-success btn-sm" title="No permitido" disabled>
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" title="Ya cancelado" disabled>
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal confirmar Realizado -->
+            <div class="modal fade" id="confirmarRealizadoModal{{ produccion.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar estado</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Confirmas marcar esta producción como <strong>Realizado</strong>?
+                            Esta acción impactará el inventario.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form method="post" action="{% url 'inventario:cambiar_estado_produccion' produccion.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="estado" value="REALIZADO">
+                                <button type="submit" class="btn btn-success">Confirmar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal confirmar Cancelado -->
+            <div class="modal fade" id="confirmarCanceladoModal{{ produccion.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar estado</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Confirmas marcar esta producción como <strong>Cancelado</strong>?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form method="post" action="{% url 'inventario:cambiar_estado_produccion' produccion.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="estado" value="CANCELADO">
+                                <button type="submit" class="btn btn-danger">Confirmar</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
