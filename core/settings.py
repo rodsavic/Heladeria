@@ -48,6 +48,7 @@ LOCAL_APPS = [
     'apps.clientes',
     'apps.productos',
     'apps.proveedores',
+    'apps.gastos',
     'apps.tipo_pago',
     'apps.usuarios',
     'apps.ventas',

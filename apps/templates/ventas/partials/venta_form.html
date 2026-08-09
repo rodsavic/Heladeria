@@ -188,14 +188,20 @@
 
               <div class="mb-3">
                 <label class="form-label fw-semibold" for="cliente">Cliente</label>
-                <select class="form-control" name="cliente" id="cliente">
-                  <option value="">Seleccionar cliente...</option>
-                  {% for cliente in clientes %}
-                  <option value="{{ cliente.id_cliente }}" {% if venta and cliente.id_cliente == venta.id_cliente.id_cliente %}selected{% endif %}>
-                    {{ cliente.nombre }} - {{ cliente.documento }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <div class="d-flex gap-2 align-items-start">
+                  <select class="form-control" name="cliente" id="cliente">
+                    <option value="">Seleccionar cliente...</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id_cliente }}" {% if venta and cliente.id_cliente == venta.id_cliente.id_cliente %}selected{% endif %}>
+                      {{ cliente.nombre }} - {{ cliente.documento }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <button type="button" class="btn btn-outline-primary flex-shrink-0" id="btnNuevoCliente" title="Crear cliente">
+                    <i class="bi bi-person-plus"></i>
+                  </button>
+                </div>
+                <small class="text-muted">Si el cliente no existe, puedes crearlo aqui mismo.</small>
               </div>
 
               <div class="row g-3">
@@ -297,6 +303,55 @@
                 <div class="action-buttons w-100">
                   <button type="button" class="btn btn-crear" data-bs-dismiss="modal" onclick="enviarFormulario()">
                     <i class="bi bi-check-circle"></i> Guardar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-labelledby="modalNuevoClienteLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalNuevoClienteLabel">
+                  <i class="bi bi-person-plus"></i> Crear cliente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div id="formNuevoCliente">
+                <div class="modal-body">
+                  <div id="clienteModalAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                  <div class="mb-3">
+                    <label class="form-label" for="cliente_documento">Cedula / Documento</label>
+                    <input type="text" class="form-control" id="cliente_documento" name="documento">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="cliente_nombre">Nombre</label>
+                    <input type="text" class="form-control" id="cliente_nombre" name="nombre">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="cliente_apellido">Apellido</label>
+                    <input type="text" class="form-control" id="cliente_apellido" name="apellido">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="cliente_correo">Correo</label>
+                    <input type="email" class="form-control" id="cliente_correo" name="correo">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="cliente_celular">Celular</label>
+                    <input type="text" class="form-control" id="cliente_celular" name="celular">
+                  </div>
+                  <div class="mb-0">
+                    <label class="form-label" for="cliente_direccion">Direccion</label>
+                    <input type="text" class="form-control" id="cliente_direccion" name="direccion">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-crear" id="btnGuardarNuevoCliente">
+                    <i class="bi bi-save"></i> Guardar cliente
                   </button>
                 </div>
               </div>

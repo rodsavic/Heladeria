@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -54,6 +55,54 @@ def crearCliente(request):
         form = ClienteForm()
 
     return render(request, "clientes/crear_cliente.html", {'form':form})
+
+
+@login_required(login_url="/")
+def crearClienteAjax(request):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'message': 'Metodo no permitido'}, status=405)
+
+    form = ClienteForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+
+    try:
+        cliente_nuevo = Cliente.objects.create(
+            documento=request.POST['documento'],
+            nombre=request.POST['nombre'],
+            apellido=request.POST['apellido'],
+            correo=request.POST['correo'],
+            celular=request.POST['celular'],
+            direccion=request.POST['direccion'],
+            estado='Activo'
+        )
+        return JsonResponse({
+            'ok': True,
+            'cliente': {
+                'id_cliente': cliente_nuevo.id_cliente,
+                'nombre': cliente_nuevo.nombre,
+                'apellido': cliente_nuevo.apellido,
+                'documento': cliente_nuevo.documento,
+                'label': f'{cliente_nuevo.nombre} - {cliente_nuevo.documento}'
+            }
+        })
+    except Exception:
+        return JsonResponse({'ok': False, 'message': 'Error en el servidor'}, status=500)
+
+
+@login_required(login_url="/")
+def clientesJson(request):
+    clientes = list(
+        Cliente.objects.order_by('nombre').values(
+            'id_cliente',
+            'nombre',
+            'apellido',
+            'documento',
+        )
+    )
+    for cliente in clientes:
+        cliente['label'] = f"{cliente['nombre']} - {cliente['documento']}"
+    return JsonResponse({'clientes': clientes})
 
 @login_required(login_url="/")
 def clienteUpdateView(request, id_cliente):

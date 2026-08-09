@@ -11,3 +11,7 @@ def add_class(value, arg):
 def punto_comma(value):
     value = Decimal(value)
     return f"{value:,.0f}".replace(",", ".")
+
+@register.filter
+def elided_page_range(paginator, number):
+    return paginator.get_elided_page_range(number, on_each_side=1, on_ends=1)
