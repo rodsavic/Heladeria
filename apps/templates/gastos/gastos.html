@@ -1,0 +1,127 @@
+{% extends "base/base.html" %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Gastos{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h1 class="mb-1">Listado de compras y gastos</h1>
+                <p class="text-muted mb-0">Filtra por fecha, descripcion y orden del monto.</p>
+            </div>
+            {% if perms.gastos.add_gasto %}
+            <a class="btn btn-crear btn-sm" href="{% url 'gastos:crear_gasto' %}">
+                <i class="bi bi-plus-circle"></i> Registrar gasto
+            </a>
+            {% endif %}
+        </div>
+
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="id_fecha_desde" class="form-label">Fecha desde</label>
+                <input type="date" id="id_fecha_desde" name="fecha_desde" value="{{ fecha_desde }}" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="id_fecha_hasta" class="form-label">Fecha hasta</label>
+                <input type="date" id="id_fecha_hasta" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="id_descripcion" class="form-label">Descripcion</label>
+                <input type="text" id="id_descripcion" name="descripcion" value="{{ descripcion }}" class="form-control" placeholder="Buscar por descripcion">
+            </div>
+            <div class="col-md-3">
+                <label for="id_orden_monto" class="form-label">Monto</label>
+                <select id="id_orden_monto" name="orden_monto" class="form-select">
+                    <option value="desc" {% if orden_monto == 'desc' %}selected{% endif %}>Descendente</option>
+                    <option value="asc" {% if orden_monto == 'asc' %}selected{% endif %}>Ascendente</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-crear btn-sm">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <a href="{% url 'gastos:gastos' %}" class="btn btn-limpiar btn-sm">Limpiar</a>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="text-center table-head-color">
+                    <tr>
+                        {% for columna in columnas %}
+                        <th style="color: white;">{{ columna }}</th>
+                        {% endfor %}
+                        <th style="color: white;">Operaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gasto in items_page %}
+                    <tr>
+                        <td>{{ gasto.descripcion }}</td>
+                        <td class="text-end">Gs. {{ gasto.costo|floatformat:2|intcomma }}</td>
+                        <td class="text-center">{{ gasto.fecha|date:"d/m/Y" }}</td>
+                        <td class="text-center">{{ gasto.id_tipo_pago.descripcion|default:"-" }}</td>
+                        <td class="text-center">
+                            <div class="d-flex flex-wrap justify-content-center gap-2">
+                                {% if perms.gastos.change_gasto %}
+                                <a href="{% url 'gastos:editar_gasto' gasto.id_gasto %}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.gastos.delete_gasto %}
+                                <form method="post" action="{% url 'gastos:eliminar_gasto' gasto.id_gasto %}" onsubmit="return confirm('¿Deseas eliminar este gasto?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">No se encontraron gastos con los filtros aplicados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if items_page.paginator.num_pages > 1 %}
+        <nav aria-label="Paginacion de gastos">
+            <ul class="pagination justify-content-center mt-4">
+                {% if items_page.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ items_page.previous_page_number }}">Anterior</a>
+                </li>
+                {% endif %}
+
+                {% for i in items_page.paginator|elided_page_range:items_page.number %}
+                {% if i == items_page.paginator.ELLIPSIS %}
+                <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
+                {% elif i == items_page.number %}
+                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ i }}">{{ i }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if items_page.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ items_page.next_page_number }}">Siguiente</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

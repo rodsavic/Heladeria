@@ -13,6 +13,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from django.contrib.auth.decorators import login_required, user_passes_test
 from apps.ventas.views import Venta, VentaDetalle, VentaTipoDePago, TipoPago
+from apps.gastos.models import Gasto
 
 
 @login_required(login_url="/")
@@ -50,6 +51,9 @@ def dashboard_data_api(request):
         ventas_queryset = Venta.objects.filter(
             fecha_venta__range=(start_date, end_date)
         )
+        gastos_queryset = Gasto.objects.filter(
+            fecha__range=(start_date.date(), end_date.date())
+        )
 
         # Datos del resumen
         summary_data = ventas_queryset.aggregate(
@@ -58,9 +62,14 @@ def dashboard_data_api(request):
             total_iva_10=Sum('total_iva_10') or 0,
             total_iva_5=Sum('total_iva_5') or 0
         )
+        gastos_data = gastos_queryset.aggregate(
+            total_expenses=Sum('costo') or 0,
+            expenses_count=Count('id_gasto') or 0
+        )
 
         # Datos de ventas por período
         sales_by_period = get_sales_by_period(ventas_queryset, period)
+        expenses_by_period = get_expenses_by_period(gastos_queryset, period)
 
         # Datos de tipos de pago
         payment_types_data = get_payment_types_data(ventas_queryset)
@@ -70,9 +79,13 @@ def dashboard_data_api(request):
                 'totalSales': float(summary_data['total_sales']),
                 'salesCount': summary_data['sales_count'],
                 'totalIVA10': float(summary_data['total_iva_10']),
-                'totalIVA5': float(summary_data['total_iva_5'])
+                'totalIVA5': float(summary_data['total_iva_5']),
+                'totalExpenses': float(gastos_data['total_expenses'] or 0),
+                'expensesCount': gastos_data['expenses_count'],
+                'netBalance': float(summary_data['total_sales']) - float(gastos_data['total_expenses'] or 0)
             },
             'salesByPeriod': sales_by_period,
+            'expensesByPeriod': expenses_by_period,
             'paymentTypes': payment_types_data
         })
 
@@ -184,6 +197,81 @@ def get_payment_types_data(queryset):
         'labels': labels,
         'data': data,
         'colors': colors[:len(labels)]
+    }
+
+
+def get_expenses_by_period(queryset, period):
+    """Obtener gastos agrupados por período"""
+    if period == 'day':
+        data = queryset.annotate(
+            day=TruncDate('fecha')
+        ).values('day').annotate(
+            total=Sum('costo')
+        ).order_by('day')
+
+        labels = []
+        values = []
+        day_names = {
+            0: 'Lun', 1: 'Mar', 2: 'Mie', 3: 'Jue',
+            4: 'Vie', 5: 'Sab', 6: 'Dom'
+        }
+
+        for item in data:
+            if item['day']:
+                day_name = day_names.get(item['day'].weekday(), 'N/A')
+                labels.append(f"{day_name} {item['day'].strftime('%d/%m')}")
+                values.append(float(item['total'] or 0))
+
+    elif period == 'week':
+        data = queryset.annotate(
+            week=TruncWeek('fecha')
+        ).values('week').annotate(
+            total=Sum('costo')
+        ).order_by('week')
+
+        labels = []
+        values = []
+        for item in data:
+            if item['week']:
+                labels.append(f'Sem {item["week"].strftime("%W")} ({item["week"].strftime("%d/%m")})')
+                values.append(float(item['total'] or 0))
+
+    elif period == 'month':
+        data = queryset.annotate(
+            month=TruncMonth('fecha')
+        ).values('month').annotate(
+            total=Sum('costo')
+        ).order_by('month')
+
+        labels = []
+        values = []
+        month_names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                       'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+        for item in data:
+            if item['month']:
+                month_num = item['month'].month - 1
+                year = item['month'].year
+                labels.append(f'{month_names[month_num]} {year}')
+                values.append(float(item['total'] or 0))
+
+    else:
+        data = queryset.annotate(
+            year=TruncYear('fecha')
+        ).values('year').annotate(
+            total=Sum('costo')
+        ).order_by('year')
+
+        labels = []
+        values = []
+        for item in data:
+            if item['year']:
+                labels.append(str(item['year'].year))
+                values.append(float(item['total'] or 0))
+
+    return {
+        'labels': labels,
+        'data': values
     }
 
 
