@@ -5,8 +5,161 @@ function inicializarSelects() {
     });
     $('#cliente').select2({
         placeholder: "Selecciona un cliente",
-        allowClear: true
+        allowClear: true,
+        width: '100%'
     });
+}
+
+function obtenerCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+function mostrarErrorClienteModal(message) {
+    const alertBox = document.getElementById('clienteModalAlert');
+    if (!alertBox) return;
+    alertBox.textContent = message;
+    alertBox.classList.remove('d-none');
+}
+
+function limpiarErrorClienteModal() {
+    const alertBox = document.getElementById('clienteModalAlert');
+    if (!alertBox) return;
+    alertBox.textContent = '';
+    alertBox.classList.add('d-none');
+}
+
+function validarCamposNuevoCliente(container) {
+    const camposRequeridos = [
+        { name: 'documento', label: 'Cedula / Documento' },
+        { name: 'nombre', label: 'Nombre' },
+        { name: 'apellido', label: 'Apellido' },
+        { name: 'correo', label: 'Correo' },
+        { name: 'celular', label: 'Celular' }
+    ];
+
+    for (const campo of camposRequeridos) {
+        const input = container.querySelector(`input[name="${campo.name}"]`);
+        const valor = input?.value?.trim() || '';
+        if (!valor) {
+            if (input) input.focus();
+            mostrarErrorClienteModal(`El campo ${campo.label} es obligatorio.`);
+            return false;
+        }
+    }
+
+    const correoInput = container.querySelector('input[name="correo"]');
+    if (correoInput && correoInput.value.trim()) {
+        const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoInput.value.trim());
+        if (!correoValido) {
+            correoInput.focus();
+            mostrarErrorClienteModal('Ingresa un correo valido.');
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function actualizarSelectClientes(clienteSeleccionadoId = null) {
+    const clienteSelect = document.getElementById('cliente');
+    if (!clienteSelect) return Promise.resolve();
+
+    return fetch('/clientes/clientes_json/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('No se pudo actualizar la lista de clientes.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
+            (data.clientes || []).forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id_cliente;
+                option.textContent = cliente.label;
+                if (clienteSeleccionadoId && String(cliente.id_cliente) === String(clienteSeleccionadoId)) {
+                    option.selected = true;
+                }
+                clienteSelect.appendChild(option);
+            });
+
+            if (typeof $ !== "undefined" && $('#cliente').length) {
+                $('#cliente').trigger('change.select2');
+            }
+        });
+}
+
+function abrirModalNuevoCliente() {
+    limpiarErrorClienteModal();
+    const container = document.getElementById('formNuevoCliente');
+    if (container) {
+        container.querySelectorAll('input').forEach(input => {
+            input.value = '';
+        });
+    }
+
+    const modalElement = document.getElementById('modalNuevoCliente');
+    if (!modalElement) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+}
+
+function guardarNuevoCliente() {
+    limpiarErrorClienteModal();
+
+    const container = document.getElementById('formNuevoCliente');
+    const submitButton = document.getElementById('btnGuardarNuevoCliente');
+    if (!container) return;
+    if (!validarCamposNuevoCliente(container)) return;
+
+    const formData = new FormData();
+    container.querySelectorAll('input[name]').forEach(input => {
+        formData.append(input.name, input.value);
+    });
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+    }
+
+    fetch('/clientes/crear_cliente_ajax/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': obtenerCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+                const firstError = data?.errors ? Object.values(data.errors)[0]?.[0] : null;
+                throw new Error(firstError || data.message || 'No se pudo crear el cliente.');
+            }
+            return data;
+        })
+        .then(data => {
+            return actualizarSelectClientes(data.cliente.id_cliente).then(() => data);
+        })
+        .then(data => {
+            if (typeof $ !== "undefined" && $('#cliente').length) {
+                $('#cliente').val(String(data.cliente.id_cliente)).trigger('change');
+            } else {
+                document.getElementById('cliente').value = data.cliente.id_cliente;
+            }
+
+            const modalElement = document.getElementById('modalNuevoCliente');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.hide();
+        })
+        .catch(error => {
+            mostrarErrorClienteModal(error.message);
+        })
+        .finally(() => {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="bi bi-save"></i> Guardar cliente';
+            }
+        });
 }
 
 function getTipoVentaSeleccionadoCheckbox() {
@@ -389,6 +542,8 @@ function cerrarModal() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    inicializarSelects();
+
     const tipoVentaChecks = Array.from(document.querySelectorAll('.tipo-venta-check'));
     if (tipoVentaChecks.length > 0) {
         if (!tipoVentaChecks.some(chk => chk.checked)) {
@@ -427,6 +582,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (productosJsonInput) {
         productosJsonInput.value = JSON.stringify(serializarTablaProductos());
+    }
+
+    const btnNuevoCliente = document.getElementById('btnNuevoCliente');
+    if (btnNuevoCliente) {
+        btnNuevoCliente.addEventListener('click', abrirModalNuevoCliente);
+    }
+
+    const formNuevoCliente = document.getElementById('formNuevoCliente');
+    const btnGuardarNuevoCliente = document.getElementById('btnGuardarNuevoCliente');
+    if (btnGuardarNuevoCliente) {
+        btnGuardarNuevoCliente.addEventListener('click', guardarNuevoCliente);
+    }
+
+    if (formNuevoCliente) {
+        formNuevoCliente.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    guardarNuevoCliente();
+                }
+            });
+        });
     }
 
     // Cerrar modal al hacer clic en el backdrop
