@@ -1,70 +1,80 @@
-.card-link{
-    color: chocolate;
+.card-link {
+    color: var(--color-primary, chocolate);
     display: block;
     font-size: 0.9rem;
     white-space: nowrap;
     border-left: 3px solid transparent;
+    transition: var(--transition-base, all 0.25s ease);
 }
-.card-link:hover{
-    color: #242628;
+
+.card-link:hover {
+    color: var(--color-primary-dark, #242628);
 }
+
 .btn-crear {
-    padding: 5px 15px;
+    padding: 6px 16px;
     white-space: initial;
-    border-radius: 5px;
-    background-color: chocolate !important;
+    border-radius: var(--radius-sm, 8px);
+    background-color: var(--color-primary, chocolate) !important;
     color: white !important;
-    border: 2px solid chocolate !important;
+    border: 1px solid var(--color-primary, chocolate) !important;
     font-weight: 500;
     text-align: center;
-    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.08)) !important;
+    transition: var(--transition-base, all 0.25s ease) !important;
     cursor: pointer !important;
     display: inline-block !important;
 }
 
 .btn-crear:hover {
-    background-color: white !important;
-    color: chocolate !important;
-    border: 2px solid chocolate !important;
+    background-color: var(--color-primary-dark, #242628) !important;
+    color: white !important;
+    border-color: var(--color-primary-dark, #242628) !important;
+    box-shadow: var(--shadow-primary, 0 8px 20px rgba(0,0,0,0.15)) !important;
+    transform: translateY(-1px);
 }
 
-
 .btn-limpiar {
-    padding: 5px 15px;
+    padding: 6px 16px;
     white-space: initial;
-    border-radius: 5px;
-    background-color: rgba(210, 105, 30, 0) !important;
-    color: #242628 !important;
-    border: 2px solid #242628 !important;
+    border-radius: var(--radius-sm, 8px);
+    background-color: transparent !important;
+    color: var(--color-dark, #242628) !important;
+    border: 1px solid var(--color-border, #242628) !important;
     font-weight: 500;
     text-align: center !important;
-    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.06)) !important;
+    transition: var(--transition-base, all 0.25s ease) !important;
     cursor: pointer !important;
     display: inline-block;
 }
 
 .btn-limpiar:hover {
-    background-color: white !important;
-    color: chocolate !important;
-    border: 2px solid chocolate !important;
+    background-color: var(--color-primary-soft, #fff) !important;
+    color: var(--color-primary-dark, chocolate) !important;
+    border-color: var(--color-primary, chocolate) !important;
+    transform: translateY(-1px);
 }
 
 .btn-cancelar {
-    padding: 5px 15px;
+    padding: 6px 16px;
     white-space: initial;
-    border-radius: 5px;
-    background-color: #242628 !important;
+    border-radius: var(--radius-sm, 8px);
+    background-color: var(--color-dark, #242628) !important;
     color: #f6f7f8 !important;
-    border: 2px solid #242628 !important;
+    border: 1px solid var(--color-dark, #242628) !important;
     font-weight: 500;
     text-align: center !important;
-    transition: all 0.3s ease !important;
+    box-shadow: var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.08)) !important;
+    transition: var(--transition-base, all 0.25s ease) !important;
     cursor: pointer !important;
     display: inline-block;
 }
 
 .btn-cancelar:hover {
-    background-color: white !important;
-    color: #242628 !important;
-    border: 2px solid #242628 !important;
+    background-color: var(--color-dark-soft, #242628) !important;
+    color: white !important;
+    border-color: var(--color-dark-soft, #242628) !important;
+    box-shadow: var(--shadow-md, 0 8px 20px rgba(0,0,0,0.15)) !important;
+    transform: translateY(-1px);
 }
