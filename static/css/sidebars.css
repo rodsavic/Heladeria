@@ -6,8 +6,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    font-family: inherit;
+    background-color: var(--color-bg, #f7f7fa);
     overflow-x: hidden;
 }
 
@@ -21,7 +21,7 @@ body {
 #sidebar {
     width: 280px;
     min-width: 280px;
-    background:  #242628;
+    background: linear-gradient(180deg, #2C2E32 0%, #202226 100%);
     color: white;
     transition: all 0.3s ease;
     position: fixed;
@@ -31,7 +31,7 @@ body {
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.10);
 }
 
 /* Sidebar colapsado en desktop */
@@ -75,20 +75,20 @@ body {
     font-size: 1.5rem;
     cursor: pointer;
     padding: 8px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+    border-radius: 8px;
+    transition: background-color 0.25s ease;
     position: relative;
     z-index: 10;
     flex-shrink: 0;
 }
 
 .toggle-btn:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255,255,255,0.08);
 }
 
 .toggle-btn:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
 }
 
 /* Navegación */
@@ -100,30 +100,33 @@ body {
 }
 
 .sidebar-item {
-    margin: 0;
+    margin: 0 8px;
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
-    padding: 12px 20px;
-    color: rgba(255,255,255,0.8);
+    padding: 12px 16px;
+    margin: 2px 0;
+    color: rgba(255,255,255,0.75);
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     border-left: 3px solid transparent;
+    border-radius: 10px;
     position: relative;
 }
 
 .sidebar-link:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255,255,255,0.07);
     color: white;
-    border-left-color: #3498db;
+    border-left-color: var(--color-primary, #B5652E);
 }
 
 .sidebar-link.active {
-    background-color: rgba(52, 152, 219, 0.2);
+    background-color: rgba(181, 101, 46, 0.22);
     color: white;
-    border-left-color: #3498db;
+    border-left-color: var(--color-primary, #B5652E);
+    box-shadow: inset 0 0 0 1px rgba(181, 101, 46, 0.18);
 }
 
 .sidebar-link i {
@@ -156,34 +159,37 @@ body {
 }
 
 .sidebar-dropdown {
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 10px;
     overflow: hidden;
+    margin: 2px 0;
 }
 
 .sidebar-dropdown .sidebar-link {
-    padding: 10px 20px 10px 55px;
-    font-size: 0.9rem;
+    padding: 10px 16px 10px 48px;
+    font-size: 0.88rem;
     border-left: none;
+    border-radius: 8px;
 }
 
 .sidebar-dropdown .sidebar-link:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255,255,255,0.08);
     border-left: none;
 }
 
 /* Footer del sidebar */
 .sidebar-footer {
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 20px 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 8px;
 }
 
 .sidebar-footer .sidebar-link {
-    color: #e74c3c;
+    color: #e57272;
 }
 
 .sidebar-footer .sidebar-link:hover {
-    background-color: rgba(231, 76, 60, 0.2);
-    border-left-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.14);
+    border-left-color: #e57272;
 }
 
 /* Estados colapsados */
@@ -225,9 +231,9 @@ body {
     left: 70px;
     top: 0;
     min-width: 200px;
-    background: #242628;
-    border-radius: 0 8px 8px 0;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    background: #2C2E32;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 6px 6px 24px rgba(0,0,0,0.16);
     display: none !important;
 }
 
@@ -267,14 +273,14 @@ body {
     top: 15px;
     left: 15px;
     z-index: 1001;
-    background:  #242628;
+    background: #2C2E32;
     color: white;
     border: none;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 8px;
     display: none;
     font-size: 1.2rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-sm, 0 4px 14px rgba(0,0,0,0.15));
 }
 
 /* Overlay para mobile */
@@ -412,7 +418,7 @@ body {
 
 .sidebar-footer {
     margin-top: auto;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 15px 0;
-    background: #242628;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 15px 8px;
+    background: transparent;
 }

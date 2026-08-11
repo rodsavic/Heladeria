@@ -9,13 +9,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar sesión - Zu Heladería</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
         body {
-            background: linear-gradient(135deg, #E95420, #3B2E2A);
+            background: linear-gradient(135deg, #B5652E, #2B2D31);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 15px;
         }
 
@@ -23,8 +25,8 @@
             width: 100%;
             max-width: 400px;
             border: none;
-            border-radius: 1rem;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+            border-radius: 1.1rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
             background: white;
         }
 
@@ -62,7 +64,7 @@
         }
 
         h2 {
-            color: #3B2E2A;
+            color: #2B2D31;
             font-weight: 600;
         }
 
@@ -71,33 +73,37 @@
         }
 
         .form-control {
-            border-radius: 0.5rem;
-            border: 1px solid #d1c4c0;
+            border-radius: 0.6rem;
+            border: 1px solid #e2ded9;
             font-size: 16px; /* Evita zoom en iOS */
+            transition: all 0.25s ease;
         }
 
         .form-control:focus {
-            border-color: #E95420;
-            box-shadow: 0 0 0 0.2rem rgba(233, 84, 32, 0.25);
+            border-color: #B5652E;
+            box-shadow: 0 0 0 0.2rem rgba(181, 101, 46, 0.18);
         }
 
         .btn-crear {
-            background-color: #E95420;
+            background-color: #B5652E;
             color: #fff;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            transition: background-color 0.3s ease;
+            font-weight: 600;
+            border-radius: 0.6rem;
+            transition: all 0.25s ease;
             border: none;
             min-height: 48px; /* Tamaño mínimo para touch */
+            box-shadow: 0 6px 16px rgba(181, 101, 46, 0.25);
         }
 
         .btn-crear:hover {
-            background-color: #d04315;
+            background-color: #93501F;
             color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(181, 101, 46, 0.3);
         }
 
         .text-secondary {
-            color: #5a463e !important;
+            color: #5a5450 !important;
         }
 
         /* Asegurar que los inputs sean accesibles en móvil */

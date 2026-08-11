@@ -1,10 +1,32 @@
-.table-head-color th{
+.table-responsive {
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm, 0 4px 14px rgba(24, 20, 16, 0.06));
+}
+
+.table-head-color th {
     color: white !important;
-    background-color: chocolate !important;
+    background-color: var(--color-primary, chocolate) !important;
     text-align: center !important;
+    font-weight: 500;
+    border-bottom: none !important;
+    padding: 12px 10px;
 }
 
 .table {
+    margin-bottom: 0;
+    box-shadow: none !important;
+}
 
-    box-shadow: 5px 5px 5px rgba(244, 79, 32, 0.45) !important;
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: var(--color-primary-soft, #fbf1e7);
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: var(--color-border, #e7e4e1) !important;
 }

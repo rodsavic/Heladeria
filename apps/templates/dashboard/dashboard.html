@@ -350,9 +350,9 @@
         max-width: 1400px;
         margin: 0 auto;
         background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
+        border-radius: var(--radius-lg, 18px);
         padding: 30px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-md, 0 10px 28px rgba(24, 20, 16, 0.08));
     }
 
     .dashboard-header {
@@ -361,13 +361,13 @@
     }
 
     .dashboard-header h1 {
-        color: #E95420;
+        color: var(--color-primary, #B5652E);
         font-size: 2.5rem;
         margin-bottom: 10px;
     }
 
     .dashboard-header p {
-        color: #7f4e2f;
+        color: var(--color-text-muted, #7f4e2f);
         font-size: 1.1rem;
     }
 
@@ -389,32 +389,46 @@
 
     .date-controls label, .report-controls label {
         font-weight: 600;
-        color: #E95420;
+        color: var(--color-primary, #B5652E);
         margin-right: 8px;
     }
 
     .date-controls input, .date-controls select, .report-controls input {
         padding: 10px 15px;
-        border: 2px solid #e1e8ed;
-        border-radius: 10px;
+        border: 1px solid var(--color-border, #e1e8ed);
+        border-radius: var(--radius-sm, 10px);
         font-size: 14px;
+        transition: var(--transition-base, all 0.25s ease);
+    }
+
+    .date-controls input:focus, .date-controls select:focus, .report-controls input:focus {
+        outline: none;
+        border-color: var(--color-primary, #B5652E);
+        box-shadow: 0 0 0 0.2rem rgba(181, 101, 46, 0.15);
     }
 
     .btn {
         padding: 12px 25px;
         border: none;
-        border-radius: 10px;
+        border-radius: var(--radius-sm, 10px);
         cursor: pointer;
         font-weight: 600;
         color: white;
+        box-shadow: var(--shadow-xs, 0 1px 3px rgba(0,0,0,0.08));
+        transition: var(--transition-base, all 0.25s ease);
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm, 0 4px 14px rgba(0,0,0,0.1));
     }
 
     .btn-primary {
-        background: linear-gradient(45deg, #E95420, #FF7F50);
+        background: linear-gradient(135deg, var(--color-primary, #B5652E), var(--color-primary-dark, #93501F));
     }
 
     .btn-success {
-        background: linear-gradient(45deg, #FFA65C, #FFB380);
+        background: linear-gradient(135deg, #C98A52, #B5652E);
     }
 
     .summary-cards {
@@ -427,17 +441,25 @@
     .summary-card, .chart-container, .report-section {
         background: white;
         padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border-radius: var(--radius-lg, 15px);
+        border: 1px solid var(--color-border, transparent);
+        box-shadow: var(--shadow-sm, 0 4px 14px rgba(24, 20, 16, 0.06));
+        transition: var(--transition-base, all 0.25s ease);
+    }
+
+    .summary-card:hover, .chart-container:hover {
+        box-shadow: var(--shadow-md, 0 10px 28px rgba(24, 20, 16, 0.08));
+        transform: translateY(-2px);
     }
 
     .summary-card {
         text-align: center;
-        background: linear-gradient(135deg, #FFEDE2 0%, #FFD1B3 100%);
+        background: linear-gradient(135deg, var(--color-primary-soft, #FBF1E7) 0%, var(--color-primary-light, #F5E3D4) 100%);
+        border: none;
     }
 
     .summary-card h3 {
-        color: #E95420;
+        color: var(--color-primary-dark, #93501F);
         font-size: 1rem;
         margin-bottom: 10px;
         text-transform: uppercase;
@@ -447,7 +469,7 @@
     .summary-card .value {
         font-size: 2.2rem;
         font-weight: bold;
-        color: #BF701B;
+        color: var(--color-primary, #B5652E);
     }
 
     .charts-grid {
