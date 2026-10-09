@@ -4,6 +4,7 @@ class Medida(models.Model):
     id_medida = models.AutoField(primary_key=True)
     descripcion = models.CharField(max_length=100,db_column='descripcion' ,null=False)
     prefijo = models.CharField(max_length=20, db_column='prefijo', null=False)
+    codigo_set = models.PositiveIntegerField(db_column='codigo_set', null=True, blank=True, help_text='Codigo de unidad de medida de la SET')
 
     class Meta:
         db_table = 'medidas'

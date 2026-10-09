@@ -53,6 +53,30 @@ class Factura(models.Model):
     vigencia_timbrado_desde = models.DateField(null=True, blank=True)
     vigencia_timbrado_hasta = models.DateField(null=True, blank=True)
 
+    # Integracion FacturaSend / SIFEN
+    ESTADO_SIFEN_BORRADOR = -1
+    ESTADO_SIFEN_GENERADO = 0
+    ESTADO_SIFEN_ENVIADO_LOTE = 1
+    ESTADO_SIFEN_APROBADO = 2
+    ESTADO_SIFEN_APROBADO_OBS = 3
+    ESTADO_SIFEN_RECHAZADO = 4
+    ESTADO_SIFEN_INEXISTENTE = 98
+    ESTADO_SIFEN_CANCELADO = 99
+    ESTADOS_SIFEN = (
+        (ESTADO_SIFEN_BORRADOR, 'Borrador'),
+        (ESTADO_SIFEN_GENERADO, 'Generado DE'),
+        (ESTADO_SIFEN_ENVIADO_LOTE, 'Enviado en lote'),
+        (ESTADO_SIFEN_APROBADO, 'Aprobado'),
+        (ESTADO_SIFEN_APROBADO_OBS, 'Aprobado con observación'),
+        (ESTADO_SIFEN_RECHAZADO, 'Rechazado'),
+        (ESTADO_SIFEN_INEXISTENTE, 'Inexistente'),
+        (ESTADO_SIFEN_CANCELADO, 'Cancelado'),
+    )
+
+    cdc = models.CharField(max_length=44, blank=True, default='', db_index=True)
+    estado_sifen = models.IntegerField(choices=ESTADOS_SIFEN, default=ESTADO_SIFEN_BORRADOR)
+    respuesta_sifen = models.TextField(blank=True, default='')
+
     class Meta:
         db_table = 'factura'
         verbose_name = 'Factura'

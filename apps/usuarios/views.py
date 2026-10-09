@@ -69,6 +69,7 @@ def createUserView(request):
         nombre = request.POST['nombre']
         direccion = request.POST['direccion']
         telefono = request.POST['telefono']
+        cargo = request.POST.get('cargo', '').strip()
         fecha_nacimiento = request.POST['fecha_nacimiento']
         apellido = request.POST['apellido']
         password = request.POST['password']
@@ -103,6 +104,7 @@ def createUserView(request):
             last_name=apellido,
             email=correo,
             telefono=telefono,
+            cargo=cargo,
             direccion=direccion,
             fecha_nacimiento=fecha_nacimiento,
             usuario_creacion=request.user.id,
@@ -147,6 +149,7 @@ def usuarioUpdateView(request, id):
         nombre = request.POST['nombre']
         direccion = request.POST['direccion']
         telefono = request.POST['telefono']
+        cargo = request.POST.get('cargo', '').strip()
         fecha_nacimiento = request.POST['fecha_nacimiento']
         apellido = request.POST['apellido']
         password = request.POST['password']
@@ -171,6 +174,7 @@ def usuarioUpdateView(request, id):
             usuario.username = username
             usuario.email = correo
             usuario.telefono = telefono
+            usuario.cargo = cargo
             usuario.direccion = direccion
             usuario.fecha_nacimiento = fecha_nacimiento
 

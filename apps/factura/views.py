@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.configuracion.models import ConfiguracionEmpresa
+from apps.factura.facturasend_service import cancelar_documento, enviar_documento
 from apps.factura.models import Factura
 from apps.ventas.models import Venta, VentaDetalle, VentaTipoDePago
 
@@ -56,7 +57,28 @@ def emitirFacturaView(request, id_venta):
         configuracion.secuencia_actual += 1
         configuracion.save()
 
-        messages.success(request, f'Factura {factura.nro_factura} emitida correctamente.')
+        if configuracion.facturasend_url and configuracion.facturasend_api_key:
+            if configuracion.facturasend_sincrono:
+                # Comunicacion sincrona: se envia ahora mismo y se espera la respuesta.
+                ok, mensaje_fs = enviar_documento(factura, configuracion)
+                if ok:
+                    messages.success(request, f'Factura {factura.nro_factura} emitida y enviada a FacturaSend.')
+                else:
+                    messages.warning(
+                        request,
+                        f'Factura {factura.nro_factura} emitida localmente, pero no se pudo enviar a '
+                        f'FacturaSend: {mensaje_fs}'
+                    )
+            else:
+                # Comunicacion asincrona: queda pendiente para el comando "enviar_facturasend".
+                messages.success(
+                    request,
+                    f'Factura {factura.nro_factura} emitida correctamente. '
+                    'Se enviará a FacturaSend en el próximo envío por lotes.'
+                )
+        else:
+            messages.success(request, f'Factura {factura.nro_factura} emitida correctamente.')
+
         return redirect('factura:detalle_factura', id_factura=factura.id_factura)
 
     context = {
@@ -77,7 +99,21 @@ def anularFacturaView(request, id_venta):
     factura.estado = Factura.ESTADO_ANULADA
     factura.fecha_anulacion = timezone.now()
     factura.save()
-    messages.success(request, f'Factura {factura.nro_factura} anulada correctamente.')
+
+    configuracion = ConfiguracionEmpresa.objects.first()
+    if factura.cdc and configuracion and configuracion.facturasend_url and configuracion.facturasend_api_key:
+        ok, mensaje_fs = cancelar_documento(factura, configuracion, motivo='Anulación solicitada por el emisor')
+        if ok:
+            messages.success(request, f'Factura {factura.nro_factura} anulada correctamente y cancelada en FacturaSend.')
+        else:
+            messages.warning(
+                request,
+                f'Factura {factura.nro_factura} anulada localmente, pero no se pudo cancelar en '
+                f'FacturaSend: {mensaje_fs}'
+            )
+    else:
+        messages.success(request, f'Factura {factura.nro_factura} anulada correctamente.')
+
     return redirect('ventas:ventas')
 
 

@@ -37,6 +37,9 @@ def configuracionEmpresaView(request):
         configuracion.punto_expedicion = request.POST.get('punto_expedicion', '001').zfill(3)
         secuencia_actual = request.POST.get('secuencia_actual', '1')
         configuracion.secuencia_actual = int(secuencia_actual) if secuencia_actual.isdigit() else 1
+        configuracion.facturasend_url = request.POST.get('facturasend_url', '').strip()
+        configuracion.facturasend_api_key = request.POST.get('facturasend_api_key', '').strip()
+        configuracion.facturasend_sincrono = request.POST.get('facturasend_sincrono') == 'on'
         configuracion.save()
         messages.success(request, 'Configuración de empresa actualizada correctamente.')
         return redirect('configuracion:empresa')

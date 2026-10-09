@@ -42,6 +42,11 @@
             </div>
 
             <div class="input-group mb-3">
+                <span class="input-group-text">Cargo</span>
+                <input name="cargo" type="text" class="form-control" maxlength="100" value="{{ usuario.cargo|default_if_none:'' }}" placeholder="Cargo">
+            </div>
+
+            <div class="input-group mb-3">
                 <span class="input-group-text">Dirección</span>
                 <input name="direccion" type="text" class="form-control" value="{{ usuario.direccion }}" placeholder="Dirección">
             </div>

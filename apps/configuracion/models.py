@@ -11,6 +11,9 @@ class ConfiguracionEmpresa(models.Model):
     establecimiento = models.CharField(max_length=3, default='001')
     punto_expedicion = models.CharField(max_length=3, default='001')
     secuencia_actual = models.PositiveIntegerField(default=1)
+    facturasend_url = models.CharField(max_length=255, blank=True, default='', help_text='Ej: https://api.facturasend.com.py/tenantId')
+    facturasend_api_key = models.CharField(max_length=255, blank=True, default='')
+    facturasend_sincrono = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'configuracion_empresa'

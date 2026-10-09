@@ -14,6 +14,7 @@ class Usuario(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(null=True)
     contrasena = models.CharField(max_length=255, null=False)
+    cargo = models.CharField(max_length=100, null=True, blank=True)
 
     def set_password(self, raw_password):
         self.contrasena = make_password(raw_password)
@@ -35,6 +36,7 @@ class User(AbstractUser):
     telefono = models.CharField(max_length=20, null=True, blank=True)
     direccion = models.CharField(max_length=255, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
+    cargo = models.CharField(max_length=100, null=True, blank=True)
     usuario_creacion = models.IntegerField(null=True)
     usuario_modificacion = models.IntegerField(null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
