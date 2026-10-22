@@ -27,6 +27,8 @@ class Venta(models.Model):
     usuario_creacion = models.BigIntegerField(db_column='usuario_creacion', null=False)
     id_cliente = models.ForeignKey(Cliente, models.DO_NOTHING, db_column='id_cliente', null=False)
     id_tipo_venta = models.ForeignKey(TipoVenta, models.DO_NOTHING, db_column='id_tipo_venta', null=True, blank=True)
+    # Texto libre que se imprime en el KuDE (ej. garantias de un alquiler).
+    observacion = models.TextField(db_column='observacion', blank=True, default='')
 
     class Meta:
         db_table = 'ventas'
@@ -45,11 +47,20 @@ class VentaDetalle(models.Model):
     id_producto = models.ForeignKey(Producto, models.DO_NOTHING, db_column='id_producto')
     total_iva_10 = models.FloatField(db_column='total_iva_10', null=False, default=0.0)
     total_iva_5 = models.FloatField(db_column='total_iva_5', null=False, default=0.0)
-    
+    # Opcionales: si vienen cargados reemplazan al nombre y al IVA del producto
+    # en la factura (lineas de alquiler con descripcion propia).
+    descripcion = models.CharField(db_column='descripcion', max_length=120, blank=True, default='')
+    observacion = models.TextField(db_column='observacion', blank=True, default='')
+    iva = models.PositiveSmallIntegerField(db_column='iva', null=True, blank=True)
+
     class Meta:
         db_table = 'venta_detalle'
         verbose_name = 'Venta Detalle'
         verbose_name_plural = 'Ventas Detalles'
+
+    @property
+    def descripcion_mostrar(self):
+        return self.descripcion or self.id_producto.nombre
 
     def __str__(self):
         return f"Detalle {self.id_detalle} - Venta {self.id_venta} - Producto {self.id_producto}"

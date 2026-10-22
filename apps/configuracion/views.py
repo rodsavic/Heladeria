@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from apps.configuracion.models import ConfiguracionEmpresa
+from apps.productos.models import Producto
 
 
 @login_required(login_url='/')
@@ -40,11 +41,14 @@ def configuracionEmpresaView(request):
         configuracion.facturasend_url = request.POST.get('facturasend_url', '').strip()
         configuracion.facturasend_api_key = request.POST.get('facturasend_api_key', '').strip()
         configuracion.facturasend_sincrono = request.POST.get('facturasend_sincrono') == 'on'
+        producto_alquiler = request.POST.get('producto_alquiler', '')
+        configuracion.producto_alquiler_id = int(producto_alquiler) if producto_alquiler.isdigit() else None
         configuracion.save()
         messages.success(request, 'Configuración de empresa actualizada correctamente.')
         return redirect('configuracion:empresa')
 
     context = {
-        'configuracion': configuracion
+        'configuracion': configuracion,
+        'productos': Producto.objects.order_by('nombre'),
     }
     return render(request, 'configuracion/empresa.html', context=context)

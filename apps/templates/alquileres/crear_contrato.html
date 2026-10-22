@@ -1,0 +1,18 @@
+{% extends "base/base.html" %}
+
+{% block title %}Nuevo contrato de alquiler{% endblock %}
+
+{% block body_class %} sidebar-mini {% endblock body_class %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Nuevo contrato de alquiler</h2>
+        <h6 class="card-subtitle mb-2 text-muted">Formulario de creación de contrato</h6>
+        <p class="card-text">Los cambios de monto se aplican a las próximas facturas; las ya emitidas no cambian.</p>
+        <a href="{% url 'alquileres:contratos' %}" class="card-link mb-3">Volver a la lista de contratos</a>
+
+        {% include "alquileres/partials/contrato_form.html" %}
+    </div>
+</div>
+{% endblock %}

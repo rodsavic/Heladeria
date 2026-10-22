@@ -14,6 +14,11 @@ class ConfiguracionEmpresa(models.Model):
     facturasend_url = models.CharField(max_length=255, blank=True, default='', help_text='Ej: https://api.facturasend.com.py/tenantId')
     facturasend_api_key = models.CharField(max_length=255, blank=True, default='')
     facturasend_sincrono = models.BooleanField(default=False)
+    # Producto generico (ej. "Servicio de alquiler") que se usa como base de las
+    # lineas de los contratos de alquiler: aporta codigo y unidad de medida SET.
+    producto_alquiler = models.ForeignKey(
+        'productos.Producto', models.SET_NULL, null=True, blank=True, related_name='+'
+    )
 
     class Meta:
         db_table = 'configuracion_empresa'

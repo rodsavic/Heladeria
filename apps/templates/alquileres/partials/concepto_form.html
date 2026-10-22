@@ -1,0 +1,41 @@
+<div class="border rounded p-3 mb-3">
+    {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+    {% if f.non_field_errors %}<div class="alert alert-danger py-1">{{ f.non_field_errors }}</div>{% endif %}
+    {% for hidden in f.hidden_fields %}{% for error in hidden.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}{% endfor %}
+    <div class="row g-2">
+        <div class="col-md-2">
+            <label class="form-label small">{{ f.tipo.label }}</label>
+            {{ f.tipo }}
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small">{{ f.descripcion.label }}</label>
+            {{ f.descripcion }}
+            {% for error in f.descripcion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">{{ f.monto.label }}</label>
+            {{ f.monto }}
+            {% for error in f.monto.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">{{ f.iva.label }}</label>
+            {{ f.iva }}
+        </div>
+        <div class="col-md-12">
+            <label class="form-label small">{{ f.observacion.label }}</label>
+            {{ f.observacion }}
+        </div>
+        <div class="col-md-12 d-flex flex-wrap gap-4">
+            <div class="form-check">
+                {{ f.cobro_unico }}
+                <label class="form-check-label small" for="{{ f.cobro_unico.id_for_label }}">{{ f.cobro_unico.label }}</label>
+            </div>
+            {% if f.instance.pk %}
+            <div class="form-check">
+                {{ f.DELETE }}
+                <label class="form-check-label small text-danger" for="{{ f.DELETE.id_for_label }}">Quitar concepto</label>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

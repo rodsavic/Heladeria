@@ -93,6 +93,14 @@
                 <span>Clientes</span>
             </a>
         </li>
+        {% if perms.alquileres.view_contrato %}
+        <li class="sidebar-item">
+            <a href="{% url 'alquileres:contratos' %}" class="sidebar-link">
+                <i class="bi bi-house-door"></i>
+                <span>Alquileres</span>
+            </a>
+        </li>
+        {% endif %}
         <li class="sidebar-item">
             <a href="{% url 'inventario:inventario' %}" class="sidebar-link">
                 <i class="bi bi-box"></i>

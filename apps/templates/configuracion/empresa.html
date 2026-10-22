@@ -67,6 +67,20 @@
                 </div>
             </div>
 
+            <h5 class="mt-4">Alquileres</h5>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Producto base para facturar alquileres</label>
+                    <select class="form-select" name="producto_alquiler">
+                        <option value="">-- Sin configurar --</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id_producto }}" {% if producto.id_producto == configuracion.producto_alquiler_id %}selected{% endif %}>{{ producto.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Ej. "Servicio de alquiler". Aporta el código y la unidad de medida SET de las líneas; la descripción y el IVA salen de cada contrato.</div>
+                </div>
+            </div>
+
             <button type="submit" class="btn-crear mt-4">Guardar configuración</button>
         </form>
     </div>

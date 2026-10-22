@@ -31,6 +31,9 @@ env/
 # other
 .DS_Store
 .idea
+.idea/
+misc.xml
+vcs.xml
 
 # javascript
 package-lock.json
@@ -45,3 +48,7 @@ apps/static/assets/.temp
 
 # Archivos de caché
 *.cache
+
+docs
+INSERT INTO PRODUCTOS
+Requisitos del cliente.docx
