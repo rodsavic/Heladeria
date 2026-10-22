@@ -1,7 +1,9 @@
 from django import forms
 from django.forms import ModelForm, TextInput,ValidationError
-from apps.catalogos.models import Ciudad, Departamento, Distrito
+from apps.catalogos.models import Ciudad, Departamento, Distrito, Pais
 from .models import *
+
+PAIS_POR_DEFECTO = 'PRY'
 
 class ClienteForm(ModelForm):
     # Campos auxiliares para elegir la ciudad en cascada (departamento -> distrito -> ciudad)
@@ -65,6 +67,8 @@ class ClienteForm(ModelForm):
         self.fields['numero_casa'].required = False
         self.fields['id_ciudad'].empty_label = 'Seleccione...'
         self.fields['pais'].empty_label = 'Seleccione...'
+        if not self.instance.pk:
+            self.initial.setdefault('pais', PAIS_POR_DEFECTO)
 
         # Distritos y ciudades: solo los del departamento/distrito elegido (o del cliente que se edita)
         departamento_id = distrito_id = None
@@ -86,6 +90,9 @@ class ClienteForm(ModelForm):
 
     def clean_tipo_documento(self):
         return self.cleaned_data.get('tipo_documento') or Cliente.TIPO_DOC_CEDULA_PARAGUAYA
+
+    def clean_pais(self):
+        return self.cleaned_data.get('pais') or Pais.objects.filter(codigo=PAIS_POR_DEFECTO).first()
 
     def clean_numero_casa(self):
         return self.cleaned_data.get('numero_casa') or 0

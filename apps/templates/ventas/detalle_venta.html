@@ -27,7 +27,7 @@
                         <tbody class="text-center">
                             {% for detalle in detalle_venta %}
                             <tr>
-                                <td>{{ detalle.id_producto.nombre }}</td>
+                                <td>{{ detalle.descripcion_mostrar }}</td>
                                 <td>{{ detalle.cantidad_producto|punto_comma }}</td>
                                 <td>{{ detalle.id_producto.precio_actual|punto_comma }}</td>
                                 <td>{{ detalle.total_detalle|punto_comma }}</td>

@@ -37,6 +37,9 @@ class Factura(models.Model):
         (TIPO_CREDITO, 'Crédito'),
     )
 
+    TRANSACCION_MERCADERIA = 1
+    TRANSACCION_SERVICIOS = 2
+
     id_factura = models.AutoField(primary_key=True)
     nro_factura = models.CharField(db_column='nro_factura', max_length=25, null=False, blank=False, unique=True)
     id_venta = models.ForeignKey(Venta, models.DO_NOTHING, db_column='id_venta')
@@ -52,6 +55,8 @@ class Factura(models.Model):
     nro_timbrado = models.CharField(max_length=30, blank=True, default='')
     vigencia_timbrado_desde = models.DateField(null=True, blank=True)
     vigencia_timbrado_hasta = models.DateField(null=True, blank=True)
+    # Codigo SIFEN de tipoTransaccion (1=venta de mercaderia, 2=prestacion de servicios).
+    tipo_transaccion = models.PositiveSmallIntegerField(default=TRANSACCION_MERCADERIA)
 
     # Integracion FacturaSend / SIFEN
     ESTADO_SIFEN_BORRADOR = -1
@@ -76,6 +81,10 @@ class Factura(models.Model):
     cdc = models.CharField(max_length=44, blank=True, default='', db_index=True)
     estado_sifen = models.IntegerField(choices=ESTADOS_SIFEN, default=ESTADO_SIFEN_BORRADOR)
     respuesta_sifen = models.TextField(blank=True, default='')
+
+    # Envio del KuDE por correo (lo hace FacturaSend al aprobarse el DE)
+    email_verificado = models.BooleanField(default=False)
+    email_reintentos = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         db_table = 'factura'
