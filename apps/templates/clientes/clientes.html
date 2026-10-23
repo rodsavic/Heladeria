@@ -58,8 +58,10 @@
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                             Cancelar
                                         </button>
-                                        <a href="{% url 'clientes:eliminar_cliente' cliente.id_cliente %}"
-                                           class="btn btn-danger">Eliminar</a>
+                                        <form method="post" action="{% url 'clientes:eliminar_cliente' cliente.id_cliente %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>

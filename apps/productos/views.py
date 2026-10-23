@@ -1,6 +1,7 @@
 import logging
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
@@ -80,6 +81,7 @@ def createProductosView(request):
 
 
 @login_required(login_url="/")
+@permission_required("productos.change_producto", login_url="/")
 def ProductoUpdateView(request, id_producto):
     """Vista para modificar producto"""
     producto = Producto.objects.get(id_producto=id_producto)
@@ -114,6 +116,8 @@ def ProductoUpdateView(request, id_producto):
         return render(request, 'productos/editar_producto.html', context=context)
 
 @login_required(login_url="/")
+@permission_required("productos.delete_producto", login_url="/")
+@require_POST
 def productoDeleteView(request, id_producto):
     producto = get_object_or_404(Producto, pk=id_producto)
     producto.delete()
@@ -121,6 +125,7 @@ def productoDeleteView(request, id_producto):
     return redirect('productos:productos')
 
 
+@login_required(login_url="/")
 def productos_json(request):
     productos = list(
         Producto.objects.select_related("id_medida").order_by('nombre').values(

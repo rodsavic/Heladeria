@@ -52,3 +52,5 @@ apps/static/assets/.temp
 docs
 INSERT INTO PRODUCTOS
 Requisitos del cliente.docx
+# variables de entorno locales
+.env

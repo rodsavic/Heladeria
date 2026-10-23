@@ -1,6 +1,7 @@
 import logging
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from .forms import *
@@ -61,6 +62,7 @@ def createProveedorView(request):
     return render(request, 'proveedores/crear_proveedor.html', {'form':form})         
 
 @login_required(login_url="/")
+@permission_required("proveedores.change_proveedor", login_url="/")
 def proveedorUpdateView(request, id_proveedor):
     """Vista para modificar proveedor"""
     proveedor = Proveedor.objects.get(id_proveedor=id_proveedor)
@@ -94,6 +96,8 @@ def proveedorUpdateView(request, id_proveedor):
         return render(request, 'proveedores/editar_proveedor.html', context=context)
 
 @login_required(login_url="/")
+@permission_required("proveedores.delete_proveedor", login_url="/")
+@require_POST
 def proveedorDeleteView(request, id_proveedor):
     proveedor = get_object_or_404(Proveedor, pk=id_proveedor)
     proveedor.delete()

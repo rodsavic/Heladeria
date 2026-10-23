@@ -1,9 +1,10 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.configuracion.models import ConfiguracionEmpresa
 from apps.factura.emision import crear_factura, enviar_si_corresponde
@@ -62,6 +63,8 @@ def _configuracion_facturasend():
 
 
 @login_required(login_url='/')
+@permission_required("factura.change_factura", login_url="/")
+@require_POST
 def anularFacturaView(request, id_venta):
     venta = get_object_or_404(Venta, id_venta=id_venta)
     factura = Factura.objects.filter(id_venta=venta, estado=Factura.ESTADO_EMITIDA).first()

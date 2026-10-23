@@ -5,6 +5,7 @@ from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYe
 from datetime import datetime, timedelta
 from django.utils import timezone
 import json
+import logging
 import csv
 from io import StringIO
 from reportlab.lib.pagesizes import letter, A4
@@ -15,6 +16,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from apps.ventas.views import Venta, VentaDetalle, VentaTipoDePago, TipoPago
 from apps.gastos.models import Gasto
 
+logger = logging.getLogger(__name__)
+
 
 @login_required(login_url="/")
 @user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
@@ -23,6 +26,8 @@ def dashboard_view(request):
     return render(request, 'dashboard/dashboard.html')
 
 
+@login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def dashboard_data_api(request):
     """API para obtener datos del dashboard"""
     try:
@@ -45,8 +50,6 @@ def dashboard_data_api(request):
             start_date = timezone.make_aware(start_datetime.replace(hour=0, minute=0, second=0))
             end_date = timezone.make_aware(end_datetime.replace(hour=23, minute=59, second=59, microsecond=999999))
 
-        print("start_date" + str(start_date))
-        print("end_date" + str(end_date))
         # Filtrar ventas por rango de fechas usando el timestamp completo
         ventas_queryset = Venta.objects.filter(
             fecha_venta__range=(start_date, end_date)
@@ -90,7 +93,7 @@ def dashboard_data_api(request):
         })
 
     except Exception as e:
-        print(e)
+        logger.exception('Error al obtener datos del dashboard')
         return JsonResponse({'error': str(e)}, status=500)
 
 
@@ -275,6 +278,8 @@ def get_expenses_by_period(queryset, period):
     }
 
 
+@login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def daily_report_view(request):
     """Generar reporte diario en CSV"""
     try:
@@ -353,6 +358,8 @@ def daily_report_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def daily_report_pdf_view(request):
     """Generar reporte diario en PDF"""
     try:
@@ -482,6 +489,8 @@ def daily_report_pdf_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def top_products_api(request):
     """API para obtener productos más vendidos"""
     try:
@@ -529,6 +538,8 @@ def top_products_api(request):
 
 
 # Vista para obtener estadísticas por cliente
+@login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def customer_stats_api(request):
     """API para obtener estadísticas por cliente"""
     try:
