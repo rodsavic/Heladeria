@@ -57,7 +57,12 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">API Key</label>
-                    <input type="password" class="form-control" name="facturasend_api_key" autocomplete="off" value="{{ configuracion.facturasend_api_key }}">
+                    {% if configuracion.facturasend_api_key %}
+                    <input type="text" class="form-control" value="Configurada (variable de entorno)" disabled>
+                    {% else %}
+                    <input type="text" class="form-control is-invalid" value="No configurada" disabled>
+                    <div class="form-text">Defina la variable de entorno FACTURASEND_API_KEY.</div>
+                    {% endif %}
                 </div>
                 <div class="col-md-12">
                     <div class="form-check">

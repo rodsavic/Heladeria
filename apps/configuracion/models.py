@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -12,7 +13,6 @@ class ConfiguracionEmpresa(models.Model):
     punto_expedicion = models.CharField(max_length=3, default='001')
     secuencia_actual = models.PositiveIntegerField(default=1)
     facturasend_url = models.CharField(max_length=255, blank=True, default='', help_text='Ej: https://api.facturasend.com.py/tenantId')
-    facturasend_api_key = models.CharField(max_length=255, blank=True, default='')
     facturasend_sincrono = models.BooleanField(default=False)
     # Producto generico (ej. "Servicio de alquiler") que se usa como base de las
     # lineas de los contratos de alquiler: aporta codigo y unidad de medida SET.
@@ -27,6 +27,10 @@ class ConfiguracionEmpresa(models.Model):
 
     def __str__(self):
         return self.nombre_empresa
+
+    @property
+    def facturasend_api_key(self):
+        return settings.FACTURASEND_API_KEY
 
     def generar_nro_factura(self):
         return f"{self.establecimiento}-{self.punto_expedicion}-{self.secuencia_actual:07d}"
