@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
+from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,11 +22,16 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-sq6!_3z2m+x*nrh&8e%2w4o*&4odz^-90nedq5byj55xl3f42o'
+# Los valores sensibles se leen de variables de entorno (o de un archivo .env
+# local, que no se versiona). En producción DEBUG queda en False por defecto.
+DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('Defina la variable de entorno DJANGO_SECRET_KEY.')
+    # Solo para desarrollo local con DJANGO_DEBUG=True.
+    SECRET_KEY = 'django-insecure-solo-para-desarrollo-local'
 
 ALLOWED_HOSTS = ['web-production-1e3ba.up.railway.app', '127.0.0.1','web-gunicorn-corewsgi-production-08f7.up.railway.app']
 CSRF_TRUSTED_ORIGINS = ["https://web-production-1e3ba.up.railway.app",'https://127.0.0.1','https://web-gunicorn-corewsgi-production-08f7.up.railway.app']
@@ -98,31 +105,34 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-if 'DATABASE_URL' in os.environ:
+# En Railway se usa DATABASE_URL (postgresql://usuario:clave@host:puerto/base).
+# En local se puede usar DATABASE_URL o las variables DB_* en el archivo .env.
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=config('DB_SSL_REQUIRE', default=True, cast=bool),
+        )
+    }
+    # dj-database-url 0.5 devuelve el alias antiguo, que Django 5 ya no reconoce.
+    if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
+        DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+elif DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'railway',
-            'USER': 'postgres',
-            'PASSWORD': 'SHlWeISUyhFLghZcpfOrcDUJcGyQWpGh',
-            'HOST': 'turntable.proxy.rlwy.net',
-            'PORT': 12224,
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {'sslmode': 'require'}
+            'NAME': config('DB_NAME', default='heladeria'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
         }
     }
 else:
-    DATABASES = {
-        #'default': dj_database_url.parse('postgresql://postgres:SiBHjChzvbjVgwJOYhHVzezhvQPJwUrf@centerbeam.proxy.rlwy.net:25265/railway') para ambiente de pruebas
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'heladeria',  # Debes crearla antes en pgAdmin o SQL
-            'USER': 'postgres',  # Tu usuario (generalmente postgres)
-            'PASSWORD': '1234',  # Tu contraseña local
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
-    }
+    raise ImproperlyConfigured('Defina la variable de entorno DATABASE_URL.')
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -174,3 +184,19 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'usuarios.User'
+
+# Seguridad de sesión y transporte
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 60 * 60 * 8  # una jornada laboral
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+
+if not DEBUG:
+    # Railway termina TLS en su proxy y reenvía el esquema original en esta cabecera.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = config('DJANGO_SSL_REDIRECT', default=True, cast=bool)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # Empezar con un valor bajo; subir a 31536000 (1 año) cuando se confirme que todo funciona por HTTPS.
+    SECURE_HSTS_SECONDS = config('DJANGO_HSTS_SECONDS', default=3600, cast=int)

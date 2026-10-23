@@ -1,4 +1,5 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib import messages
@@ -84,6 +85,7 @@ def clientesJson(request):
     return JsonResponse({'clientes': clientes})
 
 @login_required(login_url="/")
+@permission_required("clientes.change_cliente", login_url="/")
 def clienteUpdateView(request, id_cliente):
     """Vista para modificar cliente"""
     cliente = Cliente.objects.get(id_cliente=id_cliente)
@@ -117,6 +119,8 @@ def clienteUpdateView(request, id_cliente):
         return render(request, 'clientes/editar_cliente.html', context=context)
 
 @login_required(login_url="/")
+@permission_required("clientes.delete_cliente", login_url="/")
+@require_POST
 def clienteDeleteView(request, id_cliente):
     cliente = get_object_or_404(Cliente, pk=id_cliente)
     cliente.delete()

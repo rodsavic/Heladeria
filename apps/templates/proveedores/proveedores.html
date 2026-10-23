@@ -56,8 +56,10 @@
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                             Cancelar
                                         </button>
-                                        <a href="{% url 'proveedores:eliminar_proveedor' proveedor.id_proveedor %}"
-                                           class="btn btn-danger">Eliminar</a>
+                                        <form method="post" action="{% url 'proveedores:eliminar_proveedor' proveedor.id_proveedor %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>

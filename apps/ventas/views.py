@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum
@@ -11,6 +11,7 @@ from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.clientes.models import Cliente
 from apps.factura.models import Factura
@@ -72,7 +73,6 @@ def ventasReadView(request, fecha=None):
 
     # Si necesitas sumarlos
     total_monto_efectivo = pagos_efectivo.aggregate(total=Sum('monto'))['total']
-    print(f'fecha: {fecha_venta}, ventas: {ventas}')
     total_ventas = ventas.aggregate(total_ventas=Sum('total_venta'))['total_ventas'] or 0
     # Total de ventas de tipo 1 (Salón) y en efectivo
     total_ventas_salon_efectivo = VentaTipoDePago.objects.filter(
@@ -115,7 +115,6 @@ def ventasCreateView(request):
         # form = VentaForm(request.POST)
         # if form.is_valid():
         try:
-            print("Ingresa al metodo POST", request.POST)
             total_iva_10 = request.POST['total_iva_10']
             total_iva_5 = request.POST['total_iva_5']
             id_cliente = request.POST['cliente']
@@ -208,6 +207,7 @@ def ventasCreateView(request):
 
 
 @login_required(login_url="/")
+@permission_required("ventas.change_venta", login_url="/")
 def ventasEditView(request, id_venta):
     # Las ventas generadas desde un contrato de alquiler tienen lineas con
     # descripcion propia que este formulario no conserva.
@@ -217,7 +217,6 @@ def ventasEditView(request, id_venta):
 
     if request.method == 'POST':
         try:
-            print("Ingresa al metodo POST")
             total_iva_10 = request.POST['total_iva_10']
             total_iva_5 = request.POST['total_iva_5']
             id_cliente = request.POST['cliente']
@@ -230,7 +229,6 @@ def ventasEditView(request, id_venta):
             if not id_tipo_venta:
                 raise ValueError("Debes seleccionar un tipo de venta.")
             venta = get_object_or_404(Venta, id_venta=id_venta)
-            print(f'nueva venta: {venta}')
 
             if fecha_venta_str:
                 fecha_venta = datetime.strptime(fecha_venta_str, "%Y-%m-%dT%H:%M")
@@ -356,6 +354,8 @@ def ventasEditView(request, id_venta):
 
 
 @login_required(login_url="/")
+@permission_required("ventas.delete_venta", login_url="/")
+@require_POST
 def ventasDeleteView(request, id_venta):
     venta = get_object_or_404(Venta, pk=id_venta)
 

@@ -1,7 +1,7 @@
 from datetime import date
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.db import transaction
@@ -24,6 +24,7 @@ def inventarioReadView(request):
     }
     return render(request, "inventario/inventario.html", context=context)
 
+@login_required(login_url='/')
 def inventarioCreateView(request):
     if request.method == "POST":
         nombre = request.POST.get("nombre")
@@ -44,7 +45,8 @@ def inventarioCreateView(request):
         return render(request, "inventario/inventario_create.html")
 
 
-@login_required
+@login_required(login_url='/')
+@permission_required("inventario.change_inventario", login_url="/")
 @require_POST
 def inventarioUpdateView(request, id):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -60,6 +62,8 @@ def inventarioUpdateView(request, id):
     return JsonResponse({"success": False})
 
 @login_required(login_url="/")
+@permission_required("inventario.delete_inventario", login_url="/")
+@require_POST
 def inventarioDeleteView(request, id):
     inventario = get_object_or_404(Inventario, pk=id)
     inventario.delete()

@@ -133,10 +133,10 @@
                                                 data-bs-dismiss="modal">
                                             Cancelar
                                         </button>
-                                        <a class="btn btn-danger"
-                                           href="{% url 'inventario:eliminar_inventario' obj.id %}">
-                                            Eliminar
-                                        </a>
+                                        <form method="post" action="{% url 'inventario:eliminar_inventario' obj.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>

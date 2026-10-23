@@ -1,4 +1,6 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -17,7 +19,6 @@ def usuariosReadView(request):
     paginator = Paginator(usuarios,10)
     page_number = request.GET.get('page')
     usuarios_por_pagina=paginator.get_page(page_number)
-    print(f'{usuarios}')
     context = {
         "columnas":columnas,
         "usuarios": usuarios,
@@ -55,8 +56,6 @@ def createUserView(request):
 
     lista_grupos_json = json.dumps(lista_grupo_dict)
 
-    print(lista_grupos_json)
-
     context = {
         "grupos_json": lista_grupo_dict
     }
@@ -77,8 +76,6 @@ def createUserView(request):
         correo = request.POST['correo']
         grupo = request.POST.getlist('grupo')
 
-        print(request.POST)
-
         # Verificamos que el username no exista
         if User.objects.filter(username=username).exists():
             messages.info(request, 'El username ya existe!',
@@ -91,10 +88,13 @@ def createUserView(request):
                           extra_tags="Verifica e intenta de nuevo.")
             return redirect(reverse('usuarios:usuarios_create'))
 
-        # Verificamos que la contraseña no sea muy corta
-        if len(password) < 5:
-            messages.warning(request, 'La contraseña es demasiada corta!',
-                          extra_tags="Verifica e intenta de nuevo.")
+        # Verificamos la contraseña con los validadores de AUTH_PASSWORD_VALIDATORS
+        try:
+            validate_password(password, User(username=username, first_name=nombre,
+                                             last_name=apellido, email=correo))
+        except ValidationError as e:
+            messages.warning(request, 'La contraseña no es segura!',
+                             extra_tags=' '.join(e.messages))
             return redirect(reverse('usuarios:usuarios_create'))
 
         # Creamos y guardamos el usuario
@@ -162,10 +162,13 @@ def usuarioUpdateView(request, id):
                              extra_tags="Verifica e intenta de nuevo.")
             return redirect(reverse('usuarios:usuarios_modificar', args=[id]))
 
-        if password and len(password) < 5:
-            messages.warning(request, 'La contraseña es demasiado corta!',
-                             extra_tags="Verifica e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios_modificar', args=[id]))
+        if password:
+            try:
+                validate_password(password, usuario)
+            except ValidationError as e:
+                messages.warning(request, 'La contraseña no es segura!',
+                                 extra_tags=' '.join(e.messages))
+                return redirect(reverse('usuarios:usuarios_modificar', args=[id]))
 
         try:
             # Actualizar datos del usuario
@@ -294,6 +297,7 @@ def editarRolView(request, id):
 
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def crearPermiso(request):
     if request.method == 'POST':
         form = PermisoForm(request.POST)
@@ -310,6 +314,7 @@ def crearPermiso(request):
     return render(request, 'usuarios/crear_permiso.html', {'form': form})
 
 @login_required(login_url="/")
+@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def permisoReadView(request):
     permisos = Permiso.objects.all()
     paginator = Paginator(permisos,10)

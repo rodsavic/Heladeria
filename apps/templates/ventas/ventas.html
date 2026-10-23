@@ -148,8 +148,10 @@
                                         <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
                                             Cancelar
                                         </button>
-                                        <a class="btn btn-danger"
-                                           href="{% url 'ventas:eliminar_venta' venta.id_venta %}">Eliminar</a>
+                                        <form method="post" action="{% url 'ventas:eliminar_venta' venta.id_venta %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -165,10 +167,13 @@
                            type="button" title="Ver factura">
                             <i class="bi bi-file-earmark-text"></i>
                         </a>
-                        <a class="btn btn-cancelar btn-sm" href="{% url 'factura:anular_factura' venta.id_venta %}"
-                           type="button" title="Anular factura">
-                            <i class="bi bi-file-earmark-x"></i>
-                        </a>
+                        <form method="post" action="{% url 'factura:anular_factura' venta.id_venta %}" class="d-inline"
+                              onsubmit="return confirm('¿Deseas anular esta factura?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-cancelar btn-sm" title="Anular factura">
+                                <i class="bi bi-file-earmark-x"></i>
+                            </button>
+                        </form>
                         {% else %}
                         <a class="btn btn-crear btn-sm" href="{% url 'factura:emitir_factura' venta.id_venta %}"
                            type="button" title="Emitir factura">
@@ -211,9 +216,13 @@
                     <a class="btn btn-secondary btn-sm" href="{% url 'factura:detalle_factura' venta.id_factura_emitida %}" type="button" title="Ver factura">
                         <i class="bi bi-file-earmark-text"></i>
                     </a>
-                    <a class="btn btn-cancelar btn-sm" href="{% url 'factura:anular_factura' venta.id_venta %}" type="button" title="Anular factura">
-                        <i class="bi bi-file-earmark-x"></i>
-                    </a>
+                    <form method="post" action="{% url 'factura:anular_factura' venta.id_venta %}" class="d-inline"
+                          onsubmit="return confirm('¿Deseas anular esta factura?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-cancelar btn-sm" title="Anular factura">
+                            <i class="bi bi-file-earmark-x"></i>
+                        </button>
+                    </form>
                     {% else %}
                     <a class="btn btn-crear btn-sm" href="{% url 'factura:emitir_factura' venta.id_venta %}" type="button" title="Emitir factura">
                         <i class="bi bi-receipt"></i>
