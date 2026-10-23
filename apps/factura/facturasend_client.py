@@ -19,7 +19,8 @@ class FacturaSendClient:
 
     `configuracion` es una instancia de ConfiguracionEmpresa, de donde se
     toman la URL base (incluye el tenantId, ej:
-    "https://api.facturasend.com.py/<tenantId>") y la API Key.
+    "https://api.facturasend.com.py/<tenantId>") y la API Key (que viene de
+    la variable de entorno FACTURASEND_API_KEY).
     """
 
     def __init__(self, configuracion):

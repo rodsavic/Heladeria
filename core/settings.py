@@ -33,6 +33,8 @@ if not SECRET_KEY:
     # Solo para desarrollo local con DJANGO_DEBUG=True.
     SECRET_KEY = 'django-insecure-solo-para-desarrollo-local'
 
+FACTURASEND_API_KEY = config('FACTURASEND_API_KEY', default='')
+
 ALLOWED_HOSTS = ['web-production-1e3ba.up.railway.app', '127.0.0.1','web-gunicorn-corewsgi-production-08f7.up.railway.app']
 CSRF_TRUSTED_ORIGINS = ["https://web-production-1e3ba.up.railway.app",'https://127.0.0.1','https://web-gunicorn-corewsgi-production-08f7.up.railway.app']
 

@@ -39,7 +39,6 @@ def configuracionEmpresaView(request):
         secuencia_actual = request.POST.get('secuencia_actual', '1')
         configuracion.secuencia_actual = int(secuencia_actual) if secuencia_actual.isdigit() else 1
         configuracion.facturasend_url = request.POST.get('facturasend_url', '').strip()
-        configuracion.facturasend_api_key = request.POST.get('facturasend_api_key', '').strip()
         configuracion.facturasend_sincrono = request.POST.get('facturasend_sincrono') == 'on'
         producto_alquiler = request.POST.get('producto_alquiler', '')
         configuracion.producto_alquiler_id = int(producto_alquiler) if producto_alquiler.isdigit() else None

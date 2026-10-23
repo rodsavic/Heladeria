@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <title>{% block title %}Error{% endblock %} - Zu Heladería</title>
+    {# Estilos en linea y sin el tag static: estas paginas (sobre todo la 500) no deben depender de nada que pueda fallar. #}
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #B5652E, #2B2D31);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .error-card {
+            width: 100%;
+            max-width: 450px;
+            border-radius: 1.1rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+            background: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .error-code {
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: #B5652E;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .error-title {
+            font-size: 1.4rem;
+            color: #2B2D31;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .error-text {
+            color: #6c757d;
+            margin: 0 0 1.75rem;
+        }
+
+        .error-btn {
+            display: inline-block;
+            background: #B5652E;
+            color: white;
+            text-decoration: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+
+        .error-btn:hover {
+            background: #9a5426;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <p class="error-code">{% block code %}{% endblock %}</p>
+        <h1 class="error-title">{% block heading %}{% endblock %}</h1>
+        <p class="error-text">{% block message %}{% endblock %}</p>
+        <a href="/" class="error-btn">Volver al inicio</a>
+    </div>
+</body>
+</html>
