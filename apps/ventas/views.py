@@ -209,6 +209,12 @@ def ventasCreateView(request):
 
 @login_required(login_url="/")
 def ventasEditView(request, id_venta):
+    # Las ventas generadas desde un contrato de alquiler tienen lineas con
+    # descripcion propia que este formulario no conserva.
+    if VentaDetalle.objects.filter(id_venta=id_venta).exclude(descripcion='').exists():
+        messages.warning(request, 'Esta venta proviene de un contrato de alquiler y no se puede editar desde aquí.')
+        return redirect('ventas:ventas')
+
     if request.method == 'POST':
         try:
             print("Ingresa al metodo POST")

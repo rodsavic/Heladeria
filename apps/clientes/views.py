@@ -26,23 +26,8 @@ def crearCliente(request):
         form = ClienteForm(request.POST)
         if form.is_valid():
             try:
-                documento = request.POST['documento']
-                nombre = request.POST['nombre']
-                apellido = request.POST['apellido']
-                correo = request.POST['correo']
-                celular = request.POST['celular']
-                direccion = request.POST['direccion']
-
-                cliente_nuevo = Cliente.objects.create(
-                    documento= documento,
-                    nombre = nombre,
-                    apellido = apellido,
-                    correo = correo,
-                    celular = celular,
-                    direccion = direccion,
-                    estado = 'Activo'
-                )
-
+                cliente_nuevo = form.save(commit=False)
+                cliente_nuevo.estado = 'Activo'
                 cliente_nuevo.save()
                 messages.success(request, "Cliente creado con exito")
                 return redirect("clientes:clientes")
@@ -67,15 +52,9 @@ def crearClienteAjax(request):
         return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 
     try:
-        cliente_nuevo = Cliente.objects.create(
-            documento=request.POST['documento'],
-            nombre=request.POST['nombre'],
-            apellido=request.POST['apellido'],
-            correo=request.POST['correo'],
-            celular=request.POST['celular'],
-            direccion=request.POST['direccion'],
-            estado='Activo'
-        )
+        cliente_nuevo = form.save(commit=False)
+        cliente_nuevo.estado = 'Activo'
+        cliente_nuevo.save()
         return JsonResponse({
             'ok': True,
             'cliente': {

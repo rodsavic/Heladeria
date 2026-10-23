@@ -44,6 +44,49 @@
                 {{ form.direccion }}
             </div>
 
+            <h5 class="mt-4">Datos para facturación electrónica</h5>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Nombre de fantasía</span>
+                {{ form.nombre_fantasia }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Tipo de documento</span>
+                {{ form.tipo_documento }}
+                <span class="input-group-text">País</span>
+                {{ form.pais }}
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-check-inline">
+                    {{ form.es_contribuyente }}
+                    <label class="form-check-label" for="{{ form.es_contribuyente.id_for_label }}">El documento es un RUC</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    {{ form.es_persona_juridica }}
+                    <label class="form-check-label" for="{{ form.es_persona_juridica.id_for_label }}">Persona jurídica</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    {{ form.es_proveedor_estado }}
+                    <label class="form-check-label" for="{{ form.es_proveedor_estado.id_for_label }}">Proveedor del Estado</label>
+                </div>
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Departamento</span>
+                {{ form.departamento }}
+                <span class="input-group-text">Distrito</span>
+                {{ form.distrito }}
+                <span class="input-group-text">Ciudad</span>
+                {{ form.id_ciudad }}
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">Número de casa</span>
+                {{ form.numero_casa }}
+            </div>
+
             <div class="text-center mb-3">
                 <button type="submit" class="btn-crear mt-3 ">Guardar</button>
                 <button type="reset" class="btn-limpiar mt-3">Limpiar</button>
@@ -53,4 +96,29 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+(function () {
+    const dep = document.getElementById('{{ form.departamento.id_for_label }}');
+    const dis = document.getElementById('{{ form.distrito.id_for_label }}');
+    const ciu = document.getElementById('{{ form.id_ciudad.id_for_label }}');
+
+    function cargar(select, url) {
+        select.innerHTML = '<option value="">Seleccione...</option>';
+        if (!url) return;
+        fetch(url).then(r => r.json()).then(data => {
+            data.items.forEach(i => select.add(new Option(i.descripcion, i.codigo)));
+        });
+    }
+
+    dep.addEventListener('change', () => {
+        cargar(dis, dep.value && '/catalogos/distritos/' + dep.value + '/');
+        cargar(ciu, null);
+    });
+    dis.addEventListener('change', () => cargar(ciu, dis.value && '/catalogos/ciudades/' + dis.value + '/'));
+})();
+</script>
 {% endblock %}

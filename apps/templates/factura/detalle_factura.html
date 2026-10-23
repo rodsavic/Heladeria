@@ -95,6 +95,15 @@
         margin-bottom: 1rem;
     }
 
+    .correos-panel {
+        max-width: 720px;
+        margin: 1.5rem auto 0;
+    }
+
+    .correos-panel .table {
+        font-size: 0.85rem;
+    }
+
     .ticket-wrapper.ticket-58 .ticket-card {
         font-size: 0.74rem;
         padding: 0.7rem;
@@ -122,7 +131,8 @@
         .mobile-toggle,
         .sidebar-overlay,
         .messages-stack,
-        .ticket-actions {
+        .ticket-actions,
+        .correos-panel {
             display: none !important;
         }
 
@@ -160,6 +170,23 @@
     <a href="{% url 'ventas:ventas' %}" class="btn btn-secondary btn-sm">Volver</a>
     <button type="button" class="btn btn-crear btn-sm" onclick="imprimirTicket(80);">Imprimir 80mm</button>
     <button type="button" class="btn btn-limpiar btn-sm" onclick="imprimirTicket(58);">Imprimir 58mm</button>
+    {% if facturasend_activo %}
+        {% if factura.cdc %}
+        <a href="{% url 'factura:kude_factura' factura.id_factura %}" target="_blank" class="btn btn-crear btn-sm">Ver KuDE</a>
+        {% endif %}
+        {% if sifen_aprobado and not ver_correos %}
+        <a href="?correos=1#correos" class="btn btn-secondary btn-sm">Correos</a>
+        {% endif %}
+        {% if sifen_pendiente and factura.cdc %}
+        <a href="{% url 'factura:actualizar_estado_factura' factura.id_factura %}" class="btn btn-secondary btn-sm">Actualizar estado SIFEN</a>
+        {% endif %}
+        {% if sifen_reenviable %}
+        <form method="post" action="{% url 'factura:reenviar_factura' factura.id_factura %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm">Reenviar a FacturaSend</button>
+        </form>
+        {% endif %}
+    {% endif %}
 </div>
 
 <div class="ticket-wrapper ticket-80" id="ticketWrapper">
@@ -183,6 +210,10 @@
             <div class="ticket-row"><span>Tipo factura:</span><strong>{{ factura.get_tipo_factura_display }}</strong></div>
             <div class="ticket-row"><span>Forma de pago:</span><strong>{{ factura.forma_pago }}</strong></div>
             <div class="ticket-row"><span>Estado:</span><strong>{{ factura.estado }}</strong></div>
+            {% if factura.cdc %}
+            <div class="ticket-row"><span>Estado SIFEN:</span><strong>{{ factura.get_estado_sifen_display }}</strong></div>
+            <div class="ticket-row"><span>CDC:</span><strong style="word-break: break-all;">{{ factura.cdc }}</strong></div>
+            {% endif %}
         </div>
 
         <div class="ticket-section">
@@ -197,7 +228,10 @@
                 <tbody>
                     {% for detalle in detalles %}
                     <tr>
-                        <td>{{ detalle.id_producto.nombre }}</td>
+                        <td>
+                            {{ detalle.descripcion_mostrar }}
+                            {% if detalle.observacion %}<div class="text-muted small" style="white-space: pre-line;">{{ detalle.observacion }}</div>{% endif %}
+                        </td>
                         <td>{{ detalle.cantidad_producto|floatformat:0 }}</td>
                         <td>{{ detalle.total_detalle|floatformat:0|intcomma }}</td>
                     </tr>
@@ -211,8 +245,63 @@
             <div class="ticket-row"><span>IVA 5:</span><strong>{{ venta.total_iva_5|floatformat:0|intcomma }}</strong></div>
             <div class="ticket-row ticket-total"><span>TOTAL:</span><strong>{{ venta.total_venta|floatformat:0|intcomma }}</strong></div>
         </div>
+
+        {% if venta.observacion %}
+        <div class="ticket-section">
+            <div class="small" style="white-space: pre-line;">{{ venta.observacion }}</div>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+{% if ver_correos %}
+<div class="correos-panel card" id="correos">
+    <div class="card-body">
+        <h6 class="mb-3">Envío por correo</h6>
+        <form method="post" action="{% url 'factura:reenviar_email_factura' factura.id_factura %}" class="row g-2 align-items-end mb-3">
+            {% csrf_token %}
+            <div class="col-sm">
+                <label for="email" class="form-label small mb-1">
+                    Destino (vacío = correo del cliente{% if cliente.correo %}: {{ cliente.correo }}{% endif %})
+                </label>
+                <input type="text" class="form-control form-control-sm" name="email" id="email"
+                       placeholder="otro@correo.com, copia@correo.com">
+            </div>
+            <div class="col-sm-auto">
+                <button type="submit" class="btn btn-crear btn-sm">Reenviar por correo</button>
+            </div>
+        </form>
+
+        {% if error_envios %}
+        <div class="alert alert-warning py-2 small mb-0">No se pudo consultar el historial: {{ error_envios }}</div>
+        {% elif envios_email %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr><th>Fecha</th><th>Destinatario</th><th>Asunto</th><th>Resultado</th></tr>
+                </thead>
+                <tbody>
+                    {% for envio in envios_email %}
+                    <tr>
+                        <td>{{ envio.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>{{ envio.destinatario }}{% if envio.copia %}<br><small class="text-muted">CC: {{ envio.copia }}</small>{% endif %}</td>
+                        <td>{{ envio.asunto }}</td>
+                        <td title="{{ envio.respuesta }}">
+                            {% if envio.exitoso %}<span class="badge bg-success">Enviado</span>
+                            {% elif envio.exitoso is False %}<span class="badge bg-danger">Falló</span>
+                            {% else %}<span class="badge bg-secondary">Sin confirmar</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">FacturaSend todavía no registra envíos de correo para esta factura.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 <script>
     function imprimirTicket(anchoMm) {
