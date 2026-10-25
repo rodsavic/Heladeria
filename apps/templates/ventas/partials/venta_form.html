@@ -53,6 +53,18 @@
     background: #e95420;
   }
 
+  /* El contenedor intermedio impide que modal-dialog-scrollable llegue al modal-body */
+  #formNuevoCliente {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #formNuevoCliente .modal-body {
+    overflow-y: auto;
+  }
+
   .tipo-venta-group .form-check-input:focus-visible + .tipo-venta-chip {
     outline: 2px solid #e95420;
     outline-offset: 2px;
@@ -311,7 +323,7 @@
         </div>
 
         <div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-labelledby="modalNuevoClienteLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title" id="modalNuevoClienteLabel">
@@ -323,29 +335,79 @@
                 <div class="modal-body">
                   <div id="clienteModalAlert" class="alert alert-danger d-none" role="alert"></div>
 
-                  <div class="mb-3">
-                    <label class="form-label" for="cliente_documento">Cedula / Documento</label>
-                    <input type="text" class="form-control" id="cliente_documento" name="documento">
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_nombre">Nombre</label>
+                      {{ cliente_form.nombre }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_apellido">Apellido</label>
+                      {{ cliente_form.apellido }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_correo">Correo</label>
+                      {{ cliente_form.correo }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_celular">Celular</label>
+                      {{ cliente_form.celular }}
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="cliente_direccion">Dirección</label>
+                      {{ cliente_form.direccion }}
+                    </div>
                   </div>
-                  <div class="mb-3">
-                    <label class="form-label" for="cliente_nombre">Nombre</label>
-                    <input type="text" class="form-control" id="cliente_nombre" name="nombre">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label" for="cliente_apellido">Apellido</label>
-                    <input type="text" class="form-control" id="cliente_apellido" name="apellido">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label" for="cliente_correo">Correo</label>
-                    <input type="email" class="form-control" id="cliente_correo" name="correo">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label" for="cliente_celular">Celular</label>
-                    <input type="text" class="form-control" id="cliente_celular" name="celular">
-                  </div>
-                  <div class="mb-0">
-                    <label class="form-label" for="cliente_direccion">Direccion</label>
-                    <input type="text" class="form-control" id="cliente_direccion" name="direccion">
+
+                  <h6 class="mt-4 mb-3">Datos para facturación electrónica</h6>
+
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_tipo_documento">Tipo de documento</label>
+                      {{ cliente_form.tipo_documento }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_documento">Documento / RUC</label>
+                      {{ cliente_form.documento }}
+                      <small class="text-muted">Si es RUC, incluir el dígito verificador (ej. 80000000-1).</small>
+                    </div>
+                    <div class="col-12">
+                      <div class="form-check form-check-inline">
+                        {{ cliente_form.es_contribuyente }}
+                        <label class="form-check-label" for="cliente_es_contribuyente">El documento es un RUC</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        {{ cliente_form.es_persona_juridica }}
+                        <label class="form-check-label" for="cliente_es_persona_juridica">Persona jurídica</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        {{ cliente_form.es_proveedor_estado }}
+                        <label class="form-check-label" for="cliente_es_proveedor_estado">Proveedor del Estado</label>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_nombre_fantasia">Nombre de fantasía</label>
+                      {{ cliente_form.nombre_fantasia }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="cliente_pais">País</label>
+                      {{ cliente_form.pais }}
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="cliente_departamento">Departamento</label>
+                      {{ cliente_form.departamento }}
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="cliente_distrito">Distrito</label>
+                      {{ cliente_form.distrito }}
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="cliente_id_ciudad">Ciudad</label>
+                      {{ cliente_form.id_ciudad }}
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="cliente_numero_casa">Número de casa</label>
+                      {{ cliente_form.numero_casa }}
+                    </div>
                   </div>
                 </div>
                 <div class="modal-footer">

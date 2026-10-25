@@ -13,12 +13,19 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.clientes.forms import ClienteForm
 from apps.clientes.models import Cliente
 from apps.factura.models import Factura
 from apps.productos.models import Producto
 from apps.tipo_pago.models import TipoPago
 from apps.ventas.forms import *
 from apps.ventas.models import VentaTipoDePago, TipoVenta
+
+
+def _cliente_form_modal():
+    # El modal de alta rapida vive dentro del <form> de la venta: sin atributo
+    # required (bloquearia el submit de la venta) y con ids cliente_* que usa ventas.js.
+    return ClienteForm(auto_id='cliente_%s', use_required_attribute=False)
 
 
 def _es_tipo_venta_pedidos_ya(tipo_venta):
@@ -200,7 +207,8 @@ def ventasCreateView(request):
         'clientes': clientes,
         'tipos_de_pago': tipos_de_pago,
         'now': timezone.now(),
-        "tipo_venta": tipo_venta
+        "tipo_venta": tipo_venta,
+        'cliente_form': _cliente_form_modal(),
     }
 
     return render(request, 'ventas/crear_venta.html', context=context)
@@ -349,6 +357,7 @@ def ventasEditView(request, id_venta):
             'monto_efectivo': monto_efectivo,
             'monto_pos': monto_pos,
             'monto_transferencia': monto_transferencia,
+            'cliente_form': _cliente_form_modal(),
         }
     return render(request, 'ventas/editar_venta.html', context=context)
 

@@ -1,0 +1,267 @@
+<style>
+  .permisos-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .permisos-toolbar .buscador {
+    max-width: 320px;
+  }
+
+  .modulo-permisos .accordion-button {
+    gap: 0.75rem;
+    font-weight: 600;
+  }
+
+  .modulo-permisos .badge-conteo {
+    font-weight: 600;
+    min-width: 3.2rem;
+  }
+
+  .modulo-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .tabla-permisos th,
+  .tabla-permisos td {
+    vertical-align: middle;
+  }
+
+  .tabla-permisos .col-accion {
+    width: 90px;
+    text-align: center;
+  }
+
+  .tabla-permisos .col-accion button {
+    background: none;
+    border: 0;
+    color: inherit;
+    font-weight: 600;
+    padding: 0;
+  }
+
+  .tabla-permisos .form-check-input {
+    cursor: pointer;
+    transform: scale(1.15);
+  }
+
+  @media (max-width: 576px) {
+    .tabla-permisos .col-accion { width: auto; }
+    .tabla-permisos th, .tabla-permisos td { padding: 0.35rem; font-size: 0.8rem; }
+  }
+</style>
+
+<div class="card" style="width: 100%;">
+  <div class="card-body">
+    <h2 class="card-title">{{ titulo }}</h2>
+    <h6 class="card-subtitle mb-2 text-muted">{{ subtitulo }}</h6>
+    <a href="{% url 'usuarios:roles' %}" class="card-link">Volver a la lista de roles</a>
+
+    <form method="POST" class="mt-3" id="formRol">
+      {% csrf_token %}
+      <div class="input-group mb-4">
+        <span class="input-group-text">Nombre del rol</span>
+        <input id="name" name="name" type="text" class="form-control" placeholder="Ej. Cajero"
+               value="{{ nombre }}" maxlength="150" required {% if rol.name == 'ADMIN' %}readonly title="El rol ADMIN no se puede renombrar"{% endif %}>
+      </div>
+
+      <div class="permisos-toolbar">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <h5 class="mb-0">Permisos</h5>
+          <span class="badge text-bg-secondary" id="totalSeleccionados">0 seleccionados</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <input type="search" class="form-control form-control-sm buscador" id="buscarPermiso"
+                 placeholder="Buscar módulo o recurso...">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-expandir="true">Expandir todo</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-expandir="false">Contraer todo</button>
+        </div>
+      </div>
+
+      <div class="accordion" id="accordionPermisos">
+        {% for modulo in modulos %}
+        <div class="accordion-item modulo-permisos" data-modulo="{{ modulo.nombre|lower }}">
+          <h2 class="accordion-header" id="heading-{{ modulo.app_label }}">
+            <button class="accordion-button {% if not modulo.seleccionados %}collapsed{% endif %}" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-{{ modulo.app_label }}"
+                    aria-expanded="{% if modulo.seleccionados %}true{% else %}false{% endif %}"
+                    aria-controls="collapse-{{ modulo.app_label }}">
+              <span class="badge rounded-pill badge-conteo text-bg-light border" data-conteo>
+                {{ modulo.seleccionados }}/{{ modulo.total }}
+              </span>
+              {{ modulo.nombre }}
+            </button>
+          </h2>
+          <div id="collapse-{{ modulo.app_label }}" class="accordion-collapse collapse {% if modulo.seleccionados %}show{% endif %}"
+               aria-labelledby="heading-{{ modulo.app_label }}">
+            <div class="accordion-body">
+              <div class="modulo-acciones">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-marcar="todo">Todo</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-marcar="ver">Solo ver</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-marcar="nada">Ninguno</button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-hover tabla-permisos mb-0">
+                  <thead>
+                    <tr>
+                      <th>Recurso</th>
+                      <th class="col-accion"><button type="button" data-columna="0" title="Marcar/desmarcar columna">Ver</button></th>
+                      <th class="col-accion"><button type="button" data-columna="1" title="Marcar/desmarcar columna">Crear</button></th>
+                      <th class="col-accion"><button type="button" data-columna="2" title="Marcar/desmarcar columna">Editar</button></th>
+                      <th class="col-accion"><button type="button" data-columna="3" title="Marcar/desmarcar columna">Eliminar</button></th>
+                      <th>Otros</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for recurso in modulo.recursos %}
+                    <tr data-recurso="{{ recurso.nombre|lower }}">
+                      <td>
+                        <div class="form-check mb-0">
+                          <input class="form-check-input" type="checkbox" data-fila
+                                 id="fila-{{ modulo.app_label }}-{{ forloop.counter }}" aria-label="Todos los permisos de {{ recurso.nombre }}">
+                          <label class="form-check-label" for="fila-{{ modulo.app_label }}-{{ forloop.counter }}">{{ recurso.nombre }}</label>
+                        </div>
+                      </td>
+                      {% for item in recurso.acciones %}
+                      <td class="col-accion">
+                        {% if item %}
+                        <input class="form-check-input" type="checkbox" name="permissions" value="{{ item.id }}"
+                               data-col="{{ forloop.counter0 }}" title="{{ item.nombre }}"
+                               aria-label="{{ item.nombre }}" {% if item.checked %}checked{% endif %}>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                      </td>
+                      {% endfor %}
+                      <td>
+                        {% for item in recurso.extras %}
+                        <div class="form-check mb-0">
+                          <input class="form-check-input" type="checkbox" name="permissions" value="{{ item.id }}"
+                                 id="permiso-{{ item.id }}" {% if item.checked %}checked{% endif %}>
+                          <label class="form-check-label" for="permiso-{{ item.id }}">{{ item.nombre }}</label>
+                        </div>
+                        {% empty %}
+                        <span class="text-muted">—</span>
+                        {% endfor %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No hay permisos disponibles.</p>
+        {% endfor %}
+      </div>
+      <p class="text-muted mt-2 d-none" id="sinResultados">Ningún módulo o recurso coincide con la búsqueda.</p>
+
+      <div class="text-center">
+        <button type="submit" class="btn-crear mt-3">{{ boton }}</button>
+        <button type="button" class="btn-cancelar mt-3" onclick="window.location.href='{% url 'usuarios:roles' %}'">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  const form = document.getElementById('formRol');
+  const permisos = () => form.querySelectorAll('input[name="permissions"]');
+
+  function actualizarFila(fila) {
+    const checks = fila.querySelectorAll('input[name="permissions"]');
+    const marcados = Array.from(checks).filter(c => c.checked).length;
+    const toggle = fila.querySelector('[data-fila]');
+    toggle.checked = checks.length > 0 && marcados === checks.length;
+    toggle.indeterminate = marcados > 0 && marcados < checks.length;
+  }
+
+  function actualizarConteos() {
+    form.querySelectorAll('.modulo-permisos').forEach(modulo => {
+      const checks = modulo.querySelectorAll('input[name="permissions"]');
+      const marcados = Array.from(checks).filter(c => c.checked).length;
+      const badge = modulo.querySelector('[data-conteo]');
+      badge.textContent = `${marcados}/${checks.length}`;
+      badge.classList.toggle('text-bg-light', marcados === 0);
+      badge.classList.toggle('text-bg-primary', marcados > 0);
+      modulo.querySelectorAll('tbody tr').forEach(actualizarFila);
+    });
+    const total = Array.from(permisos()).filter(c => c.checked).length;
+    document.getElementById('totalSeleccionados').textContent =
+      `${total} seleccionado${total === 1 ? '' : 's'}`;
+  }
+
+  form.addEventListener('change', function (event) {
+    const fila = event.target.closest('tr');
+    if (event.target.matches('[data-fila]') && fila) {
+      fila.querySelectorAll('input[name="permissions"]').forEach(c => { c.checked = event.target.checked; });
+    }
+    actualizarConteos();
+  });
+
+  form.addEventListener('click', function (event) {
+    const modulo = event.target.closest('.modulo-permisos');
+
+    const botonMarcar = event.target.closest('[data-marcar]');
+    if (botonMarcar && modulo) {
+      const modo = botonMarcar.dataset.marcar;
+      modulo.querySelectorAll('input[name="permissions"]').forEach(c => {
+        c.checked = modo === 'todo' || (modo === 'ver' && c.dataset.col === '0');
+      });
+      actualizarConteos();
+      return;
+    }
+
+    const botonColumna = event.target.closest('[data-columna]');
+    if (botonColumna && modulo) {
+      const checks = modulo.querySelectorAll(`input[data-col="${botonColumna.dataset.columna}"]`);
+      const marcarTodos = Array.from(checks).some(c => !c.checked);
+      checks.forEach(c => { c.checked = marcarTodos; });
+      actualizarConteos();
+      return;
+    }
+
+    const botonExpandir = event.target.closest('[data-expandir]');
+    if (botonExpandir) {
+      const expandir = botonExpandir.dataset.expandir === 'true';
+      form.querySelectorAll('.modulo-permisos:not(.d-none) .accordion-collapse').forEach(panel => {
+        bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false })[expandir ? 'show' : 'hide']();
+      });
+    }
+  });
+
+  document.getElementById('buscarPermiso').addEventListener('input', function () {
+    const texto = this.value.trim().toLowerCase();
+    let visibles = 0;
+    form.querySelectorAll('.modulo-permisos').forEach(modulo => {
+      const coincideModulo = !texto || modulo.dataset.modulo.includes(texto);
+      let filasVisibles = 0;
+      modulo.querySelectorAll('tbody tr').forEach(fila => {
+        const visible = coincideModulo || fila.dataset.recurso.includes(texto);
+        fila.classList.toggle('d-none', !visible);
+        if (visible) filasVisibles++;
+      });
+      const mostrar = filasVisibles > 0;
+      modulo.classList.toggle('d-none', !mostrar);
+      if (mostrar) visibles++;
+      if (texto && mostrar) {
+        bootstrap.Collapse.getOrCreateInstance(modulo.querySelector('.accordion-collapse'), { toggle: false }).show();
+      }
+    });
+    document.getElementById('sinResultados').classList.toggle('d-none', visibles > 0);
+  });
+
+  actualizarConteos();
+})();
+</script>

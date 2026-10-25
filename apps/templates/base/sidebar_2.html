@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!-- Sidebar Template for Django -->
 <nav id="sidebar">
     <!-- Header del sidebar -->
@@ -29,7 +30,8 @@
             </a>
         </li>
         {% endif %}
-        {% if perms.auth %}
+        {% with usuario_admin=request.user|es_admin %}
+        {% if usuario_admin %}
         <li class="sidebar-item">
             <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link">
                 <i class="lni lni-agenda"></i>
@@ -37,7 +39,7 @@
             </a>
         </li>
         {% endif %}
-        {% if perms.auth %}
+        {% if usuario_admin or request.user.is_superuser %}
         <li class="sidebar-item">
             <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" data-bs-target="#adm"
                aria-expanded="false" aria-controls="adm">
@@ -45,15 +47,12 @@
                 <span>Administración</span>
             </a>
             <ul id="adm" class="sidebar-dropdown list-unstyled collapse">
-                {% if perms.usuarios.view_usuario %}
+                {% if usuario_admin %}
                 <li class="sidebar-item">
                     <a href="{% url 'usuarios:usuarios' %}" class="sidebar-link">
                         <span>Usuarios</span>
                     </a>
                 </li>
-                {% endif %}
-
-                {% if perms.auth.view_group %}
                 <li class="sidebar-item">
                     <a href="{% url 'usuarios:roles' %}" class="sidebar-link">
                         <span>Roles</span>
@@ -75,6 +74,7 @@
             </ul>
         </li>
         {% endif %}
+        {% endwith %}
         <li class="sidebar-item">
             <a href="{% url 'productos:productos' %}" class="sidebar-link">
                 <i class="bi bi-boxes"></i>

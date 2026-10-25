@@ -1,7 +1,14 @@
 from decimal import Decimal
 from django import template
 
+from apps.usuarios.acceso import es_admin as _es_admin
+
 register = template.Library()
+
+
+@register.filter
+def es_admin(user):
+    return _es_admin(user)
 
 @register.filter(name='add_class')
 def add_class(value, arg):

@@ -1,116 +1,107 @@
-from django.forms import CharField, CheckboxSelectMultiple, ModelForm, ModelMultipleChoiceField, PasswordInput, SelectMultiple, TextInput
-from apps.usuarios.models import *
-from django.core.exceptions import ValidationError
-from django.contrib.auth.models import Group, Permission
-
 from django import forms
+from django.contrib.auth.models import Group
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
+from apps.usuarios.acceso import GRUPO_ADMIN
+from apps.usuarios.models import User
 
 
-class UsuarioForm(ModelForm):
-    contrasena = CharField(
-        widget=PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Contraseña'
-        }),
-        label="Contraseña"
-    )
-    contrasena2 = CharField(
-        widget=PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Confirma la contraseña'
-        }),
-        label="Confirma la contraseña"
-    )
-    
-    roles = ModelMultipleChoiceField(
-        queryset=Rol.objects.all(),
-        widget=SelectMultiple(attrs={
-            'class': 'form-control',
-            'placeholder': 'Selecciona uno o más roles'
-        }),
-        required=False
-    )
+class UsuarioForm(forms.ModelForm):
+    """Alta y edicion de usuarios. La contrasena es obligatoria solo al crear."""
+    password = forms.CharField(
+        label='Contraseña', required=False, strip=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'new-password'}))
+    password_repetir = forms.CharField(
+        label='Repetir contraseña', required=False, strip=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'new-password'}))
+    grupos = forms.ModelMultipleChoiceField(
+        label='Rol', queryset=Group.objects.order_by('name'), required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-select'}))
 
     class Meta:
-        model = Usuario
-        exclude = ['id_usuario', 'estado','usuario_creacion','usuario_modificacion','fecha_creacion','fecha_modificacion']
+        model = User
+        fields = ['first_name', 'last_name', 'username', 'email', 'telefono', 'cargo', 'direccion', 'fecha_nacimiento']
+        labels = {
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'username': 'Username',
+            'email': 'Correo',
+            'telefono': 'Teléfono',
+            'cargo': 'Cargo',
+            'direccion': 'Dirección',
+            'fecha_nacimiento': 'Fecha de nacimiento',
+        }
         widgets = {
-            'nombre_usuario': TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre de usuario'
-            }),
-            'nombre': TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre'
-            }),
-            'apellido': TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Apellido'
-            }),
-            'documento': TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Documento'
-            }),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'cargo': forms.TextInput(attrs={'class': 'form-control'}),
+            'direccion': forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
         }
 
-    def clean_nombre_usuario(self):
-        """
-        Validamos que el nombre de usuario no esté duplicado
-        """
-        nombre_usuario = self.cleaned_data['nombre_usuario']
-        instance = self.instance
+    def __init__(self, *args, editor=None, **kwargs):
+        # editor: usuario logueado, para que no se quite a si mismo el rol ADMIN.
+        self.editor = editor
+        super().__init__(*args, **kwargs)
+        self.es_alta = self.instance.pk is None
+        self.fields['first_name'].required = True
+        self.fields['password'].required = self.es_alta
+        self.fields['password_repetir'].required = self.es_alta
+        if not self.es_alta:
+            self.fields['password'].help_text = 'Dejar vacío para mantener la contraseña actual.'
+            self.initial['grupos'] = list(self.instance.groups.values_list('pk', flat=True))
 
-        queryset = Usuario.objects.filter(nombre_usuario=nombre_usuario).exclude(id_usuario=instance.id_usuario)
-        
-        if queryset.exists():
-            raise ValidationError('El nombre de usuario ya existe!')
-        return nombre_usuario
+    def full_clean(self):
+        super().full_clean()
+        for nombre in self.errors:
+            if nombre in self.fields:
+                widget = self.fields[nombre].widget
+                widget.attrs['class'] = f"{widget.attrs.get('class', '')} is-invalid".strip()
 
-    def clean_documento(self):
-        """
-        Validamos que el documento no esté duplicado
-        """
-        documento = self.cleaned_data['documento']
-        instance = self.instance
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ya existe un usuario con ese username.')
+        return username
 
-        queryset = Usuario.objects.filter(documento=documento).exclude(id_usuario=instance.id_usuario)
-        
-        if queryset.exists():
-            raise ValidationError('El documento ya existe!')
-        return documento
+    def clean_grupos(self):
+        grupos = self.cleaned_data['grupos']
+        es_el_mismo = self.editor is not None and self.editor.pk == self.instance.pk
+        if es_el_mismo and not any(g.name == GRUPO_ADMIN for g in grupos):
+            raise ValidationError(f'No podés quitarte a vos mismo el rol {GRUPO_ADMIN}.')
+        return grupos
 
     def clean(self):
-        """
-        Validamos que las contraseñas coincidan
-        """
         cleaned_data = super().clean()
-        contrasena = cleaned_data.get("contrasena")
-        contrasena2 = cleaned_data.get("contrasena2")
+        password = cleaned_data.get('password')
+        password_repetir = cleaned_data.get('password_repetir')
 
-        if contrasena and contrasena2 and contrasena != contrasena2:
-            raise ValidationError("Las contraseñas no coinciden.")
-
+        if password or password_repetir:
+            if password != password_repetir:
+                self.add_error('password_repetir', 'Las contraseñas no coinciden.')
+            else:
+                # Se valida contra los datos nuevos para detectar contrasenas parecidas al nombre o username.
+                candidato = User(
+                    username=cleaned_data.get('username', ''),
+                    first_name=cleaned_data.get('first_name', ''),
+                    last_name=cleaned_data.get('last_name', ''),
+                    email=cleaned_data.get('email', ''),
+                )
+                try:
+                    validate_password(password, candidato)
+                except ValidationError as error:
+                    self.add_error('password', error)
         return cleaned_data
 
-
-class PermisoForm(ModelForm):
-    class Meta:
-        model = Permiso
-        fields = ['descripcion']
-
-
-class RolForm(ModelForm):
-    permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'form-control',
-            'placeholder': 'Selecciona uno o más permisos'
-        }),
-        required=False
-    )
-
-    class Meta:
-        model = Group
-        fields = ['name', 'permissions']
-
-
+    def save(self, commit=True):
+        usuario = super().save(commit=False)
+        if self.cleaned_data.get('password'):
+            usuario.set_password(self.cleaned_data['password'])
+        if commit:
+            usuario.save()
+            usuario.groups.set(self.cleaned_data['grupos'])
+        return usuario
