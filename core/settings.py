@@ -178,7 +178,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # django_heroku.settings(locals())
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
+# Hay plantillas que referencian estáticos inexistentes; evita que den error 500
+WHITENOISE_MANIFEST_STRICT = False
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
