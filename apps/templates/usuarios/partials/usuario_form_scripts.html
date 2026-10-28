@@ -1,0 +1,14 @@
+<style>
+    .input-group > .select2-container {
+        flex: 1 1 auto;
+        width: 1% !important;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        $('#id_grupos').select2({
+            placeholder: 'Selecciona uno o más roles',
+            width: 'resolve'
+        });
+    });
+</script>

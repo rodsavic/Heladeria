@@ -119,63 +119,21 @@
 
 <div class="messages-stack" id="messagesStack" aria-live="polite" aria-atomic="true">
     {% for message in messages %}
-        {% if message.tags == 'error' %}
-            {% with toast_type='error' icon='!' title='Error' %}
-                <div class="app-toast app-toast-{{ toast_type }}" data-toast>
-                    <div class="app-toast-content">
-                        <span class="app-toast-icon">{{ icon }}</span>
-                        <div>
-                            <p class="app-toast-title">{{ title }}</p>
-                            <p class="app-toast-text">{{ message }}</p>
-                        </div>
-                        <button type="button" class="app-toast-close" data-toast-close aria-label="Cerrar">x</button>
+        {# level_tag es solo el nivel; message.tags tambien incluye extra_tags y no sirve para comparar. #}
+        {% with nivel=message.level_tag detalle=message.extra_tags %}
+            <div class="app-toast app-toast-{% if nivel == 'error' or nivel == 'warning' or nivel == 'info' %}{{ nivel }}{% else %}success{% endif %}" data-toast>
+                <div class="app-toast-content">
+                    <span class="app-toast-icon">{% if nivel == 'error' or nivel == 'warning' %}!{% elif nivel == 'info' %}i{% else %}OK{% endif %}</span>
+                    <div>
+                        <p class="app-toast-title">{% if nivel == 'error' %}Error{% elif nivel == 'warning' %}Atención{% elif nivel == 'info' %}Información{% else %}Éxito{% endif %}</p>
+                        <p class="app-toast-text">{{ message }}</p>
+                        {% if detalle|cut:" " %}<p class="app-toast-text small">{{ detalle }}</p>{% endif %}
                     </div>
-                    <div class="app-toast-progress"></div>
+                    <button type="button" class="app-toast-close" data-toast-close aria-label="Cerrar">x</button>
                 </div>
-            {% endwith %}
-        {% elif message.tags == 'warning' %}
-            {% with toast_type='warning' icon='!' title='Atención' %}
-                <div class="app-toast app-toast-{{ toast_type }}" data-toast>
-                    <div class="app-toast-content">
-                        <span class="app-toast-icon">{{ icon }}</span>
-                        <div>
-                            <p class="app-toast-title">{{ title }}</p>
-                            <p class="app-toast-text">{{ message }}</p>
-                        </div>
-                        <button type="button" class="app-toast-close" data-toast-close aria-label="Cerrar">x</button>
-                    </div>
-                    <div class="app-toast-progress"></div>
-                </div>
-            {% endwith %}
-        {% elif message.tags == 'info' %}
-            {% with toast_type='info' icon='i' title='Información' %}
-                <div class="app-toast app-toast-{{ toast_type }}" data-toast>
-                    <div class="app-toast-content">
-                        <span class="app-toast-icon">{{ icon }}</span>
-                        <div>
-                            <p class="app-toast-title">{{ title }}</p>
-                            <p class="app-toast-text">{{ message }}</p>
-                        </div>
-                        <button type="button" class="app-toast-close" data-toast-close aria-label="Cerrar">x</button>
-                    </div>
-                    <div class="app-toast-progress"></div>
-                </div>
-            {% endwith %}
-        {% else %}
-            {% with toast_type='success' icon='OK' title='Éxito' %}
-                <div class="app-toast app-toast-{{ toast_type }}" data-toast>
-                    <div class="app-toast-content">
-                        <span class="app-toast-icon">{{ icon }}</span>
-                        <div>
-                            <p class="app-toast-title">{{ title }}</p>
-                            <p class="app-toast-text">{{ message }}</p>
-                        </div>
-                        <button type="button" class="app-toast-close" data-toast-close aria-label="Cerrar">x</button>
-                    </div>
-                    <div class="app-toast-progress"></div>
-                </div>
-            {% endwith %}
-        {% endif %}
+                <div class="app-toast-progress"></div>
+            </div>
+        {% endwith %}
     {% endfor %}
 </div>
 

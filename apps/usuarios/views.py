@@ -1,247 +1,155 @@
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
-from django.urls import reverse
-from .forms import *
-from .models import *
-import json
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from .acceso import GRUPO_ADMIN, admin_required
+from .forms import UsuarioForm
+from .models import User
+from .permisos import agrupar_permisos, permisos_asignables, permisos_ocultos_ids, resumen_por_modulo
+
 
 @login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
+@admin_required
 def usuariosReadView(request):
-
-    # Obtener los campos de los usuarios
-    usuarios = User.objects.all().order_by('username')
-    columnas = ["Usuario","Nombre", "Apellido","Accion"]
-    paginator = Paginator(usuarios,10)
-    page_number = request.GET.get('page')
-    usuarios_por_pagina=paginator.get_page(page_number)
+    usuarios = User.objects.order_by('username').prefetch_related('groups')
+    columnas = ["Usuario", "Nombre", "Apellido", "Rol", "Estado", "Accion"]
+    paginator = Paginator(usuarios, 10)
+    usuarios_por_pagina = paginator.get_page(request.GET.get('page'))
     context = {
-        "columnas":columnas,
-        "usuarios": usuarios,
-        'usuarios_por_pagina':usuarios_por_pagina
+        "columnas": columnas,
+        'usuarios_por_pagina': usuarios_por_pagina,
     }
     return render(request, "usuarios/usuarios.html", context=context)
 
 
 @login_required(login_url="/")
-def usuarioReadView(request):
+@admin_required
+def createUserView(request):
+    form = UsuarioForm(request.POST or None, editor=request.user)
+    if request.method == 'POST':
+        if form.is_valid():
+            with transaction.atomic():
+                usuario = form.save(commit=False)
+                usuario.usuario_creacion = request.user.id
+                usuario.save()
+                usuario.groups.set(form.cleaned_data['grupos'])
+            messages.success(request, f'Usuario {usuario.username} creado exitosamente.')
+            return redirect('usuarios:usuarios')
+        messages.error(request, 'Revisá los campos marcados en el formulario.')
 
-    usuario_q = User.objects.filter(username=request.user.username).first()
-
-    context = {
-        "usuario": usuario_q,
-    }
-
-    return render(request, "usuarios/perfil.html", context=context)
+    return render(request, 'usuarios/usuarios_create.html', {'form': form})
 
 
 @login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
-def createUserView(request):
-
-    # Obtenemos la lista de permisos
-    lista_grupos_id = list(Group.objects.values_list('id', flat=True))
-    lista_grupos_nombre = list(Group.objects.values_list('name', flat=True))
-    lista_grupo_dict = []
-
-    # Creamos diccionario con el id y el nombre para select2
-    for i in range(len(lista_grupos_id)):
-        id_grupo = lista_grupos_id[i]
-        nombre_grupo = lista_grupos_nombre[i]
-        lista_grupo_dict.append({"id": id_grupo, "text": nombre_grupo})
-
-    lista_grupos_json = json.dumps(lista_grupo_dict)
-
-    context = {
-        "grupos_json": lista_grupo_dict
-    }
-
-    # Si se desea guardar en la BDD
+@admin_required
+def usuarioUpdateView(request, id):
+    usuario = get_object_or_404(User, id=id)
+    form = UsuarioForm(request.POST or None, instance=usuario, editor=request.user)
     if request.method == 'POST':
+        if form.is_valid():
+            cambio_password = bool(form.cleaned_data.get('password'))
+            with transaction.atomic():
+                usuario = form.save(commit=False)
+                usuario.usuario_modificacion = request.user.id
+                usuario.fecha_modificacion = timezone.now()
+                usuario.save()
+                usuario.groups.set(form.cleaned_data['grupos'])
+            # Cambiar la propia contrasena invalida la sesion; se renueva para no desloguear.
+            if cambio_password and usuario.pk == request.user.pk:
+                update_session_auth_hash(request, usuario)
+            messages.success(request, f'Usuario {usuario.username} actualizado exitosamente.')
+            return redirect('usuarios:usuarios')
+        messages.error(request, 'Revisá los campos marcados en el formulario.')
 
-        # Obtiene los argumentos enviados para crear el usuario
-        username = request.POST['username']
-        nombre = request.POST['nombre']
-        direccion = request.POST['direccion']
-        telefono = request.POST['telefono']
-        cargo = request.POST.get('cargo', '').strip()
-        fecha_nacimiento = request.POST['fecha_nacimiento']
-        apellido = request.POST['apellido']
-        password = request.POST['password']
-        password_repetir = request.POST['password_repetir']
-        correo = request.POST['correo']
-        grupo = request.POST.getlist('grupo')
+    return render(request, "usuarios/usuarios_modificar.html", {'form': form, 'usuario': usuario})
 
-        # Verificamos que el username no exista
-        if User.objects.filter(username=username).exists():
-            messages.info(request, 'El username ya existe!',
-                          extra_tags="Verifica el username e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios_create'))
 
-        # Verificamos que las contraseñas coincidan
-        if password != password_repetir:
-            messages.warning(request, 'Las contraseñas no coinciden!',
-                          extra_tags="Verifica e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios_create'))
-
-        # Verificamos la contraseña con los validadores de AUTH_PASSWORD_VALIDATORS
-        try:
-            validate_password(password, User(username=username, first_name=nombre,
-                                             last_name=apellido, email=correo))
-        except ValidationError as e:
-            messages.warning(request, 'La contraseña no es segura!',
-                             extra_tags=' '.join(e.messages))
-            return redirect(reverse('usuarios:usuarios_create'))
-
-        # Creamos y guardamos el usuario
-        usuario_nuevo = User.objects.create(
-            username=username,
-            first_name=nombre,
-            last_name=apellido,
-            email=correo,
-            telefono=telefono,
-            cargo=cargo,
-            direccion=direccion,
-            fecha_nacimiento=fecha_nacimiento,
-            usuario_creacion=request.user.id,
-            password=make_password(password))
-
-        # Agregamos grupos
-        if len(grupo) > 0:
-            for g in grupo:
-                usuario_nuevo.groups.add(g)
-
-        usuario_nuevo.save()
-
-        messages.success(request, 'Usuario ' +
-                         nombre + ' creado exitosamente!', extra_tags=" ")
+@login_required(login_url="/")
+@admin_required
+@require_POST
+def usuarioCambiarEstadoView(request, id):
+    usuario = get_object_or_404(User, id=id)
+    if usuario.pk == request.user.pk:
+        messages.error(request, 'No podés desactivar tu propio usuario.')
         return redirect('usuarios:usuarios')
 
-    # Si es una solicitud GET envia el template
-    else:
-        return render(request, 'usuarios/usuarios_create.html', context=context)
+    usuario.is_active = not usuario.is_active
+    usuario.usuario_modificacion = request.user.id
+    usuario.fecha_modificacion = timezone.now()
+    usuario.save(update_fields=['is_active', 'usuario_modificacion', 'fecha_modificacion'])
+    estado = 'activado' if usuario.is_active else 'desactivado'
+    messages.success(request, f'Usuario {usuario.username} {estado}.')
+    return redirect('usuarios:usuarios')
 
 
-@login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
-def usuarioUpdateView(request, id):
-    usuario = User.objects.get(id=id)
+def _guardar_rol(request, rol, template):
+    """Valida y guarda nombre y permisos del rol. Si hay un error vuelve a
+    mostrar el formulario con lo que el usuario ya habia marcado."""
+    nombre = request.POST.get('name', '').strip()
+    permisos_ids = {
+        int(permiso_id) for permiso_id in request.POST.getlist('permissions') if permiso_id.isdigit()
+    }
 
-    # Obtener los grupos disponibles para el select2
-    lista_grupos_id = list(Group.objects.values_list('id', flat=True))
-    lista_grupos_nombre = list(Group.objects.values_list('name', flat=True))
-    lista_grupo_dict = []
+    error = None
+    if not nombre:
+        error = 'El nombre del rol no puede estar vacío.'
+    elif rol.pk and rol.name == GRUPO_ADMIN and nombre != GRUPO_ADMIN:
+        # El acceso a la administracion depende de este nombre exacto.
+        error = f'El rol {GRUPO_ADMIN} no se puede renombrar.'
+    elif Group.objects.filter(name__iexact=nombre).exclude(pk=rol.pk).exists():
+        error = f'Ya existe un rol con el nombre "{nombre}".'
 
-    for i in range(len(lista_grupos_id)):
-        lista_grupo_dict.append({
-            "id": lista_grupos_id[i],
-            "text": lista_grupos_nombre[i]
-        })
-
-    grupos_json = json.dumps(lista_grupo_dict)
-
-    if request.method == 'POST':
-        username = request.POST['username']
-        nombre = request.POST['nombre']
-        direccion = request.POST['direccion']
-        telefono = request.POST['telefono']
-        cargo = request.POST.get('cargo', '').strip()
-        fecha_nacimiento = request.POST['fecha_nacimiento']
-        apellido = request.POST['apellido']
-        password = request.POST['password']
-        password_repetir = request.POST['password_repetir']
-        correo = request.POST['correo']
-        grupo = request.POST.getlist('grupo')
-
-        if password and password != password_repetir:
-            messages.warning(request, 'Las contraseñas no coinciden!',
-                             extra_tags="Verifica e intenta de nuevo.")
-            return redirect(reverse('usuarios:usuarios_modificar', args=[id]))
-
-        if password:
-            try:
-                validate_password(password, usuario)
-            except ValidationError as e:
-                messages.warning(request, 'La contraseña no es segura!',
-                                 extra_tags=' '.join(e.messages))
-                return redirect(reverse('usuarios:usuarios_modificar', args=[id]))
-
-        try:
-            # Actualizar datos del usuario
-            usuario.first_name = nombre
-            usuario.last_name = apellido
-            usuario.username = username
-            usuario.email = correo
-            usuario.telefono = telefono
-            usuario.cargo = cargo
-            usuario.direccion = direccion
-            usuario.fecha_nacimiento = fecha_nacimiento
-
-            if password:
-                usuario.password  = make_password(password)
-
-            usuario.save()
-
-            # Actualizar grupos
-            usuario_django = User.objects.get(username=username)
-            usuario_django.groups.clear()
-            if len(grupo) > 0:
-                for g in grupo:
-                    usuario_django.groups.add(g)
-
-            messages.success(request, 'Usuario actualizado exitosamente!')
-            return redirect('usuarios:usuarios')
-
-        except Exception as e:
-            messages.error(request, f"Ocurrió un error: {str(e)}")
-            return redirect(reverse('usuarios:usuarios_modificar', args=[id]))
-
-    else:
-        # Preparar datos del usuario para el formulario
-        usuario_django = User.objects.get(username=usuario.username)
-        grupos_usuario = usuario_django.groups.values_list('id', flat=True)
-
+    if error:
+        messages.error(request, error)
         context = {
-            "usuario": usuario,
-            "grupos_json": lista_grupo_dict,
-            "grupos_usuario": list(grupos_usuario)
+            'rol': rol,
+            'nombre': nombre,
+            'modulos': agrupar_permisos(permisos_ids),
         }
-        return render(request, "usuarios/usuarios_modificar.html", context)
+        return render(request, template, context)
+
+    # Solo se aceptan permisos de la pantalla; los ocultos que ya tenia el rol se conservan.
+    asignables = {permiso.id for permiso in permisos_asignables()}
+    ocultos = permisos_ocultos_ids(rol) if rol.pk else []
+    es_nuevo = rol.pk is None
+
+    with transaction.atomic():
+        rol.name = nombre
+        rol.save()
+        rol.permissions.set((permisos_ids & asignables) | set(ocultos))
+
+    accion = 'creado' if es_nuevo else 'actualizado'
+    messages.success(request, f'El rol "{rol.name}" fue {accion} correctamente.')
+    return redirect('usuarios:roles')
 
 
 @login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
+@admin_required
 def crearRol(request):
+    rol = Group()
     if request.method == 'POST':
-        nombre = request.POST.get('name')
-        permisos_ids = request.POST.getlist('permissions') 
-
-        if nombre:
-            nuevo_grupo = Group.objects.create(name=nombre)
-            if permisos_ids:
-                permisos = Permission.objects.filter(id__in=permisos_ids)
-                nuevo_grupo.permissions.set(permisos)
-            return redirect('usuarios:roles')
-        else:
-            pass
-
-    permisos = Permission.objects.all()
-    permisos_data = [{"id": permiso.id, "text": permiso.name} for permiso in permisos]
+        return _guardar_rol(request, rol, 'usuarios/crear_rol.html')
 
     context = {
-        "permisos_json": json.dumps(permisos_data) 
+        'rol': rol,
+        'nombre': '',
+        'modulos': agrupar_permisos(),
     }
     return render(request, 'usuarios/crear_rol.html', context)
 
 
 @login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
+@admin_required
 def rolReadView(request):
-    roles = Group.objects.all().prefetch_related('permissions')
+    roles = Group.objects.order_by('name').prefetch_related('permissions__content_type')
+    for rol in roles:
+        rol.resumen_permisos = resumen_por_modulo(rol.permissions.all())
 
     context = {
         'roles': roles
@@ -250,79 +158,15 @@ def rolReadView(request):
 
 
 @login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
+@admin_required
 def editarRolView(request, id):
-    # Obtenemos el rol a editar
-    rol = Group.objects.get(id=id)
-
+    rol = get_object_or_404(Group, id=id)
     if request.method == 'POST':
-        nombre = request.POST.get('name')
-        permisos_ids = request.POST.getlist('permissions')
+        return _guardar_rol(request, rol, 'usuarios/editar_rol.html')
 
-        if not nombre:
-            messages.error(request, "El nombre del rol no puede estar vacío.")
-            return redirect(reverse('usuarios:editar_rol', args=[id]))
-
-        try:
-            # Actualiza el nombre
-            rol.name = nombre
-            rol.save()
-
-            # Actualiza los permisos asociados
-            permisos = Permission.objects.filter(id__in=permisos_ids)
-            rol.permissions.set(permisos)
-
-            messages.success(request, f'El rol "{rol.name}" fue actualizado correctamente.')
-            return redirect('usuarios:roles')
-
-        except Exception as e:
-            messages.error(request, f"Ocurrió un error al actualizar el rol: {e}")
-            return redirect(reverse('usuarios:editar_rol', args=[id]))
-
-    else:
-        # Obtenemos todos los permisos disponibles
-        permisos = Permission.objects.all()
-        permisos_data = [{"id": p.id, "text": p.name} for p in permisos]
-
-        # Permisos que ya tiene asignado el rol
-        permisos_rol = rol.permissions.values_list('id', flat=True)
-
-        context = {
-            "rol": rol,
-            "permisos_json": json.dumps(permisos_data),
-            "permisos_rol": list(permisos_rol)
-        }
-
-        return render(request, 'usuarios/editar_rol.html', context)
-
-
-@login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
-def crearPermiso(request):
-    if request.method == 'POST':
-        form = PermisoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request,"El permiso fue creado exitosamente")
-            return redirect('usuarios:permisos')
-        else:
-            messages.error(request, "Hubo un error al crear el permiso")
-            return redirect('usuarios:permisos')
-    else:
-        form = PermisoForm()
-
-    return render(request, 'usuarios/crear_permiso.html', {'form': form})
-
-@login_required(login_url="/")
-@user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
-def permisoReadView(request):
-    permisos = Permiso.objects.all()
-    paginator = Paginator(permisos,10)
-    page_number = request.GET.get('page')
-    permisos_por_pagina=paginator.get_page(page_number)
     context = {
-        'permisos':permisos,
-        'permisos_por_pagina':permisos_por_pagina,
+        'rol': rol,
+        'nombre': rol.name,
+        'modulos': agrupar_permisos(rol.permissions.values_list('id', flat=True)),
     }
-
-    return render(request, 'usuarios/permisos.html', context=context)
+    return render(request, 'usuarios/editar_rol.html', context)

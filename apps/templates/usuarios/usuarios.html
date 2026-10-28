@@ -30,14 +30,41 @@
                         <td>{{ usuario.username }}</td>
                         <td>{{ usuario.first_name }}</td>
                         <td>{{ usuario.last_name }}</td>
-                        <td class="text-center"><a type="button" class="btn-crear"
-                            href="{% url 'usuarios:usuarios_modificar' usuario.id %}"><i
-                                class="bi bi-pen"></i></a>
-                            <!--
-                        <a type="button" class="btn-cancelar"
-                            href="#"><i
-                                class="bi bi-trash"></i></a>-->
-                    </td>
+                        <td>
+                            {% for grupo in usuario.groups.all %}
+                            <span class="badge text-bg-light border">{{ grupo.name }}</span>
+                            {% empty %}
+                            <span class="text-muted">Sin rol</span>
+                            {% endfor %}
+                        </td>
+                        <td class="text-center">
+                            {% if usuario.is_active %}
+                            <span class="badge text-bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge text-bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="d-inline-flex gap-1">
+                                <a class="btn-crear" href="{% url 'usuarios:usuarios_modificar' usuario.id %}" title="Editar">
+                                    <i class="bi bi-pen"></i></a>
+                                {% if usuario.pk != request.user.pk %}
+                                <form method="post" action="{% url 'usuarios:usuarios_cambiar_estado' usuario.id %}"
+                                      onsubmit="return confirm('¿{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %} al usuario {{ usuario.username|escapejs }}?');">
+                                    {% csrf_token %}
+                                    {% if usuario.is_active %}
+                                    <button type="submit" class="btn-cancelar" title="Desactivar"><i class="bi bi-person-x"></i></button>
+                                    {% else %}
+                                    <button type="submit" class="btn-crear" title="Activar"><i class="bi bi-person-check"></i></button>
+                                    {% endif %}
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ columnas|length }}" class="text-center">No hay usuarios registrados.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

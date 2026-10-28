@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -38,7 +39,16 @@ def emitirFacturaView(request, id_venta):
 
     if request.method == 'POST':
         tipo_factura = request.POST.get('tipo_factura', Factura.TIPO_CONTADO)
-        factura = crear_factura(venta, tipo_factura=tipo_factura)
+        with transaction.atomic():
+            # Bloquea la venta y repite el chequeo: dos POST simultaneos (doble click,
+            # dos pestañas) pasarian ambos el control de arriba y emitirian dos facturas.
+            Venta.objects.select_for_update().get(pk=venta.pk)
+            factura_activa = Factura.objects.filter(id_venta=venta, estado=Factura.ESTADO_EMITIDA).first()
+            if factura_activa:
+                messages.warning(request, f'La venta ya tiene factura emitida: {factura_activa.nro_factura}')
+                return redirect('factura:detalle_factura', id_factura=factura_activa.id_factura)
+            factura = crear_factura(venta, tipo_factura=tipo_factura)
+        # El envio a FacturaSend queda fuera de la transaccion para no retener el bloqueo durante la llamada HTTP.
         ok, mensaje = enviar_si_corresponde(factura, configuracion)
         if ok:
             messages.success(request, mensaje)

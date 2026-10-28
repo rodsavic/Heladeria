@@ -89,13 +89,49 @@ function actualizarSelectClientes(clienteSeleccionadoId = null) {
         });
 }
 
+function cargarOpcionesUbicacion(select, url) {
+    if (!select) return;
+    select.innerHTML = '<option value="">Seleccione...</option>';
+    if (!url) return;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            (data.items || []).forEach(item => select.add(new Option(item.descripcion, item.codigo)));
+        });
+}
+
+function inicializarUbicacionNuevoCliente() {
+    const departamento = document.getElementById('cliente_departamento');
+    const distrito = document.getElementById('cliente_distrito');
+    const ciudad = document.getElementById('cliente_id_ciudad');
+    if (!departamento || !distrito || !ciudad) return;
+
+    departamento.addEventListener('change', () => {
+        cargarOpcionesUbicacion(distrito, departamento.value && `/catalogos/distritos/${departamento.value}/`);
+        cargarOpcionesUbicacion(ciudad, null);
+    });
+    distrito.addEventListener('change', () => {
+        cargarOpcionesUbicacion(ciudad, distrito.value && `/catalogos/ciudades/${distrito.value}/`);
+    });
+}
+
 function abrirModalNuevoCliente() {
     limpiarErrorClienteModal();
     const container = document.getElementById('formNuevoCliente');
     if (container) {
         container.querySelectorAll('input').forEach(input => {
-            input.value = '';
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            } else {
+                input.value = input.defaultValue;
+            }
         });
+        container.querySelectorAll('select').forEach(select => {
+            const opcionPorDefecto = Array.from(select.options).find(option => option.defaultSelected);
+            select.value = opcionPorDefecto ? opcionPorDefecto.value : '';
+        });
+        cargarOpcionesUbicacion(document.getElementById('cliente_distrito'), null);
+        cargarOpcionesUbicacion(document.getElementById('cliente_id_ciudad'), null);
     }
 
     const modalElement = document.getElementById('modalNuevoCliente');
@@ -110,10 +146,13 @@ function guardarNuevoCliente() {
     const container = document.getElementById('formNuevoCliente');
     const submitButton = document.getElementById('btnGuardarNuevoCliente');
     if (!container) return;
+    // Enter en un campo llama a esta funcion aunque el boton ya este deshabilitado.
+    if (submitButton && submitButton.disabled) return;
     if (!validarCamposNuevoCliente(container)) return;
 
     const formData = new FormData();
-    container.querySelectorAll('input[name]').forEach(input => {
+    container.querySelectorAll('input[name], select[name]').forEach(input => {
+        if (input.type === 'checkbox' && !input.checked) return;
         formData.append(input.name, input.value);
     });
     if (submitButton) {
@@ -595,8 +634,10 @@ document.addEventListener('DOMContentLoaded', function() {
         btnGuardarNuevoCliente.addEventListener('click', guardarNuevoCliente);
     }
 
+    inicializarUbicacionNuevoCliente();
+
     if (formNuevoCliente) {
-        formNuevoCliente.querySelectorAll('input').forEach(input => {
+        formNuevoCliente.querySelectorAll('input:not([type="checkbox"])').forEach(input => {
             input.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter') {
                     event.preventDefault();
@@ -671,6 +712,9 @@ function calcularVuelto() {
 }
 
 function enviarFormulario() {
+    const form = document.getElementById('tablaProductos')?.closest('form');
+    if (!form || (window.EnvioUnico && EnvioUnico.enviando(form))) return;
+
     const totalVenta = parseFloat(document.getElementById("total_venta").value) || 0;
     const montoEfectivo = parseFloat(document.getElementById("efectivo").value) || 0;
     const montoPos = parseFloat(document.getElementById("pos").value) || 0;
@@ -707,7 +751,11 @@ function enviarFormulario() {
 
         document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados);
 
-        document.querySelector("form").submit();
+        if (window.EnvioUnico) {
+            EnvioUnico.enviar(form);
+        } else {
+            form.submit();
+        }
     }
 
 }

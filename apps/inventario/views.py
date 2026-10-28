@@ -8,6 +8,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
+from apps.envio_unico import envio_unico
 from apps.inventario.models import Inventario, ProduccionDiaria, ProduccionDetalle
 
 
@@ -25,6 +26,7 @@ def inventarioReadView(request):
     return render(request, "inventario/inventario.html", context=context)
 
 @login_required(login_url='/')
+@envio_unico('inventario:inventario')
 def inventarioCreateView(request):
     if request.method == "POST":
         nombre = request.POST.get("nombre")
@@ -72,6 +74,7 @@ def inventarioDeleteView(request, id):
 
 
 @login_required(login_url='/')
+@envio_unico('inventario:lista_produccion')
 def produccionCreateView(request):
     inventario = Inventario.objects.all().order_by('nombre')
 
