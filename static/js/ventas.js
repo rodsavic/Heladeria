@@ -146,6 +146,8 @@ function guardarNuevoCliente() {
     const container = document.getElementById('formNuevoCliente');
     const submitButton = document.getElementById('btnGuardarNuevoCliente');
     if (!container) return;
+    // Enter en un campo llama a esta funcion aunque el boton ya este deshabilitado.
+    if (submitButton && submitButton.disabled) return;
     if (!validarCamposNuevoCliente(container)) return;
 
     const formData = new FormData();
@@ -710,6 +712,9 @@ function calcularVuelto() {
 }
 
 function enviarFormulario() {
+    const form = document.getElementById('tablaProductos')?.closest('form');
+    if (!form || (window.EnvioUnico && EnvioUnico.enviando(form))) return;
+
     const totalVenta = parseFloat(document.getElementById("total_venta").value) || 0;
     const montoEfectivo = parseFloat(document.getElementById("efectivo").value) || 0;
     const montoPos = parseFloat(document.getElementById("pos").value) || 0;
@@ -746,7 +751,11 @@ function enviarFormulario() {
 
         document.getElementById('productos_json').value = JSON.stringify(productosSeleccionados);
 
-        document.querySelector("form").submit();
+        if (window.EnvioUnico) {
+            EnvioUnico.enviar(form);
+        } else {
+            form.submit();
+        }
     }
 
 }

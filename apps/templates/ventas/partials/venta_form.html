@@ -88,6 +88,7 @@
 
       <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();">
         {% csrf_token %}
+        {% if not is_edit %}{% token_envio %}{% endif %}
 
         <div class="card mb-3">
           <div class="card-body">

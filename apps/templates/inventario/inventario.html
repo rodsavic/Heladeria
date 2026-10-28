@@ -182,6 +182,9 @@ function guardarEdicion(id) {
     const nombre = document.getElementById(`nombre-${id}`);
     const cant_chico = document.getElementById(`cant_chico-${id}`);
     const cant_grande = document.getElementById(`cant_grande-${id}`);
+    const botonGuardar = document.getElementById(`save-${id}`);
+    if (botonGuardar.disabled) return;
+    botonGuardar.disabled = true;
 
     fetch(`/inventario/editar/${id}/`, {
         method: "POST",
@@ -207,7 +210,9 @@ function guardarEdicion(id) {
         } else {
             alert("Error al guardar");
         }
-    });
+    })
+    .catch(() => alert("Error al guardar"))
+    .finally(() => { botonGuardar.disabled = false; });
 }
 </script>
 

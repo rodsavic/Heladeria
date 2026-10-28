@@ -6,6 +6,8 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from apps.envio_unico import envio_unico
+
 from .forms import GastoForm
 from .models import Gasto
 
@@ -76,6 +78,7 @@ def gastosReadView(request):
 
 @login_required(login_url="/")
 @user_passes_test(es_admin, login_url="/")
+@envio_unico("gastos:gastos")
 def gastoCreateView(request):
     if request.method == "POST":
         form = GastoForm(request.POST)

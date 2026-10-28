@@ -11,9 +11,11 @@ from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_POST
 
 from apps.clientes.forms import ClienteForm
+from apps.envio_unico import envio_unico
 from apps.clientes.models import Cliente
 from apps.factura.models import Factura
 from apps.productos.models import Producto
@@ -26,6 +28,19 @@ def _cliente_form_modal():
     # El modal de alta rapida vive dentro del <form> de la venta: sin atributo
     # required (bloquearia el submit de la venta) y con ids cliente_* que usa ventas.js.
     return ClienteForm(auto_id='cliente_%s', use_required_attribute=False)
+
+
+def _parsear_fecha_venta(valor, por_defecto):
+    """Convierte el valor del input datetime-local (hora local de Asuncion, sin
+    zona) en un datetime con zona. Acepta el valor con o sin segundos."""
+    if not valor:
+        return por_defecto
+    fecha = parse_datetime(valor)
+    if fecha is None:
+        raise ValueError(f'Fecha de venta inválida: {valor}')
+    if timezone.is_naive(fecha):
+        fecha = timezone.make_aware(fecha)
+    return fecha
 
 
 def _es_tipo_venta_pedidos_ya(tipo_venta):
@@ -110,6 +125,7 @@ def ventasReadView(request, fecha=None):
 
 
 @login_required(login_url="/")
+@envio_unico('ventas:ventas')
 def ventasCreateView(request):
     # Se cargan los productos para mostrar en la lista
     productos = Producto.objects.all()
@@ -133,10 +149,7 @@ def ventasCreateView(request):
             id_tipo_venta = request.POST.get('tipo_venta')
 
             # Si el usuario no toca nada, queda la actual
-            if fecha_venta_str:
-                fecha_venta = datetime.strptime(fecha_venta_str, "%Y-%m-%dT%H:%M")
-            else:
-                fecha_venta = timezone.now()
+            fecha_venta = _parsear_fecha_venta(fecha_venta_str, por_defecto=timezone.now())
 
             nueva_venta = Venta.objects.create(
                 fecha_venta=fecha_venta,
@@ -198,7 +211,7 @@ def ventasCreateView(request):
             return redirect('ventas:ventas')
         except Exception as e:
             error_message = str(e)
-            messages.error(request, "Error al registrar venta {error_message}")
+            messages.error(request, f"Error al registrar venta {error_message}")
             logging.error(f'Error al crear venta: {error_message}')
             return redirect('ventas:crear_venta')
 
@@ -238,10 +251,8 @@ def ventasEditView(request, id_venta):
                 raise ValueError("Debes seleccionar un tipo de venta.")
             venta = get_object_or_404(Venta, id_venta=id_venta)
 
-            if fecha_venta_str:
-                fecha_venta = datetime.strptime(fecha_venta_str, "%Y-%m-%dT%H:%M")
-            else:
-                fecha_venta = timezone.now()
+            # Si el campo llega vacio se conserva la fecha original de la venta.
+            fecha_venta = _parsear_fecha_venta(fecha_venta_str, por_defecto=venta.fecha_venta)
 
             venta.total_iva_10 = total_iva_10
             venta.total_iva_5 = total_iva_5

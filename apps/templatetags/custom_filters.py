@@ -1,9 +1,17 @@
 from decimal import Decimal
 from django import template
+from django.utils.html import format_html
 
+from apps.envio_unico import CAMPO_TOKEN, nuevo_token
 from apps.usuarios.acceso import es_admin as _es_admin
 
 register = template.Library()
+
+
+@register.simple_tag
+def token_envio():
+    """Campo oculto con un token nuevo para @envio_unico."""
+    return format_html('<input type="hidden" name="{}" value="{}">', CAMPO_TOKEN, nuevo_token())
 
 
 @register.filter
