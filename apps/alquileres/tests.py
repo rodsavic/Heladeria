@@ -23,7 +23,7 @@ class DatosContratoMixin:
         )
         self.configuracion = ConfiguracionEmpresa.objects.create(
             nombre_empresa="Empresa", ruc="80000000-1", direccion="Asunción", nro_timbrado="12345678",
-            vigencia_timbrado_desde=date(2026, 1, 1), vigencia_timbrado_hasta=date(2026, 12, 31),
+            vigencia_timbrado_desde=date(2026, 1, 1),
             producto_alquiler=producto,
         )
         self.cliente = Cliente.objects.create(

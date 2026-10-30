@@ -42,7 +42,6 @@ def crear_factura(venta, tipo_factura=Factura.TIPO_CONTADO, tipo_transaccion=Fac
             direccion_empresa=configuracion.direccion,
             nro_timbrado=configuracion.nro_timbrado,
             vigencia_timbrado_desde=configuracion.vigencia_timbrado_desde,
-            vigencia_timbrado_hasta=configuracion.vigencia_timbrado_hasta,
         )
         configuracion.secuencia_actual += 1
         configuracion.save(update_fields=['secuencia_actual'])

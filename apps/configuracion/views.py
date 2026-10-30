@@ -20,7 +20,6 @@ def configuracionEmpresaView(request):
             'direccion': 'Dirección',
             'nro_timbrado': '00000000',
             'vigencia_timbrado_desde': '2026-01-01',
-            'vigencia_timbrado_hasta': '2026-12-31',
             'establecimiento': '001',
             'punto_expedicion': '001',
             'secuencia_actual': 1,
@@ -33,7 +32,6 @@ def configuracionEmpresaView(request):
         configuracion.direccion = request.POST.get('direccion', '').strip()
         configuracion.nro_timbrado = request.POST.get('nro_timbrado', '').strip()
         configuracion.vigencia_timbrado_desde = request.POST.get('vigencia_timbrado_desde')
-        configuracion.vigencia_timbrado_hasta = request.POST.get('vigencia_timbrado_hasta')
         configuracion.establecimiento = request.POST.get('establecimiento', '001').zfill(3)
         configuracion.punto_expedicion = request.POST.get('punto_expedicion', '001').zfill(3)
         secuencia_actual = request.POST.get('secuencia_actual', '1')
