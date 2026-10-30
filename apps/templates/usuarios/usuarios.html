@@ -50,7 +50,7 @@
                                     <i class="bi bi-pen"></i></a>
                                 {% if usuario.pk != request.user.pk %}
                                 <form method="post" action="{% url 'usuarios:usuarios_cambiar_estado' usuario.id %}"
-                                      onsubmit="return confirm('¿{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %} al usuario {{ usuario.username|escapejs }}?');">
+                                      data-confirm="¿{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %} al usuario {{ usuario.username }}?">
                                     {% csrf_token %}
                                     {% if usuario.is_active %}
                                     <button type="submit" class="btn-cancelar" title="Desactivar"><i class="bi bi-person-x"></i></button>

@@ -74,7 +74,7 @@
                                 </a>
                                 {% endif %}
                                 {% if perms.gastos.delete_gasto %}
-                                <form method="post" action="{% url 'gastos:eliminar_gasto' gasto.id_gasto %}" onsubmit="return confirm('¿Deseas eliminar este gasto?');">
+                                <form method="post" action="{% url 'gastos:eliminar_gasto' gasto.id_gasto %}" data-confirm="¿Deseas eliminar este gasto?">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-danger btn-sm">
                                         <i class="bi bi-trash"></i>

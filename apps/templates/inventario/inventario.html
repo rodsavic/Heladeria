@@ -208,10 +208,10 @@ function guardarEdicion(id) {
 
             cancelarEdicion(id);
         } else {
-            alert("Error al guardar");
+            AppAlertas.alerta("Error al guardar", "error");
         }
     })
-    .catch(() => alert("Error al guardar"))
+    .catch(() => AppAlertas.alerta("Error al guardar", "error"))
     .finally(() => { botonGuardar.disabled = false; });
 }
 </script>
