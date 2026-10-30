@@ -54,7 +54,6 @@ class Factura(models.Model):
     direccion_empresa = models.CharField(max_length=255, blank=True, default='')
     nro_timbrado = models.CharField(max_length=30, blank=True, default='')
     vigencia_timbrado_desde = models.DateField(null=True, blank=True)
-    vigencia_timbrado_hasta = models.DateField(null=True, blank=True)
     # Codigo SIFEN de tipoTransaccion (1=venta de mercaderia, 2=prestacion de servicios).
     tipo_transaccion = models.PositiveSmallIntegerField(default=TRANSACCION_MERCADERIA)
 

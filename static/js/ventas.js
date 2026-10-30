@@ -362,14 +362,14 @@ function agregarProductoATabla() {
     syncTipoVentaHiddenInput();
     const tipoVentaHidden = document.getElementById("tipo_venta");
     if (!tipoVentaHidden || !tipoVentaHidden.value) {
-        alert("Selecciona el tipo de venta antes de agregar productos.");
+        AppAlertas.alerta("Selecciona el tipo de venta antes de agregar productos.", "warning");
         return;
     }
 
     const cantidadInput = parseFloat(document.getElementById("cantidad").value) || 0;
     const opcionSeleccionada = selectProducto.options[selectProducto.selectedIndex];
     if (!opcionSeleccionada) {
-        alert("Selecciona un producto válido.");
+        AppAlertas.alerta("Selecciona un producto válido.", "warning");
         return;
     }
     const precio = obtenerPrecioPorTipoDesdeOpcion(opcionSeleccionada);
@@ -381,7 +381,7 @@ function agregarProductoATabla() {
     console.log("idProducto:", idProducto, "tipo de dato:", typeof idProducto)
 
     if (!idProducto || cantidad <= 0) {
-        alert("Selecciona un producto y una cantidad válida.");
+        AppAlertas.alerta("Selecciona un producto y una cantidad válida.", "warning");
         return;
     }
 
@@ -469,9 +469,9 @@ function agregarProductoATabla() {
         actualizarTotal(totalDetalle);
         document.getElementById('cantidad').value = 1;
     } else if (cantidad < 1) {
-        window.alert("La cantidad mínima es 1");
+        AppAlertas.alerta("La cantidad mínima es 1", "warning");
     } else {
-        window.alert("Debe seleccionar al menos un producto.");
+        AppAlertas.alerta("Debe seleccionar al menos un producto.", "warning");
     }
 
 
@@ -517,14 +517,14 @@ function actualizarTotalIVA(iva10, iva5) {
 function abrirModalVuelto() {
     // Validaciones
     if(document.getElementById("cliente").value == ""){
-        alert("Por favor, selecciona un cliente antes de continuar.");
+        AppAlertas.alerta("Por favor, selecciona un cliente antes de continuar.", "warning");
         return;
     }
     const totalVenta = parseFloat(document.getElementById("total_venta").value) || 0;
     const totalVentaModal = document.getElementById("totalVentaModal");
 
     if(totalVenta == 0){
-        alert("No hay productos en la venta.");
+        AppAlertas.alerta("No hay productos en la venta.", "warning");
         return;
     }
 
@@ -722,11 +722,11 @@ function enviarFormulario() {
     const montoPagado = montoEfectivo + montoPos + montoTransferencia;
 
     if (montoPagado < totalVenta) {
-        window.alert('No se ha pagado el total de la venta');
+        AppAlertas.alerta('No se ha pagado el total de la venta', "warning");
     } else if(montoPos > totalVenta){
-        window.alert("El monto en POS excede al monto total de la venta.")
+        AppAlertas.alerta("El monto en POS excede al monto total de la venta.", "warning");
     } else if(montoTransferencia > totalVenta){
-        window.alert("El monto en Transferencia excede al monto total de la venta.")
+        AppAlertas.alerta("El monto en Transferencia excede al monto total de la venta.", "warning");
     } else {
         const tabla = document.getElementById("tablaProductos").querySelector("tbody");
         const productosSeleccionados = [];

@@ -8,7 +8,6 @@ class ConfiguracionEmpresa(models.Model):
     direccion = models.CharField(max_length=255)
     nro_timbrado = models.CharField(max_length=30)
     vigencia_timbrado_desde = models.DateField()
-    vigencia_timbrado_hasta = models.DateField()
     establecimiento = models.CharField(max_length=3, default='001')
     punto_expedicion = models.CharField(max_length=3, default='001')
     secuencia_actual = models.PositiveIntegerField(default=1)

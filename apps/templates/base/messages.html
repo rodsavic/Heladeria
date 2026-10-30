@@ -1,4 +1,3 @@
-{% if messages %}
 <style>
     .messages-stack {
         position: fixed;
@@ -107,6 +106,73 @@
         to { transform: scaleX(0); }
     }
 
+    .app-confirm-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(24, 20, 16, 0.35);
+        animation: confirmFade 0.18s ease-out;
+    }
+
+    .app-confirm {
+        width: min(100%, 400px);
+        border-radius: var(--radius-md, 14px);
+        border: 1px solid var(--color-border, rgba(0, 0, 0, 0.06));
+        background: var(--color-surface, #ffffff);
+        box-shadow: var(--shadow-md, 0 10px 28px rgba(24, 20, 16, 0.08));
+        padding: 1.1rem 1.15rem 1rem;
+        animation: toastIn 0.25s ease-out;
+    }
+
+    .app-confirm .app-confirm-head {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        align-items: start;
+        gap: 0.6rem;
+    }
+
+    .app-confirm .app-toast-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-pill, 999px);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .app-confirm .app-toast-title {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.25;
+        color: var(--color-text, #242628);
+    }
+
+    .app-confirm .app-toast-text {
+        margin: 0.2rem 0 0;
+        font-size: 0.88rem;
+        line-height: 1.35;
+        color: var(--color-text-muted, #4a4a4a);
+    }
+
+    .app-confirm .app-confirm-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    @keyframes confirmFade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
     @media (max-width: 576px) {
         .messages-stack {
             top: 0.75rem;
@@ -139,8 +205,13 @@
 
 <script>
     (function () {
-        const toasts = document.querySelectorAll('[data-toast]');
-        if (!toasts.length) return;
+        const NIVELES = {
+            success: { icono: 'OK', titulo: 'Éxito' },
+            error: { icono: '!', titulo: 'Error' },
+            warning: { icono: '!', titulo: 'Atención' },
+            info: { icono: 'i', titulo: 'Información' },
+        };
+        const stack = document.getElementById('messagesStack');
 
         function dismissToast(toast) {
             if (!toast || toast.classList.contains('hiding')) return;
@@ -148,13 +219,136 @@
             setTimeout(() => toast.remove(), 260);
         }
 
-        toasts.forEach((toast) => {
+        function activarToast(toast) {
             const closeButton = toast.querySelector('[data-toast-close]');
             if (closeButton) {
                 closeButton.addEventListener('click', () => dismissToast(toast));
             }
             setTimeout(() => dismissToast(toast), 5200);
-        });
+        }
+
+        function elemento(tag, clase, texto) {
+            const el = document.createElement(tag);
+            if (clase) el.className = clase;
+            if (texto !== undefined) el.textContent = texto;
+            return el;
+        }
+
+        /** Muestra un aviso con el template propio. nivel: success | error | warning | info */
+        function toast(mensaje, nivel) {
+            const config = NIVELES[nivel] ? nivel : 'info';
+            const toastEl = elemento('div', `app-toast app-toast-${config}`);
+            toastEl.setAttribute('data-toast', '');
+            const contenido = elemento('div', 'app-toast-content');
+            const cuerpo = elemento('div');
+            cuerpo.append(
+                elemento('p', 'app-toast-title', NIVELES[config].titulo),
+                elemento('p', 'app-toast-text', mensaje)
+            );
+            const cerrar = elemento('button', 'app-toast-close', 'x');
+            cerrar.type = 'button';
+            cerrar.setAttribute('data-toast-close', '');
+            cerrar.setAttribute('aria-label', 'Cerrar');
+            contenido.append(elemento('span', 'app-toast-icon', NIVELES[config].icono), cuerpo, cerrar);
+            toastEl.append(contenido, elemento('div', 'app-toast-progress'));
+            stack.appendChild(toastEl);
+            activarToast(toastEl);
+        }
+
+        /** Dialogo modal con el template propio. Devuelve una Promise<boolean> (true = Aceptar). */
+        function dialogo(mensaje, opts) {
+            return new Promise((resolve) => {
+                const previo = document.activeElement;
+                const backdrop = elemento('div', 'app-confirm-backdrop');
+                const caja = elemento('div', `app-confirm app-toast-${opts.nivel}`);
+                caja.setAttribute('role', 'alertdialog');
+                caja.setAttribute('aria-modal', 'true');
+
+                const cabecera = elemento('div', 'app-confirm-head');
+                const cuerpo = elemento('div');
+                cuerpo.append(elemento('p', 'app-toast-title', opts.titulo), elemento('p', 'app-toast-text', mensaje));
+                cabecera.append(elemento('span', 'app-toast-icon', opts.icono), cuerpo);
+
+                const acciones = elemento('div', 'app-confirm-actions');
+                const botones = [];
+                if (opts.cancelar) {
+                    const btnCancelar = elemento('button', 'btn btn-secondary btn-sm', opts.cancelar);
+                    btnCancelar.type = 'button';
+                    btnCancelar.addEventListener('click', () => cerrar(false));
+                    botones.push(btnCancelar);
+                }
+                const btnAceptar = elemento('button', 'btn btn-crear btn-sm', opts.aceptar);
+                btnAceptar.type = 'button';
+                btnAceptar.addEventListener('click', () => cerrar(true));
+                botones.push(btnAceptar);
+                acciones.append(...botones);
+
+                caja.append(cabecera, acciones);
+                backdrop.appendChild(caja);
+                document.body.appendChild(backdrop);
+                btnAceptar.focus();
+
+                function cerrar(resultado) {
+                    document.removeEventListener('keydown', onKey, true);
+                    backdrop.remove();
+                    if (previo && typeof previo.focus === 'function') previo.focus();
+                    resolve(resultado);
+                }
+                function onKey(event) {
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        cerrar(false);
+                    } else if (event.key === 'Tab') {
+                        // Mantiene el foco dentro del dialogo.
+                        event.preventDefault();
+                        const i = botones.indexOf(document.activeElement);
+                        botones[(i + 1) % botones.length].focus();
+                    }
+                }
+
+                backdrop.addEventListener('click', (event) => { if (event.target === backdrop) cerrar(false); });
+                document.addEventListener('keydown', onKey, true);
+            });
+        }
+
+        /** Pide confirmacion con el template propio. Devuelve una Promise<boolean>. */
+        function confirmar(mensaje, opciones) {
+            return dialogo(mensaje, Object.assign(
+                { titulo: 'Confirmar', aceptar: 'Aceptar', cancelar: 'Cancelar', nivel: 'warning', icono: '?' },
+                opciones
+            ));
+        }
+
+        /** Alerta modal con un solo boton (reemplazo de window.alert). nivel: warning | error | info | success */
+        function alerta(mensaje, nivel) {
+            const config = NIVELES[nivel] ? nivel : 'warning';
+            return dialogo(mensaje, {
+                titulo: NIVELES[config].titulo, icono: NIVELES[config].icono,
+                nivel: config, aceptar: 'Aceptar', cancelar: null,
+            });
+        }
+
+        // Formularios con data-confirm="mensaje": piden confirmacion antes de enviarse.
+        // Se registra en captura para cortar el envio antes que envio_unico lo bloquee.
+        document.addEventListener('submit', function (event) {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-confirm')) return;
+            if (form.dataset.confirmado === '1') {
+                delete form.dataset.confirmado;
+                return;
+            }
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            const submitter = event.submitter;
+            confirmar(form.getAttribute('data-confirm')).then((ok) => {
+                if (!ok) return;
+                form.dataset.confirmado = '1';
+                form.requestSubmit(submitter && submitter.form === form ? submitter : undefined);
+            });
+        }, true);
+
+        document.querySelectorAll('[data-toast]').forEach(activarToast);
+
+        window.AppAlertas = { toast: toast, alerta: alerta, confirmar: confirmar };
     })();
 </script>
-{% endif %}

@@ -46,7 +46,7 @@
         {% endif %}
 
         <form method="post" action="?anio={{ anio }}&mes={{ mes }}"
-              onsubmit="return confirm('¿Emitir las facturas de los contratos seleccionados?');">
+              data-confirm="¿Emitir las facturas de los contratos seleccionados?">
             {% csrf_token %}
 
             {% if pendientes %}

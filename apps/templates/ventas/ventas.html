@@ -168,7 +168,7 @@
                             <i class="bi bi-file-earmark-text"></i>
                         </a>
                         <form method="post" action="{% url 'factura:anular_factura' venta.id_venta %}" class="d-inline"
-                              onsubmit="return confirm('¿Deseas anular esta factura?');">
+                              data-confirm="¿Deseas anular esta factura?">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-cancelar btn-sm" title="Anular factura">
                                 <i class="bi bi-file-earmark-x"></i>
@@ -217,7 +217,7 @@
                         <i class="bi bi-file-earmark-text"></i>
                     </a>
                     <form method="post" action="{% url 'factura:anular_factura' venta.id_venta %}" class="d-inline"
-                          onsubmit="return confirm('¿Deseas anular esta factura?');">
+                          data-confirm="¿Deseas anular esta factura?">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-cancelar btn-sm" title="Anular factura">
                             <i class="bi bi-file-earmark-x"></i>
