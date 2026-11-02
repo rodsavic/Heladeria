@@ -531,14 +531,23 @@ function abrirModalVuelto() {
     // Actualizar el total en el modal
     totalVentaModal.value = totalVenta.toLocaleString('es-ES');
 
-    // Restablecer campos de pago (en editar usa valores precargados)
-    ['efectivo', 'pos', 'transferencia'].forEach((id) => {
-        const input = document.getElementById(id);
-        if (!input) return;
-        const defaultValue = input.getAttribute('data-default');
-        input.value = defaultValue !== null ? defaultValue : "";
+    // Restablecer métodos de pago (en editar se marcan los que tenían monto)
+    const checksPago = obtenerChecksPago();
+    checksPago.forEach((check) => {
+        const input = document.getElementById(check.dataset.target);
+        const defaultValue = parseFloat(input.getAttribute('data-default')) || 0;
+        check.checked = defaultValue > 0;
     });
-    document.getElementById("mensajeVuelto").textContent = "";
+    const marcados = checksPago.filter(chk => chk.checked);
+    actualizarInputsPago();
+    // Con varios métodos en edición se respetan los montos guardados
+    if (marcados.length > 1) {
+        marcados.forEach((check) => {
+            const input = document.getElementById(check.dataset.target);
+            input.value = parseFloat(input.getAttribute('data-default')) || 0;
+        });
+        calcularVuelto();
+    }
 
     // Obtener el modal y mostrarlo
     const modalElement = document.getElementById('modalCobro');
@@ -558,8 +567,46 @@ function abrirModalVuelto() {
 
     // Enfocar campo
     setTimeout(() => {
-        document.getElementById("efectivo").focus();
+        const primerMarcado = obtenerChecksPago().find(chk => chk.checked);
+        if (primerMarcado) {
+            document.getElementById(primerMarcado.dataset.target).focus();
+        } else {
+            document.getElementById("chk_efectivo")?.focus();
+        }
     }, 500);
+}
+
+function obtenerChecksPago() {
+    return Array.from(document.querySelectorAll('.pago-check'));
+}
+
+// Habilita los inputs de los métodos marcados:
+// uno solo -> monto total preseteado; dos o más -> 0 en cada uno.
+function actualizarInputsPago() {
+    const totalVenta = parseFloat(document.getElementById("total_venta").value) || 0;
+    const checksPago = obtenerChecksPago();
+    const marcados = checksPago.filter(chk => chk.checked);
+
+    checksPago.forEach((check) => {
+        const input = document.getElementById(check.dataset.target);
+        input.disabled = !check.checked;
+        if (!check.checked) {
+            input.value = 0;
+        } else {
+            input.value = marcados.length === 1 ? totalVenta.toFixed(0) : 0;
+        }
+    });
+
+    const btnGuardarCobro = document.getElementById('btnGuardarCobro');
+    if (btnGuardarCobro) {
+        btnGuardarCobro.disabled = marcados.length === 0;
+    }
+
+    if (marcados.length === 0) {
+        document.getElementById("mensajeVuelto").textContent = "";
+    } else {
+        calcularVuelto();
+    }
 }
 
 function cerrarModal() {
@@ -661,6 +708,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    obtenerChecksPago().forEach((check) => {
+        check.addEventListener('change', function () {
+            actualizarInputsPago();
+            if (this.checked) {
+                document.getElementById(this.dataset.target).focus();
+            }
+        });
+    });
+
     // Auto-cálculo del vuelto
     ['efectivo', 'pos', 'transferencia'].forEach(id => {
         const element = document.getElementById(id);
@@ -701,6 +757,18 @@ function calcularVuelto() {
     const mensajeVuelto = document.getElementById("mensajeVuelto");
     const montoApagar = totalVenta - montoPos - montoTransferencia
 
+    // Sin efectivo no hay vuelto: solo se informa el saldo pendiente
+    if (!document.getElementById("chk_efectivo")?.checked) {
+        if (montoApagar > 0) {
+            mensajeVuelto.textContent = `Falta asignar: ₲${montoApagar.toLocaleString('es-ES')}`;
+        } else if (montoApagar < 0) {
+            mensajeVuelto.textContent = "Los montos superan el total de la venta.";
+        } else {
+            mensajeVuelto.textContent = "Total cubierto.";
+        }
+        return;
+    }
+
     if (montoEfectivo >= montoApagar) {
         const vuelto = montoEfectivo - montoApagar;
         const vueltoFormateado = vuelto.toFixed(0).toLocaleString('es-ES');  // Formato en miles
@@ -721,12 +789,16 @@ function enviarFormulario() {
     const montoTransferencia = parseFloat(document.getElementById("transferencia").value) || 0;
     const montoPagado = montoEfectivo + montoPos + montoTransferencia;
 
-    if (montoPagado < totalVenta) {
+    if (!obtenerChecksPago().some(chk => chk.checked)) {
+        AppAlertas.alerta('Seleccione al menos un método de pago.', "warning");
+    } else if (montoPagado < totalVenta) {
         AppAlertas.alerta('No se ha pagado el total de la venta', "warning");
     } else if(montoPos > totalVenta){
         AppAlertas.alerta("El monto en POS excede al monto total de la venta.", "warning");
     } else if(montoTransferencia > totalVenta){
         AppAlertas.alerta("El monto en Transferencia excede al monto total de la venta.", "warning");
+    } else if(montoPos + montoTransferencia > totalVenta){
+        AppAlertas.alerta("La suma de POS y Transferencia excede al monto total de la venta.", "warning");
     } else {
         const tabla = document.getElementById("tablaProductos").querySelector("tbody");
         const productosSeleccionados = [];

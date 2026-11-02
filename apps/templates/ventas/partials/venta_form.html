@@ -279,31 +279,41 @@
                   </div>
                 </div>
 
+                <label class="form-label fw-semibold mb-2">Seleccione el/los métodos de pago</label>
                 <div class="row g-3">
                   <div class="col-12 col-md-4">
-                    <label for="efectivo" class="form-label"><i class="bi bi-cash"></i> Efectivo</label>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input pago-check" type="checkbox" id="chk_efectivo" data-target="efectivo">
+                      <label class="form-check-label" for="chk_efectivo"><i class="bi bi-cash"></i> Efectivo</label>
+                    </div>
                     <div class="input-group">
                       <span class="input-group-text">Gs</span>
                       <input type="number" id="efectivo" name="efectivo" class="form-control" placeholder="0" min="0"
-                             value="{{ monto_efectivo|default:0 }}" data-default="{{ monto_efectivo|default:0 }}">
+                             value="0" data-default="{{ monto_efectivo|default:0 }}" disabled>
                     </div>
                   </div>
 
                   <div class="col-12 col-md-4">
-                    <label for="pos" class="form-label"><i class="bi bi-credit-card-2-front"></i> POS</label>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input pago-check" type="checkbox" id="chk_pos" data-target="pos">
+                      <label class="form-check-label" for="chk_pos"><i class="bi bi-credit-card-2-front"></i> POS</label>
+                    </div>
                     <div class="input-group">
                       <span class="input-group-text">Gs</span>
                       <input type="number" id="pos" name="pos" class="form-control" placeholder="0" min="0"
-                             value="{{ monto_pos|default:0 }}" data-default="{{ monto_pos|default:0 }}">
+                             value="0" data-default="{{ monto_pos|default:0 }}" disabled>
                     </div>
                   </div>
 
                   <div class="col-12 col-md-4">
-                    <label for="transferencia" class="form-label"><i class="bi bi-bank"></i> Transferencia</label>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input pago-check" type="checkbox" id="chk_transferencia" data-target="transferencia">
+                      <label class="form-check-label" for="chk_transferencia"><i class="bi bi-bank"></i> Transferencia</label>
+                    </div>
                     <div class="input-group">
                       <span class="input-group-text">Gs</span>
                       <input type="number" id="transferencia" name="transferencia" class="form-control" placeholder="0" min="0"
-                             value="{{ monto_transferencia|default:0 }}" data-default="{{ monto_transferencia|default:0 }}">
+                             value="0" data-default="{{ monto_transferencia|default:0 }}" disabled>
                     </div>
                   </div>
                 </div>
@@ -314,7 +324,7 @@
               </div>
               <div class="modal-footer">
                 <div class="action-buttons w-100">
-                  <button type="button" class="btn btn-crear" data-bs-dismiss="modal" onclick="enviarFormulario()">
+                  <button type="button" class="btn btn-crear" id="btnGuardarCobro" data-bs-dismiss="modal" onclick="enviarFormulario()" disabled>
                     <i class="bi bi-check-circle"></i> Guardar
                   </button>
                 </div>
