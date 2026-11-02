@@ -43,6 +43,19 @@ def _parsear_fecha_venta(valor, por_defecto):
     return fecha
 
 
+ESTADOS_FACTURA_BLOQUEANTES = (Factura.ESTADO_EMITIDA, Factura.ESTADO_ANULADA)
+MENSAJE_VENTA_BLOQUEADA = 'La venta tiene una factura emitida o anulada y no se puede {accion}.'
+
+
+def _venta_tiene_factura(id_venta):
+    # Una venta facturada (aunque la factura este anulada) ya fue informada
+    # a SIFEN: modificarla o borrarla dejaria la factura sin respaldo.
+    return Factura.objects.filter(
+        id_venta=id_venta,
+        estado__in=ESTADOS_FACTURA_BLOQUEANTES,
+    ).exists()
+
+
 def _es_tipo_venta_pedidos_ya(tipo_venta):
     return bool(tipo_venta and 'pedido' in tipo_venta.nombre.lower())
 
@@ -79,6 +92,12 @@ def ventasReadView(request, fecha=None):
         estado=Factura.ESTADO_EMITIDA
     ).select_related('id_venta')
     factura_por_venta = {factura.id_venta_id: factura for factura in facturas_emitidas}
+    ventas_con_factura = set(
+        Factura.objects.filter(
+            id_venta__in=ids_ventas,
+            estado__in=ESTADOS_FACTURA_BLOQUEANTES,
+        ).values_list('id_venta_id', flat=True)
+    )
 
     # Agregar atributo dinámico a cada venta
     for venta in ventas:
@@ -86,6 +105,7 @@ def ventasReadView(request, fecha=None):
         factura = factura_por_venta.get(venta.id_venta)
         venta.factura_emitida = factura is not None
         venta.id_factura_emitida = factura.id_factura if factura else None
+        venta.bloqueada = venta.id_venta in ventas_con_factura
 
     # Filtrar los pagos con id_tipo_pago=1 y los id_venta obtenidos
     pagos_efectivo = VentaTipoDePago.objects.filter(id_tipo_pago=1, id_venta__in=ids_ventas)
@@ -230,6 +250,10 @@ def ventasCreateView(request):
 @login_required(login_url="/")
 @permission_required("ventas.change_venta", login_url="/")
 def ventasEditView(request, id_venta):
+    if _venta_tiene_factura(id_venta):
+        messages.warning(request, MENSAJE_VENTA_BLOQUEADA.format(accion='editar'))
+        return redirect('ventas:ventas')
+
     # Las ventas generadas desde un contrato de alquiler tienen lineas con
     # descripcion propia que este formulario no conserva.
     if VentaDetalle.objects.filter(id_venta=id_venta).exclude(descripcion='').exists():
@@ -378,6 +402,10 @@ def ventasEditView(request, id_venta):
 @require_POST
 def ventasDeleteView(request, id_venta):
     venta = get_object_or_404(Venta, pk=id_venta)
+
+    if _venta_tiene_factura(id_venta):
+        messages.warning(request, MENSAJE_VENTA_BLOQUEADA.format(accion='eliminar'))
+        return redirect('ventas:ventas')
 
     if venta:
 
