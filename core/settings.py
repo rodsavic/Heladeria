@@ -35,6 +35,18 @@ if not SECRET_KEY:
 
 FACTURASEND_API_KEY = config('FACTURASEND_API_KEY', default='')
 
+# Correo saliente por Gmail (respaldo del envio de facturas de FacturaSend).
+# EMAIL_HOST_PASSWORD debe ser una "contraseña de aplicación" de Google
+# (requiere verificacion en dos pasos en la cuenta), no la clave normal.
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_TIMEOUT = 20
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
+
 ALLOWED_HOSTS = ['web-production-1e3ba.up.railway.app', '127.0.0.1','web-gunicorn-corewsgi-production-08f7.up.railway.app']
 CSRF_TRUSTED_ORIGINS = ["https://web-production-1e3ba.up.railway.app",'https://127.0.0.1','https://web-gunicorn-corewsgi-production-08f7.up.railway.app']
 

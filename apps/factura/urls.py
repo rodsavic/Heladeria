@@ -5,6 +5,7 @@ from apps.factura.views import (
     anularFacturaView,
     detalleFacturaView,
     emitirFacturaView,
+    enviarEmailGmailFacturaView,
     kudeFacturaView,
     reenviarEmailFacturaView,
     reenviarFacturaView,
@@ -20,4 +21,5 @@ urlpatterns = [
     path('reenviar/<int:id_factura>/', reenviarFacturaView, name='reenviar_factura'),
     path('kude/<int:id_factura>/', kudeFacturaView, name='kude_factura'),
     path('email/<int:id_factura>/', reenviarEmailFacturaView, name='reenviar_email_factura'),
+    path('email-gmail/<int:id_factura>/', enviarEmailGmailFacturaView, name='enviar_email_gmail_factura'),
 ]

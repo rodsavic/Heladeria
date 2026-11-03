@@ -84,6 +84,8 @@ class Factura(models.Model):
     # Envio del KuDE por correo (lo hace FacturaSend al aprobarse el DE)
     email_verificado = models.BooleanField(default=False)
     email_reintentos = models.PositiveSmallIntegerField(default=0)
+    # Ultimo envio de respaldo por Gmail (cuando falla el correo de FacturaSend)
+    fecha_email_respaldo = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'factura'

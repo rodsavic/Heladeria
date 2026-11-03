@@ -115,3 +115,8 @@ class FacturaSendClient:
         """POST /de/pdf. Devuelve los bytes del PDF del KuDE (hasta 50 CDCs)."""
         cuerpo = {'cdcList': [{'cdc': cdc} for cdc in cdcs]}
         return self._request('POST', '/de/pdf', cuerpo, binario=True)
+
+    def obtener_xml(self, cdc):
+        """GET /de/xml/<cdc>. Devuelve los bytes del XML firmado del DE (el
+        archivo con validez fiscal una vez aprobado por SIFEN)."""
+        return self._request('GET', f'/de/xml/{cdc}?extras=false&json=false', binario=True)

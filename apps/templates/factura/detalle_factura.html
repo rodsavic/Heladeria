@@ -269,8 +269,18 @@
             </div>
             <div class="col-sm-auto">
                 <button type="submit" class="btn btn-crear btn-sm">Reenviar por correo</button>
+                {% if gmail_activo %}
+                <button type="submit" class="btn btn-secondary btn-sm"
+                        formaction="{% url 'factura:enviar_email_gmail_factura' factura.id_factura %}"
+                        title="Envía el KuDE y el XML desde la cuenta de Gmail propia, sin usar el correo de FacturaSend">
+                    Enviar por Gmail (respaldo)
+                </button>
+                {% endif %}
             </div>
         </form>
+        {% if factura.fecha_email_respaldo %}
+        <p class="text-muted small mb-3">Último envío por Gmail: {{ factura.fecha_email_respaldo|date:"d/m/Y H:i" }}</p>
+        {% endif %}
 
         {% if error_envios %}
         <div class="alert alert-warning py-2 small mb-0">No se pudo consultar el historial: {{ error_envios }}</div>
