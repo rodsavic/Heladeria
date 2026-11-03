@@ -20,9 +20,8 @@ def gmail_configurado():
 
 
 def _cuerpo_correo(factura):
-    venta = factura.id_venta
-    cliente = venta.id_cliente
-    total = f'{int(venta.total_venta):,}'.replace(',', '.')
+    cliente = factura.cliente
+    total = f'{int(factura.total):,}'.replace(',', '.')
     return (
         f'Estimado/a {cliente.nombre} {cliente.apellido}:\n\n'
         f'Adjuntamos la factura electrónica N° {factura.nro_factura} emitida por '
@@ -53,7 +52,7 @@ def enviar_factura_gmail(factura, configuracion, email=None):
         return False, 'Solo se envían por correo facturas aprobadas por SIFEN.'
 
     try:
-        destino = _validar_emails(email or factura.id_venta.id_cliente.correo or '')
+        destino = _validar_emails(email or factura.cliente.correo or '')
     except ValidationError:
         if email:
             return False, f'La dirección de correo "{email}" no es válida.'

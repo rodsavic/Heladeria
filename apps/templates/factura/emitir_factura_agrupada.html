@@ -1,0 +1,109 @@
+{% extends "base/base.html" %}
+{% load humanize %}
+
+{% block title %}Emitir factura agrupada{% endblock %}
+
+{% block content %}
+<div class="card" style="width: 100%;">
+    <div class="card-body">
+        <h2 class="card-title">Emitir una factura para varias ventas</h2>
+        <h6 class="card-subtitle mb-2 text-muted">
+            {{ ventas|length }} venta{{ ventas|length|pluralize }} sin factura{% if fecha %} del {{ ventas.0.fecha_venta|date:"d/m/Y" }}{% endif %}
+        </h6>
+        <a href="{% if fecha %}{% url 'ventas:ventas' fecha %}{% else %}{% url 'ventas:ventas' %}{% endif %}" class="card-link mb-3">Volver a ventas</a>
+
+        <form method="post" class="mt-3" id="formFacturaAgrupada"
+              data-confirm="¿Emitir una sola factura para las ventas seleccionadas?">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                    <thead class="text-center table-head-color">
+                    <tr>
+                        <th style="color: white;"><input type="checkbox" class="form-check-input" id="seleccionarTodas" checked title="Seleccionar todas"></th>
+                        <th style="color: white;">Venta</th>
+                        <th style="color: white;">Cliente</th>
+                        <th style="color: white;">Tipo de venta</th>
+                        <th style="color: white;">Fecha</th>
+                        <th style="color: white;">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input venta-check" name="ventas"
+                                   value="{{ venta.id_venta }}" data-total="{{ venta.total_venta|floatformat:0 }}" checked>
+                        </td>
+                        <td>#{{ venta.id_venta }}</td>
+                        <td>{{ venta.id_cliente.nombre }} {{ venta.id_cliente.apellido }}</td>
+                        <td>{{ venta.id_tipo_venta.nombre }}</td>
+                        <td>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">{{ venta.total_venta|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th colspan="5" class="text-end">Total a facturar</th>
+                        <th class="text-end" id="totalFactura">{{ total|floatformat:0|intcomma }}</th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="clienteFactura">Cliente de la factura</label>
+                    <select class="form-control" name="cliente" id="clienteFactura" required>
+                        <option value="">Seleccionar cliente...</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id_cliente }}" {% if cliente.id_cliente == cliente_sugerido %}selected{% endif %}>
+                            {{ cliente.nombre }} {{ cliente.apellido }} - {{ cliente.documento }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="tipoFactura">Tipo de factura</label>
+                    <select class="form-control" name="tipo_factura" id="tipoFactura" required>
+                        <option value="CONTADO">Al contado</option>
+                        <option value="CREDITO">Crédito</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-crear mt-4" id="btnEmitirAgrupada">Confirmar emisión</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    (function () {
+        const checks = Array.from(document.querySelectorAll('.venta-check'));
+        const todas = document.getElementById('seleccionarTodas');
+        const total = document.getElementById('totalFactura');
+        const boton = document.getElementById('btnEmitirAgrupada');
+        const formato = new Intl.NumberFormat('es-PY');
+
+        function actualizar() {
+            const marcadas = checks.filter(c => c.checked);
+            total.textContent = formato.format(marcadas.reduce((suma, c) => suma + Number(c.dataset.total), 0));
+            todas.checked = marcadas.length === checks.length;
+            boton.disabled = marcadas.length === 0;
+        }
+
+        checks.forEach(c => c.addEventListener('change', actualizar));
+        todas.addEventListener('change', () => {
+            checks.forEach(c => { c.checked = todas.checked; });
+            actualizar();
+        });
+
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            $('#clienteFactura').select2({ placeholder: 'Selecciona un cliente', width: '100%' });
+        }
+    })();
+</script>
+{% endblock scripts %}

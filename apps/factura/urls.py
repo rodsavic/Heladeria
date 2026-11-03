@@ -4,6 +4,7 @@ from apps.factura.views import (
     actualizarEstadoFacturaView,
     anularFacturaView,
     detalleFacturaView,
+    emitirFacturaAgrupadaView,
     emitirFacturaView,
     enviarEmailGmailFacturaView,
     kudeFacturaView,
@@ -15,6 +16,7 @@ app_name = 'factura'
 
 urlpatterns = [
     path('emitir/<int:id_venta>/', emitirFacturaView, name='emitir_factura'),
+    path('emitir-agrupada/', emitirFacturaAgrupadaView, name='emitir_factura_agrupada'),
     path('anular/<int:id_venta>/', anularFacturaView, name='anular_factura'),
     path('detalle/<int:id_factura>/', detalleFacturaView, name='detalle_factura'),
     path('estado/<int:id_factura>/', actualizarEstadoFacturaView, name='actualizar_estado_factura'),
