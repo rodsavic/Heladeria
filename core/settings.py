@@ -47,6 +47,16 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_TIMEOUT = 20
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 
+# Alternativa sin SMTP: API de Gmail por HTTPS (para servidores que bloquean
+# los puertos SMTP, como Railway fuera del plan Pro). Si estan las tres
+# variables se usa en lugar del SMTP; el token se obtiene con
+# "python manage.py gmail_autorizar".
+GMAIL_CLIENT_ID = config('GMAIL_CLIENT_ID', default='')
+GMAIL_CLIENT_SECRET = config('GMAIL_CLIENT_SECRET', default='')
+GMAIL_REFRESH_TOKEN = config('GMAIL_REFRESH_TOKEN', default='')
+if GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET and GMAIL_REFRESH_TOKEN:
+    EMAIL_BACKEND = 'apps.factura.gmail_api_backend.GmailApiBackend'
+
 ALLOWED_HOSTS = ['web-production-1e3ba.up.railway.app', '127.0.0.1','web-gunicorn-corewsgi-production-08f7.up.railway.app']
 CSRF_TRUSTED_ORIGINS = ["https://web-production-1e3ba.up.railway.app",'https://127.0.0.1','https://web-gunicorn-corewsgi-production-08f7.up.railway.app']
 
