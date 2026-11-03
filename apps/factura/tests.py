@@ -92,3 +92,44 @@ class EnvioGmailTest(TestCase):
         xml, error = obtener_xml(self.factura, self.configuracion)
         self.assertIsNone(error)
         self.assertTrue(xml.endswith(b'</rDE>'))
+
+
+@override_settings(
+    EMAIL_BACKEND='apps.factura.gmail_api_backend.GmailApiBackend',
+    GMAIL_CLIENT_ID='id', GMAIL_CLIENT_SECRET='secreto', GMAIL_REFRESH_TOKEN='refresh',
+)
+class GmailApiBackendTest(TestCase):
+    def test_pide_token_y_envia_mensaje_codificado(self):
+        import base64
+        import json
+
+        from apps.factura import gmail_api_backend
+
+        gmail_api_backend._token.update(valor=None, vence=0.0)
+        llamadas = []
+
+        def falso_llamar(url, data, headers):
+            llamadas.append((url, data, headers))
+            if url == gmail_api_backend.TOKEN_URL:
+                return {'access_token': 'tok', 'expires_in': 3600}
+            return {'id': 'abc'}
+
+        with mock.patch.object(gmail_api_backend, '_llamar', side_effect=falso_llamar):
+            correo = mail.EmailMessage('Asunto', 'Cuerpo', 'yo@gmail.com', ['cliente@correo.com'])
+            correo.attach('KuDE.pdf', PDF, 'application/pdf')
+            self.assertEqual(correo.send(), 1)
+
+        self.assertEqual([url for url, _, _ in llamadas], [gmail_api_backend.TOKEN_URL, gmail_api_backend.SEND_URL])
+        _, data, headers = llamadas[1]
+        self.assertEqual(headers['Authorization'], 'Bearer tok')
+        crudo = base64.urlsafe_b64decode(json.loads(data)['raw'])
+        self.assertIn(b'To: cliente@correo.com', crudo)
+        self.assertIn(b'KuDE.pdf', crudo)
+
+    def test_error_de_api_se_informa(self):
+        from apps.factura import gmail_api_backend
+
+        gmail_api_backend._token.update(valor=None, vence=0.0)
+        with mock.patch.object(gmail_api_backend, '_llamar', side_effect=gmail_api_backend.GmailApiError('401')):
+            with self.assertRaises(gmail_api_backend.GmailApiError):
+                mail.EmailMessage('A', 'B', 'yo@gmail.com', ['c@correo.com']).send()

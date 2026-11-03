@@ -7,12 +7,16 @@ from django.core.mail import EmailMessage
 from django.utils import timezone
 
 from .facturasend_service import ESTADOS_SIFEN_APROBADOS, _validar_emails, obtener_kude, obtener_xml
+from .gmail_api_backend import GmailApiError, gmail_api_configurada
 
 logger = logging.getLogger(__name__)
 
 
 def gmail_configurado():
-    return bool(settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD)
+    """True si hay cuenta remitente y credenciales: API de Gmail (OAuth) o SMTP."""
+    if not settings.EMAIL_HOST_USER:
+        return False
+    return gmail_api_configurada() or bool(settings.EMAIL_HOST_PASSWORD)
 
 
 def _cuerpo_correo(factura):
@@ -39,7 +43,10 @@ def enviar_factura_gmail(factura, configuracion, email=None):
     No lanza excepciones: devuelve (ok: bool, mensaje: str).
     """
     if not gmail_configurado():
-        return False, 'El envío por Gmail no está configurado (EMAIL_HOST_USER / EMAIL_HOST_PASSWORD).'
+        return False, (
+            'El envío por Gmail no está configurado (EMAIL_HOST_USER y '
+            'GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET / GMAIL_REFRESH_TOKEN o EMAIL_HOST_PASSWORD).'
+        )
     if not factura.cdc:
         return False, 'La factura no tiene CDC: todavía no se envió a FacturaSend.'
     if factura.estado_sifen not in ESTADOS_SIFEN_APROBADOS:
@@ -73,7 +80,7 @@ def enviar_factura_gmail(factura, configuracion, email=None):
 
     try:
         mensaje.send(fail_silently=False)
-    except (smtplib.SMTPException, OSError) as exc:
+    except (smtplib.SMTPException, OSError, GmailApiError) as exc:
         logger.error('Gmail: error al enviar la factura %s: %s', factura.nro_factura, exc)
         return False, f'Error al enviar por Gmail: {exc}'
 
