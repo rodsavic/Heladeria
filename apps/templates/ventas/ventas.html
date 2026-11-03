@@ -102,12 +102,28 @@
             </div>
         </div>
 
+        {% if hay_ventas_sin_factura %}
+        <form method="get" action="{% url 'factura:emitir_factura_agrupada' %}" id="formFacturaAgrupada"></form>
+        <div class="d-flex flex-wrap justify-content-md-end justify-content-center gap-2 mb-2">
+            <button type="submit" form="formFacturaAgrupada" class="btn btn-crear btn-sm" id="btnFacturarSeleccionadas" disabled>
+                <i class="bi bi-receipt"></i> Facturar seleccionadas (<span id="cantidadSeleccionadas">0</span>)
+            </button>
+            <a class="btn btn-limpiar btn-sm" href="{% url 'factura:emitir_factura_agrupada' %}?fecha={{ fecha_venta|date:'Y-m-d' }}"
+               title="Una sola factura con todas las ventas del día que no tienen factura">
+                <i class="bi bi-receipt-cutoff"></i> Facturar pendientes del día
+            </a>
+        </div>
+        {% else %}
         <br>
+        {% endif %}
         {% if ventas_por_pagina %}
         <div class="table-responsive d-none d-md-block">
             <table class="table table-bordered ventas-table">
                 <thead class="text-center table-head-color">
                 <tr>
+                    <th style="color: white;" title="Seleccionar para facturar juntas">
+                        {% if hay_ventas_sin_factura %}<input type="checkbox" class="form-check-input" id="seleccionarVentas" title="Seleccionar todas las de esta página">{% endif %}
+                    </th>
                     {% for columna in columnas %}
                     <th style="color: white;">{{columna}}</th>
                     {% endfor %}
@@ -117,7 +133,12 @@
                 <tbody>
                 {% for venta in ventas_por_pagina %}
                 <tr>
-
+                    <td class="text-center">
+                        {% if not venta.factura_emitida %}
+                        <input type="checkbox" class="form-check-input venta-seleccion" name="ventas" value="{{ venta.id_venta }}"
+                               form="formFacturaAgrupada" title="Seleccionar para facturar">
+                        {% endif %}
+                    </td>
                     <td>{{venta.id_cliente.nombre}}</td>
                     <td>{{venta.total_venta|floatformat:0|intcomma}}</td>
                     <td>{{venta.total_iva_10|floatformat:0|intcomma}}</td>
@@ -165,11 +186,11 @@
 
                         {% if venta.factura_emitida %}
                         <a class="btn btn-secondary btn-sm" href="{% url 'factura:detalle_factura' venta.id_factura_emitida %}"
-                           type="button" title="Ver factura">
+                           type="button" title="Ver factura {{ venta.nro_factura_emitida }}{% if venta.factura_agrupada %} (agrupada){% endif %}">
                             <i class="bi bi-file-earmark-text"></i>
                         </a>
                         <form method="post" action="{% url 'factura:anular_factura' venta.id_venta %}" class="d-inline"
-                              data-confirm="¿Deseas anular esta factura?">
+                              data-confirm="{% if venta.factura_agrupada %}La factura {{ venta.nro_factura_emitida }} agrupa varias ventas: se anulará para todas ellas. ¿Deseas continuar?{% else %}¿Deseas anular esta factura?{% endif %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-cancelar btn-sm" title="Anular factura">
                                 <i class="bi bi-file-earmark-x"></i>
@@ -195,9 +216,13 @@
             <div class="venta-card-mobile">
                 <div class="venta-badges">
                     {% if venta.factura_emitida %}
-                    <span class="badge bg-success">Facturada</span>
+                    <span class="badge bg-success">Facturada{% if venta.factura_agrupada %} (agrupada){% endif %}</span>
                     {% else %}
-                    <span class="badge bg-secondary">Sin factura</span>
+                    <label class="d-inline-flex align-items-center gap-1 mb-0">
+                        <input type="checkbox" class="form-check-input venta-seleccion mt-0" name="ventas" value="{{ venta.id_venta }}"
+                               form="formFacturaAgrupada">
+                        <span class="badge bg-secondary">Sin factura</span>
+                    </label>
                     {% endif %}
                     <span class="badge bg-light text-dark border">{{ venta.id_tipo_venta.nombre }}</span>
                 </div>
@@ -220,7 +245,7 @@
                         <i class="bi bi-file-earmark-text"></i>
                     </a>
                     <form method="post" action="{% url 'factura:anular_factura' venta.id_venta %}" class="d-inline"
-                          data-confirm="¿Deseas anular esta factura?">
+                          data-confirm="{% if venta.factura_agrupada %}La factura {{ venta.nro_factura_emitida }} agrupa varias ventas: se anulará para todas ellas. ¿Deseas continuar?{% else %}¿Deseas anular esta factura?{% endif %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-cancelar btn-sm" title="Anular factura">
                             <i class="bi bi-file-earmark-x"></i>
@@ -248,3 +273,41 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    (function () {
+        const boton = document.getElementById('btnFacturarSeleccionadas');
+        if (!boton) return;
+        const contador = document.getElementById('cantidadSeleccionadas');
+        const todas = document.getElementById('seleccionarVentas');
+        const checks = Array.from(document.querySelectorAll('.venta-seleccion'));
+
+        // La misma venta tiene un checkbox en la tabla y otro en la tarjeta
+        // movil: se mantienen sincronizados y se cuentan una sola vez.
+        function seleccionadas() {
+            return new Set(checks.filter(c => c.checked).map(c => c.value));
+        }
+
+        function actualizar() {
+            const cantidad = seleccionadas().size;
+            contador.textContent = cantidad;
+            boton.disabled = cantidad === 0;
+        }
+
+        checks.forEach(check => check.addEventListener('change', () => {
+            checks.filter(c => c.value === check.value).forEach(c => { c.checked = check.checked; });
+            actualizar();
+        }));
+
+        if (todas) {
+            todas.addEventListener('change', () => {
+                checks.forEach(c => { c.checked = todas.checked; });
+                actualizar();
+            });
+        }
+        actualizar();
+    })();
+</script>
+{% endblock scripts %}

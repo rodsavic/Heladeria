@@ -271,7 +271,7 @@ def reenviar_email(factura, configuracion, email=None):
             email = _validar_emails(email)
         except ValidationError:
             return False, f'La dirección de correo "{email}" no es válida.'
-    elif not factura.id_venta.id_cliente.correo:
+    elif not factura.cliente.correo:
         return False, 'El cliente no tiene correo cargado; indique una dirección de destino.'
 
     try:
@@ -291,7 +291,7 @@ def reenviar_email(factura, configuracion, email=None):
     if isinstance(resultado, dict) and resultado.get('success') is False:
         return False, _mensaje_error(resultado)
 
-    destino = email or factura.id_venta.id_cliente.correo
+    destino = email or factura.cliente.correo
     return True, f'Se solicitó a FacturaSend el reenvío del correo a {destino}.'
 
 
@@ -363,12 +363,14 @@ def verificar_envios_email(configuracion, max_reintentos=1, dias=7):
             fecha_emision__gte=timezone.now() - timedelta(days=dias),
         )
         .exclude(cdc='')
-        .exclude(id_venta__id_cliente__correo='')
-        .select_related('id_venta__id_cliente')
+        .select_related('id_cliente', 'id_venta__id_cliente')
     )
 
     verificadas, reenviadas = 0, 0
     for factura in facturas:
+        # El receptor puede ser el cliente elegido al facturar o el de la venta.
+        if not factura.cliente.correo:
+            continue
         envios, error = consultar_envios_email(factura, configuracion)
         if error:
             return verificadas, reenviadas, error

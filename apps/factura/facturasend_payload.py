@@ -146,9 +146,10 @@ def _cliente_payload(cliente):
     return data
 
 
-def _items_payload(venta):
+def _items_payload(ventas):
     detalles = (
-        VentaDetalle.objects.filter(id_venta=venta)
+        VentaDetalle.objects.filter(id_venta__in=ventas)
+        .order_by('id_venta__fecha_venta', 'id_venta', 'pk')
         .select_related('id_producto', 'id_producto__id_medida', 'id_producto__id_iva')
     )
     items = []
@@ -160,7 +161,9 @@ def _items_payload(venta):
                 'no tiene codigo_set asignado (tabla de unidades de medida de la SET).'
             )
         if detalle.cantidad_producto == 0:
-            raise PayloadError(f'El producto "{producto.nombre}" tiene cantidad 0 en la venta.')
+            raise PayloadError(
+                f'El producto "{producto.nombre}" tiene cantidad 0 en la venta #{detalle.id_venta_id}.'
+            )
 
         # La linea puede traer su propio IVA (ej. alquileres); si no, se usa el del producto.
         if detalle.iva is not None:
@@ -225,12 +228,23 @@ def _entrega_payload(pago):
     return entrega
 
 
-def _condicion_payload(factura, venta):
-    pagos = VentaTipoDePago.objects.filter(id_venta=venta).select_related('id_tipo_pago')
-    entregas = [_entrega_payload(pago) for pago in pagos]
+def _pagos_agrupados(ventas):
+    """Pagos de las ventas sumados por tipo de pago (una factura agrupada
+    informa una entrega por forma de pago, no una por venta)."""
+    pagos = {}
+    for pago in VentaTipoDePago.objects.filter(id_venta__in=ventas).select_related('id_tipo_pago').order_by('pk'):
+        if pago.id_tipo_pago_id in pagos:
+            pagos[pago.id_tipo_pago_id].monto += pago.monto
+        else:
+            pagos[pago.id_tipo_pago_id] = pago
+    return list(pagos.values())
+
+
+def _condicion_payload(factura):
+    entregas = [_entrega_payload(pago) for pago in _pagos_agrupados(factura.get_ventas())]
     if not entregas:
         # Nunca deberia pasar (la venta exige forma de pago), pero evita un DE invalido.
-        entregas = [{'tipo': 1, 'monto': venta.total_venta, 'moneda': 'PYG'}]
+        entregas = [{'tipo': 1, 'monto': factura.total, 'moneda': 'PYG'}]
 
     condicion = {'tipo': 1 if factura.tipo_factura == factura.TIPO_CONTADO else 2}
     if condicion['tipo'] == 1:
@@ -260,8 +274,7 @@ def construir_documento(factura):
     Puede levantar PayloadError si al cliente, al producto o a la medida
     les falta un dato obligatorio para SIFEN.
     """
-    venta = factura.id_venta
-    cliente = venta.id_cliente
+    cliente = factura.cliente
 
     establecimiento, punto, numero = separar_nro_factura(factura)
 
@@ -283,13 +296,13 @@ def construir_documento(factura):
         'moneda': 'PYG',
         'cliente': _cliente_payload(cliente),
         'factura': {'presencia': PRESENCIA_OPERACION_PRESENCIAL},
-        'condicion': _condicion_payload(factura, venta),
-        'items': _items_payload(venta),
+        'condicion': _condicion_payload(factura),
+        'items': _items_payload(factura.get_ventas()),
     }
 
     # Informacion de interes del emisor (B005): se imprime en el KuDE.
-    if venta.observacion:
-        documento['observacion'] = venta.observacion
+    if factura.observacion:
+        documento['observacion'] = factura.observacion
 
     if cliente.tipo_operacion == Cliente.OPERACION_B2G:
         documento['dncp'] = dict(DNCP_SIN_LICITACION, fecha=fecha.strftime('%Y-%m-%d'))

@@ -21,6 +21,8 @@ CDC = '0' * 44
     EMAIL_HOST_USER='heladeria@gmail.com',
     EMAIL_HOST_PASSWORD='clave-de-aplicacion',
     DEFAULT_FROM_EMAIL='heladeria@gmail.com',
+    # Los tests no deben depender de las credenciales del .env local.
+    GMAIL_CLIENT_ID='', GMAIL_CLIENT_SECRET='', GMAIL_REFRESH_TOKEN='',
 )
 class EnvioGmailTest(TestCase):
     def setUp(self):
@@ -133,3 +135,105 @@ class GmailApiBackendTest(TestCase):
         with mock.patch.object(gmail_api_backend, '_llamar', side_effect=gmail_api_backend.GmailApiError('401')):
             with self.assertRaises(gmail_api_backend.GmailApiError):
                 mail.EmailMessage('A', 'B', 'yo@gmail.com', ['c@correo.com']).send()
+
+
+class FacturaAgrupadaTest(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from django.utils import timezone
+
+        from apps.productos.models import Iva, Medida, Producto
+        from apps.tipo_pago.models import TipoPago
+        from apps.ventas.models import VentaDetalle, VentaTipoDePago
+
+        ConfiguracionEmpresa.objects.create(
+            nombre_empresa='Empresa', ruc='80000000-1', direccion='Asunción', nro_timbrado='12345678',
+            vigencia_timbrado_desde=date(2026, 1, 1),
+        )
+        medida = Medida.objects.create(descripcion='Unidad', prefijo='UNI', codigo_set=77)
+        iva = Iva.objects.create(descripcion='10')
+        self.producto = Producto.objects.create(nombre='Helado', precio_actual=11_000, id_medida=medida, id_iva=iva)
+        self.efectivo = TipoPago.objects.create(descripcion='Efectivo')
+        self.cliente_venta = Cliente.objects.create(documento='111', nombre='Ocasional', apellido='', correo='', celular='')
+        self.cliente_factura = Cliente.objects.create(
+            documento='2222222', nombre='Ana', apellido='Gómez', correo='ana@correo.com', celular='',
+        )
+        self.ventas = []
+        ahora = timezone.now()
+        for monto in (11_000, 22_000, 33_000):
+            venta = Venta.objects.create(
+                total_iva_10=monto / 11, total_iva_5=0, total_venta=monto, usuario_creacion=1,
+                id_cliente=self.cliente_venta, fecha_venta=ahora,
+            )
+            VentaDetalle.objects.create(
+                id_venta=venta, id_producto=self.producto, cantidad_producto=monto / 11_000, total_detalle=monto,
+            )
+            VentaTipoDePago.objects.create(id_venta=venta, id_tipo_pago=self.efectivo, monto=monto)
+            self.ventas.append(venta)
+
+        usuario = get_user_model().objects.create_superuser('admin', 'admin@example.com', 'clave')
+        self.client.force_login(usuario)
+
+    def _emitir(self, ventas, cliente=None):
+        return self.client.post('/factura/emitir-agrupada/', {
+            'ventas': [v.id_venta for v in ventas],
+            'cliente': (cliente or self.cliente_factura).id_cliente,
+            'tipo_factura': Factura.TIPO_CONTADO,
+        })
+
+    def test_una_factura_para_varias_ventas_con_cliente_elegido(self):
+        from apps.factura.facturasend_payload import construir_documento
+
+        respuesta = self._emitir(self.ventas[:2])
+
+        factura = Factura.objects.get()
+        self.assertRedirects(respuesta, f'/factura/detalle/{factura.id_factura}/', fetch_redirect_response=False)
+        self.assertEqual(factura.id_venta, self.ventas[0])
+        self.assertEqual(factura.cliente, self.cliente_factura)
+        self.assertEqual(factura.total, 33_000)
+        self.assertEqual(factura.forma_pago, 'Efectivo: 33000')
+
+        documento = construir_documento(factura)
+        self.assertEqual(documento['cliente']['documentoNumero'], '2222222')
+        self.assertEqual(len(documento['items']), 2)
+        self.assertEqual(documento['condicion']['entregas'], [{'tipo': 1, 'monto': 33_000, 'moneda': 'PYG'}])
+
+        detalle = self.client.get(f'/factura/detalle/{factura.id_factura}/')
+        self.assertContains(detalle, 'Ana Gómez')
+        self.assertEqual(detalle.context['factura'].total, 33_000)
+
+    def test_ventas_agrupadas_quedan_facturadas_y_bloqueadas(self):
+        self._emitir(self.ventas[:2])
+        factura = Factura.objects.get()
+
+        # No se pueden volver a facturar, ni solas ni en otro grupo.
+        self._emitir(self.ventas[1:])
+        self.assertEqual(Factura.objects.count(), 1)
+        self.client.post(f'/factura/emitir/{self.ventas[1].id_venta}/', {'tipo_factura': Factura.TIPO_CONTADO})
+        self.assertEqual(Factura.objects.count(), 1)
+
+        # La grilla las muestra facturadas y no permite editarlas.
+        grilla = self.client.get('/ventas/')
+        self.assertContains(grilla, f'/factura/detalle/{factura.id_factura}/', count=4)
+        respuesta = self.client.get(f'/ventas/editar_venta/{self.ventas[1].id_venta}')
+        self.assertRedirects(respuesta, '/ventas/', fetch_redirect_response=False)
+
+        # Anular desde cualquiera de las ventas anula la factura completa.
+        self.client.post(f'/factura/anular/{self.ventas[1].id_venta}/')
+        factura.refresh_from_db()
+        self.assertEqual(factura.estado, Factura.ESTADO_ANULADA)
+
+    def test_pendientes_del_dia_omite_las_facturadas(self):
+        from django.utils import timezone
+
+        self.client.post(f'/factura/emitir/{self.ventas[0].id_venta}/', {'tipo_factura': Factura.TIPO_CONTADO})
+        respuesta = self.client.get(f'/factura/emitir-agrupada/?fecha={timezone.localdate():%Y-%m-%d}')
+
+        self.assertEqual(list(respuesta.context['ventas']), self.ventas[1:])
+        self.assertEqual(respuesta.context['total'], 55_000)
+        self.assertEqual(respuesta.context['cliente_sugerido'], self.cliente_venta.id_cliente)
+
+    def test_sin_cliente_no_emite(self):
+        respuesta = self.client.post('/factura/emitir-agrupada/', {'ventas': [self.ventas[0].id_venta]})
+        self.assertEqual(Factura.objects.count(), 0)
+        self.assertEqual(respuesta.status_code, 302)

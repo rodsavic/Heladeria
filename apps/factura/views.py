@@ -1,3 +1,6 @@
+from datetime import datetime
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db import transaction
@@ -7,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.clientes.models import Cliente
 from apps.configuracion.models import ConfiguracionEmpresa
 from apps.factura.correo_respaldo import enviar_factura_gmail, gmail_configurado
 from apps.factura.emision import crear_factura, enviar_si_corresponde
@@ -21,14 +25,14 @@ from apps.factura.facturasend_service import (
     obtener_kude,
     reenviar_email,
 )
-from apps.factura.models import Factura
+from apps.factura.models import Factura, facturas_de_ventas
 from apps.ventas.models import Venta, VentaDetalle, VentaTipoDePago
 
 
 @login_required(login_url='/')
 def emitirFacturaView(request, id_venta):
     venta = get_object_or_404(Venta, id_venta=id_venta)
-    factura_activa = Factura.objects.filter(id_venta=venta, estado=Factura.ESTADO_EMITIDA).first()
+    factura_activa = Factura.objects.de_venta(venta).filter(estado=Factura.ESTADO_EMITIDA).first()
     if factura_activa:
         messages.warning(request, f'La venta ya tiene factura emitida: {factura_activa.nro_factura}')
         return redirect('ventas:ventas')
@@ -44,7 +48,7 @@ def emitirFacturaView(request, id_venta):
             # Bloquea la venta y repite el chequeo: dos POST simultaneos (doble click,
             # dos pestañas) pasarian ambos el control de arriba y emitirian dos facturas.
             Venta.objects.select_for_update().get(pk=venta.pk)
-            factura_activa = Factura.objects.filter(id_venta=venta, estado=Factura.ESTADO_EMITIDA).first()
+            factura_activa = Factura.objects.de_venta(venta).filter(estado=Factura.ESTADO_EMITIDA).first()
             if factura_activa:
                 messages.warning(request, f'La venta ya tiene factura emitida: {factura_activa.nro_factura}')
                 return redirect('factura:detalle_factura', id_factura=factura_activa.id_factura)
@@ -65,6 +69,98 @@ def emitirFacturaView(request, id_venta):
     return render(request, 'factura/emitir_factura.html', context=context)
 
 
+def _ids_ventas(valores):
+    """Convierte la lista de ids recibida (puede venir repetida si la grilla
+    tiene checkboxes en la vista de escritorio y en la movil) en enteros unicos."""
+    ids = set()
+    for valor in valores:
+        try:
+            ids.add(int(valor))
+        except (TypeError, ValueError):
+            continue
+    return sorted(ids)
+
+
+@login_required(login_url='/')
+def emitirFacturaAgrupadaView(request):
+    """Emite una sola factura para varias ventas sin factura, con el cliente
+    receptor que se elija.
+
+    Las ventas llegan como `?ventas=1&ventas=2` (seleccionadas en la grilla) o
+    con `?fecha=AAAA-MM-DD` para tomar todas las ventas de ese dia que todavia
+    no tienen factura emitida.
+    """
+    configuracion = ConfiguracionEmpresa.objects.first()
+    if not configuracion:
+        messages.error(request, 'Debes configurar los datos de la empresa antes de emitir facturas.')
+        return redirect('configuracion:empresa')
+
+    if request.method == 'POST':
+        ids = _ids_ventas(request.POST.getlist('ventas'))
+        cliente = Cliente.objects.filter(id_cliente=request.POST.get('cliente') or None).first()
+        tipo_factura = request.POST.get('tipo_factura', Factura.TIPO_CONTADO)
+        if not ids:
+            messages.warning(request, 'Seleccione al menos una venta para facturar.')
+            return redirect('ventas:ventas')
+        if not cliente:
+            messages.warning(request, 'Seleccione el cliente de la factura.')
+            consulta = urlencode([('ventas', i) for i in ids])
+            return redirect(f"{reverse('factura:emitir_factura_agrupada')}?{consulta}")
+
+        with transaction.atomic():
+            # Se bloquean las ventas (en orden, para evitar deadlocks) y se
+            # repite el chequeo: un doble envio no debe emitir dos facturas.
+            ventas = list(Venta.objects.select_for_update().filter(pk__in=ids).order_by('pk'))
+            facturadas = facturas_de_ventas(ids, [Factura.ESTADO_EMITIDA])
+            if facturadas:
+                nros = ', '.join(sorted({f.nro_factura for f in facturadas.values()}))
+                messages.warning(request, f'Algunas ventas ya tienen factura emitida ({nros}); revise la selección.')
+                return redirect('ventas:ventas')
+            if len(ventas) != len(ids):
+                messages.warning(request, 'Algunas ventas seleccionadas ya no existen; revise la selección.')
+                return redirect('ventas:ventas')
+            factura = crear_factura(ventas[0], tipo_factura=tipo_factura, ventas=ventas, cliente=cliente)
+
+        # El envio a FacturaSend queda fuera de la transaccion para no retener el bloqueo durante la llamada HTTP.
+        ok, mensaje = enviar_si_corresponde(factura, configuracion)
+        if ok:
+            messages.success(request, mensaje)
+        else:
+            messages.warning(request, mensaje)
+        return redirect('factura:detalle_factura', id_factura=factura.id_factura)
+
+    fecha = request.GET.get('fecha')
+    if fecha:
+        try:
+            dia = datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            messages.warning(request, 'Fecha inválida.')
+            return redirect('ventas:ventas')
+        candidatas = Venta.objects.filter(fecha_venta__date=dia)
+    else:
+        candidatas = Venta.objects.filter(pk__in=_ids_ventas(request.GET.getlist('ventas')))
+    candidatas = list(candidatas.select_related('id_cliente', 'id_tipo_venta').order_by('fecha_venta', 'id_venta'))
+
+    facturadas = facturas_de_ventas([v.id_venta for v in candidatas], [Factura.ESTADO_EMITIDA])
+    ventas = [v for v in candidatas if v.id_venta not in facturadas]
+    if not ventas:
+        messages.warning(request, 'No hay ventas sin factura para facturar.')
+        return redirect('ventas:ventas', fecha=fecha) if fecha else redirect('ventas:ventas')
+    if len(ventas) < len(candidatas):
+        messages.info(request, f'Se omitieron {len(candidatas) - len(ventas)} ventas que ya tienen factura emitida.')
+
+    # Si todas las ventas son del mismo cliente se propone ese cliente.
+    clientes_ventas = {v.id_cliente_id for v in ventas}
+    context = {
+        'ventas': ventas,
+        'total': sum(v.total_venta for v in ventas),
+        'clientes': Cliente.objects.order_by('nombre', 'apellido'),
+        'cliente_sugerido': clientes_ventas.pop() if len(clientes_ventas) == 1 else None,
+        'fecha': fecha,
+    }
+    return render(request, 'factura/emitir_factura_agrupada.html', context=context)
+
+
 def _configuracion_facturasend():
     """Devuelve la ConfiguracionEmpresa si FacturaSend esta configurado, si no None."""
     configuracion = ConfiguracionEmpresa.objects.first()
@@ -78,7 +174,7 @@ def _configuracion_facturasend():
 @require_POST
 def anularFacturaView(request, id_venta):
     venta = get_object_or_404(Venta, id_venta=id_venta)
-    factura = Factura.objects.filter(id_venta=venta, estado=Factura.ESTADO_EMITIDA).first()
+    factura = Factura.objects.de_venta(venta).filter(estado=Factura.ESTADO_EMITIDA).first()
     if not factura:
         messages.warning(request, 'No existe una factura emitida para anular en esta venta.')
         return redirect('ventas:ventas')
@@ -228,8 +324,13 @@ def kudeFacturaView(request, id_factura):
 def detalleFacturaView(request, id_factura):
     factura = get_object_or_404(Factura, id_factura=id_factura)
     venta = factura.id_venta
-    detalle_venta = VentaDetalle.objects.filter(id_venta=venta).select_related('id_producto')
-    pagos = VentaTipoDePago.objects.filter(id_venta=venta).select_related('id_tipo_pago')
+    ventas = factura.get_ventas()
+    detalle_venta = (
+        VentaDetalle.objects.filter(id_venta__in=ventas)
+        .select_related('id_producto')
+        .order_by('id_venta__fecha_venta', 'id_venta', 'pk')
+    )
+    pagos = VentaTipoDePago.objects.filter(id_venta__in=ventas).select_related('id_tipo_pago')
     configuracion = _configuracion_facturasend()
 
     # El historial de correos se consulta a FacturaSend solo cuando se pide
@@ -243,7 +344,7 @@ def detalleFacturaView(request, id_factura):
     context = {
         'factura': factura,
         'venta': venta,
-        'cliente': venta.id_cliente,
+        'cliente': factura.cliente,
         'detalles': detalle_venta,
         'pagos': pagos,
         'facturasend_activo': configuracion is not None,

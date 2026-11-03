@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from apps.clientes.forms import ClienteForm
 from apps.envio_unico import envio_unico
 from apps.clientes.models import Cliente
-from apps.factura.models import Factura
+from apps.factura.models import Factura, facturas_de_ventas
 from apps.productos.models import Producto
 from apps.tipo_pago.models import TipoPago
 from apps.ventas.forms import *
@@ -50,10 +50,7 @@ MENSAJE_VENTA_BLOQUEADA = 'La venta tiene una factura emitida o anulada y no se 
 def _venta_tiene_factura(id_venta):
     # Una venta facturada (aunque la factura este anulada) ya fue informada
     # a SIFEN: modificarla o borrarla dejaria la factura sin respaldo.
-    return Factura.objects.filter(
-        id_venta=id_venta,
-        estado__in=ESTADOS_FACTURA_BLOQUEANTES,
-    ).exists()
+    return Factura.objects.de_venta(id_venta).filter(estado__in=ESTADOS_FACTURA_BLOQUEANTES).exists()
 
 
 def _es_tipo_venta_pedidos_ya(tipo_venta):
@@ -87,16 +84,13 @@ def ventasReadView(request, fecha=None):
 
     total_efectivo_salon = 0
 
-    facturas_emitidas = Factura.objects.filter(
-        id_venta__in=ids_ventas,
-        estado=Factura.ESTADO_EMITIDA
-    ).select_related('id_venta')
-    factura_por_venta = {factura.id_venta_id: factura for factura in facturas_emitidas}
-    ventas_con_factura = set(
-        Factura.objects.filter(
-            id_venta__in=ids_ventas,
-            estado__in=ESTADOS_FACTURA_BLOQUEANTES,
-        ).values_list('id_venta_id', flat=True)
+    # Incluye las ventas que forman parte de una factura agrupada.
+    factura_por_venta = facturas_de_ventas(ids_ventas, [Factura.ESTADO_EMITIDA])
+    ventas_con_factura = set(facturas_de_ventas(ids_ventas, ESTADOS_FACTURA_BLOQUEANTES))
+    ventas_agrupadas = set(
+        Factura.ventas.through.objects.filter(
+            venta_id__in=ids_ventas, factura__estado=Factura.ESTADO_EMITIDA
+        ).values_list('venta_id', flat=True)
     )
 
     # Agregar atributo dinámico a cada venta
@@ -105,6 +99,8 @@ def ventasReadView(request, fecha=None):
         factura = factura_por_venta.get(venta.id_venta)
         venta.factura_emitida = factura is not None
         venta.id_factura_emitida = factura.id_factura if factura else None
+        venta.nro_factura_emitida = factura.nro_factura if factura else ''
+        venta.factura_agrupada = venta.id_venta in ventas_agrupadas
         venta.bloqueada = venta.id_venta in ventas_con_factura
 
     # Filtrar los pagos con id_tipo_pago=1 y los id_venta obtenidos
@@ -139,6 +135,8 @@ def ventasReadView(request, fecha=None):
         'total_ventas': total_ventas,
         'total_ventas_salon': total_ventas_salon,
         'total_ventas_salon_efectivo': total_ventas_salon_efectivo,
+        'fecha_venta': fecha_venta,
+        'hay_ventas_sin_factura': len(factura_por_venta) < len(ids_ventas),
     }
 
     return render(request, 'ventas/ventas.html', context=context)

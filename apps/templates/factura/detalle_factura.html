@@ -210,6 +210,9 @@
             <div class="ticket-row"><span>Tipo factura:</span><strong>{{ factura.get_tipo_factura_display }}</strong></div>
             <div class="ticket-row"><span>Forma de pago:</span><strong>{{ factura.forma_pago }}</strong></div>
             <div class="ticket-row"><span>Estado:</span><strong>{{ factura.estado }}</strong></div>
+            {% if factura.es_agrupada %}
+            <div class="ticket-row"><span>Ventas:</span><strong>{% for v in factura.get_ventas %}#{{ v.id_venta }}{% if not forloop.last %}, {% endif %}{% endfor %}</strong></div>
+            {% endif %}
             {% if factura.cdc %}
             <div class="ticket-row"><span>Estado SIFEN:</span><strong>{{ factura.get_estado_sifen_display }}</strong></div>
             <div class="ticket-row"><span>CDC:</span><strong style="word-break: break-all;">{{ factura.cdc }}</strong></div>
@@ -241,14 +244,14 @@
         </div>
 
         <div class="ticket-section">
-            <div class="ticket-row"><span>IVA 10:</span><strong>{{ venta.total_iva_10|floatformat:0|intcomma }}</strong></div>
-            <div class="ticket-row"><span>IVA 5:</span><strong>{{ venta.total_iva_5|floatformat:0|intcomma }}</strong></div>
-            <div class="ticket-row ticket-total"><span>TOTAL:</span><strong>{{ venta.total_venta|floatformat:0|intcomma }}</strong></div>
+            <div class="ticket-row"><span>IVA 10:</span><strong>{{ factura.total_iva_10|floatformat:0|intcomma }}</strong></div>
+            <div class="ticket-row"><span>IVA 5:</span><strong>{{ factura.total_iva_5|floatformat:0|intcomma }}</strong></div>
+            <div class="ticket-row ticket-total"><span>TOTAL:</span><strong>{{ factura.total|floatformat:0|intcomma }}</strong></div>
         </div>
 
-        {% if venta.observacion %}
+        {% if factura.observacion %}
         <div class="ticket-section">
-            <div class="small" style="white-space: pre-line;">{{ venta.observacion }}</div>
+            <div class="small" style="white-space: pre-line;">{{ factura.observacion }}</div>
         </div>
         {% endif %}
     </div>
