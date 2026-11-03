@@ -344,12 +344,16 @@ def verificar_envios_email(configuracion, max_reintentos=1, dias=7):
 
     - Si algun envio fue exitoso, la factura queda con email_verificado=True
       y no se vuelve a consultar.
-    - Si hay envios y todos fallaron, se reenvia el correo.
+    - Si hay envios y todos fallaron, se reenvia el correo: por Gmail si
+      esta configurado (respaldo), si no pidiendo el reenvio a FacturaSend.
     - Si todavia no hay envios, se espera a la proxima ejecucion (FacturaSend
       envia el correo al aprobarse el DE).
 
     Devuelve (verificadas, reenviadas, mensaje_error | None).
     """
+    # Import local: correo_respaldo importa este modulo.
+    from .correo_respaldo import enviar_factura_gmail, gmail_configurado
+
     facturas = (
         Factura.objects.filter(
             estado=Factura.ESTADO_EMITIDA,
@@ -375,9 +379,15 @@ def verificar_envios_email(configuracion, max_reintentos=1, dias=7):
             factura.save(update_fields=['email_verificado'])
             verificadas += 1
         elif all(envio['exitoso'] is False for envio in envios):
-            ok, mensaje = reenviar_email(factura, configuracion)
+            # Si hay Gmail configurado se usa como respaldo; si no, se pide a
+            # FacturaSend que reintente.
+            if gmail_configurado():
+                ok, mensaje = enviar_factura_gmail(factura, configuracion)
+                factura.email_verificado = ok
+            else:
+                ok, mensaje = reenviar_email(factura, configuracion)
             factura.email_reintentos += 1
-            factura.save(update_fields=['email_reintentos'])
+            factura.save(update_fields=['email_reintentos', 'email_verificado'])
             if ok:
                 reenviadas += 1
             else:
@@ -408,3 +418,28 @@ def obtener_kude(factura, configuracion):
     if isinstance(contenido, dict):
         return None, _mensaje_error(contenido)
     return None, 'FacturaSend no devolvió un PDF válido.'
+
+
+def obtener_xml(factura, configuracion):
+    """Descarga el XML firmado del DE.
+
+    Devuelve (xml_bytes | None, mensaje_error | None).
+    """
+    if not factura.cdc:
+        return None, 'La factura no tiene CDC: todavía no se envió a FacturaSend.'
+    try:
+        contenido = FacturaSendClient(configuracion).obtener_xml(factura.cdc)
+    except FacturaSendError as exc:
+        return None, str(exc)
+
+    if isinstance(contenido, (bytes, bytearray)):
+        # Se ignoran BOM y espacios iniciales para reconocer el XML.
+        if bytes(contenido).lstrip(b'\xef\xbb\xbf \t\r\n').startswith(b'<'):
+            return bytes(contenido), None
+        try:
+            contenido = json.loads(contenido.decode('utf-8'))
+        except ValueError:
+            return None, 'FacturaSend no devolvió un XML válido.'
+    if isinstance(contenido, dict):
+        return None, _mensaje_error(contenido)
+    return None, 'FacturaSend no devolvió un XML válido.'

@@ -9,7 +9,8 @@ de Windows), por ejemplo cada 10 minutos como recomienda FacturaSend:
 2. Consulta el estado (POST /de/estado) de las facturas en 0-Generado o
    1-Enviado en lote, ya que /lote/create no devuelve la aprobacion de SIFEN.
 3. Revisa el envio de correo (KuDE) de las facturas aprobadas en los
-   ultimos 7 dias y reenvia una vez las que fallaron.
+   ultimos 7 dias y reenvia una vez las que fallaron (por Gmail si esta
+   configurado, como respaldo del correo de FacturaSend).
 
 Las facturas rechazadas no se reenvian solas (fallarian con el mismo error):
 se corrige el dato y se reenvian desde el detalle de la factura.

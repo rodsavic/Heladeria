@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.configuracion.models import ConfiguracionEmpresa
+from apps.factura.correo_respaldo import enviar_factura_gmail, gmail_configurado
 from apps.factura.emision import crear_factura, enviar_si_corresponde
 from apps.factura.facturasend_service import (
     ESTADOS_SIFEN_APROBADOS,
@@ -186,6 +187,26 @@ def reenviarEmailFacturaView(request, id_factura):
 
 
 @login_required(login_url='/')
+@require_POST
+def enviarEmailGmailFacturaView(request, id_factura):
+    """Respaldo del correo de FacturaSend: envia el KuDE y el XML desde la
+    cuenta de Gmail propia. Si se indica una direccion, se envia solo a esa."""
+    factura = get_object_or_404(Factura, id_factura=id_factura)
+    configuracion = _configuracion_facturasend()
+    if not configuracion:
+        messages.warning(request, 'FacturaSend no está configurado.')
+        return redirect('factura:detalle_factura', id_factura=factura.id_factura)
+
+    email = request.POST.get('email', '').strip() or None
+    ok, mensaje = enviar_factura_gmail(factura, configuracion, email)
+    if ok:
+        messages.success(request, mensaje)
+    else:
+        messages.error(request, f'No se pudo enviar el correo por Gmail: {mensaje}')
+    return redirect(f"{reverse('factura:detalle_factura', args=[factura.id_factura])}?correos=1")
+
+
+@login_required(login_url='/')
 def kudeFacturaView(request, id_factura):
     factura = get_object_or_404(Factura, id_factura=id_factura)
     configuracion = _configuracion_facturasend()
@@ -231,6 +252,7 @@ def detalleFacturaView(request, id_factura):
         'ver_correos': ver_correos,
         'envios_email': envios_email,
         'error_envios': error_envios,
+        'gmail_activo': gmail_configurado(),
         'sifen_reenviable': factura.estado == Factura.ESTADO_EMITIDA and (
             not factura.cdc or factura.estado_sifen == Factura.ESTADO_SIFEN_RECHAZADO
         ),
