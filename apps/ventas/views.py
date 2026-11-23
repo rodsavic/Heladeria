@@ -1,12 +1,12 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
-from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Sum
+from django.db import transaction
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -18,7 +18,7 @@ from apps.clientes.forms import ClienteForm
 from apps.envio_unico import envio_unico
 from apps.clientes.models import Cliente
 from apps.factura.models import Factura, facturas_de_ventas
-from apps.productos.models import Producto
+from apps.productos.models import CategoriaProducto, Producto
 from apps.tipo_pago.models import TipoPago
 from apps.ventas.forms import *
 from apps.ventas.models import VentaTipoDePago, TipoVenta
@@ -53,14 +53,103 @@ def _venta_tiene_factura(id_venta):
     return Factura.objects.de_venta(id_venta).filter(estado__in=ESTADOS_FACTURA_BLOQUEANTES).exists()
 
 
-def _es_tipo_venta_pedidos_ya(tipo_venta):
-    return bool(tipo_venta and 'pedido' in tipo_venta.nombre.lower())
+# Ventana usada para ordenar la grilla de productos por los mas vendidos.
+DIAS_POPULARIDAD = 60
 
 
-def _obtener_precio_producto_por_tipo_venta(producto, tipo_venta):
-    if _es_tipo_venta_pedidos_ya(tipo_venta):
-        return float(producto.precio_pedidos_ya or producto.precio_actual or 0)
-    return float(producto.precio_actual or 0)
+def _productos_para_venta():
+    """Productos para la grilla del punto de venta, los mas vendidos primero."""
+    desde = timezone.now() - timedelta(days=DIAS_POPULARIDAD)
+    productos = (
+        Producto.objects.select_related('id_iva')
+        .annotate(veces_vendido=Count(
+            'ventadetalle', filter=Q(ventadetalle__id_venta__fecha_venta__gte=desde)
+        ))
+        .order_by('-veces_vendido', 'nombre')
+    )
+
+    categorias_por_producto = {}
+    categorias = {}
+    for cp in CategoriaProducto.objects.select_related('id_categoria'):
+        categorias_por_producto.setdefault(cp.id_producto_id, []).append(cp.id_categoria_id)
+        categorias[cp.id_categoria_id] = cp.id_categoria.descripcion
+
+    datos = []
+    for producto in productos:
+        precio = float(producto.precio_actual or 0)
+        # Sin precio PedidosYa (None) se usa el normal; con 0 el producto no se ofrece en PedidosYa.
+        precio_py = precio if producto.precio_pedidos_ya is None else float(producto.precio_pedidos_ya)
+        try:
+            iva = int(producto.id_iva.descripcion)
+        except (TypeError, ValueError):
+            iva = 0
+        datos.append({
+            'id': producto.id_producto,
+            'nombre': producto.nombre,
+            'precio': precio,
+            'precio_py': precio_py,
+            'iva': iva,
+            'categorias': categorias_por_producto.get(producto.id_producto, []),
+        })
+
+    categorias_lista = [
+        {'id': id_cat, 'nombre': nombre}
+        for id_cat, nombre in sorted(categorias.items(), key=lambda c: c[1].lower())
+    ]
+    return datos, categorias_lista
+
+
+def _cliente_por_defecto():
+    """Cliente innominado ("Sin nombre") que se preselecciona en las ventas nuevas."""
+    return (
+        Cliente.objects.filter(tipo_documento=Cliente.TIPO_DOC_INNOMINADO)
+        .order_by('id_cliente')
+        .first()
+    )
+
+
+def _contexto_formulario_venta(venta=None):
+    productos, categorias = _productos_para_venta()
+    if venta:
+        cliente_seleccionado = venta.id_cliente_id
+    else:
+        cliente_defecto = _cliente_por_defecto()
+        cliente_seleccionado = cliente_defecto.id_cliente if cliente_defecto else None
+    return {
+        'productos_pos': productos,
+        'categorias_pos': categorias,
+        'clientes': Cliente.objects.all().order_by('nombre'),
+        'tipo_venta': TipoVenta.objects.all().order_by('id'),
+        'cliente_seleccionado': cliente_seleccionado,
+        'cliente_form': _cliente_form_modal(),
+        'now': timezone.now(),
+    }
+
+
+def _guardar_detalles_y_pagos(venta, productos_json, pago_efectivo, pago_pos, pago_transferencia):
+    if not productos_json:
+        raise ValueError("No se recibieron los detalles de la venta.")
+    productos_data = json.loads(productos_json)
+    if not productos_data:
+        raise ValueError("La venta no tiene productos.")
+
+    for detalle in productos_data:
+        VentaDetalle.objects.create(
+            id_venta=venta,
+            id_producto=Producto.objects.get(id_producto=detalle['id_producto']),
+            cantidad_producto=detalle['cantidad'],
+            total_detalle=detalle['total_detalle'],
+            total_iva_5=detalle['total_detalle_iva_5'],
+            total_iva_10=detalle['total_detalle_iva_10'],
+        )
+
+    for id_tipo_pago, monto in ((1, pago_efectivo), (2, pago_pos), (3, pago_transferencia)):
+        if monto > 0:
+            VentaTipoDePago.objects.create(
+                id_venta=venta,
+                id_tipo_pago=TipoPago.objects.get(id_tipo_pago=id_tipo_pago),
+                monto=monto,
+            )
 
 
 @login_required(login_url="/")
@@ -145,87 +234,38 @@ def ventasReadView(request, fecha=None):
 @login_required(login_url="/")
 @envio_unico('ventas:ventas')
 def ventasCreateView(request):
-    # Se cargan los productos para mostrar en la lista
-    productos = Producto.objects.all()
-    clientes = Cliente.objects.all()
-    tipos_de_pago = TipoPago.objects.all()
-    tipo_venta = TipoVenta.objects.all()
-    # print(f'productos: {productos}')
-
     if request.method == 'POST':
-        # form = VentaForm(request.POST)
-        # if form.is_valid():
         try:
-            total_iva_10 = request.POST['total_iva_10']
-            total_iva_5 = request.POST['total_iva_5']
-            id_cliente = request.POST['cliente']
-            total_venta = request.POST['total_venta']
             pago_pos = float(request.POST.get('pos', 0) or 0)
             pago_efectivo = float(request.POST.get('efectivo', 0) or 0)
             pago_transferencia = float(request.POST.get('transferencia', 0) or 0)
-            fecha_venta_str = request.POST.get('fecha_venta')
             id_tipo_venta = request.POST.get('tipo_venta')
+            if not id_tipo_venta:
+                raise ValueError("Debes seleccionar un tipo de venta.")
 
             # Si el usuario no toca nada, queda la actual
-            fecha_venta = _parsear_fecha_venta(fecha_venta_str, por_defecto=timezone.now())
+            fecha_venta = _parsear_fecha_venta(request.POST.get('fecha_venta'), por_defecto=timezone.now())
 
-            nueva_venta = Venta.objects.create(
-                fecha_venta=fecha_venta,
-                total_iva_10=total_iva_10,
-                total_iva_5=total_iva_5,
-                id_cliente=Cliente.objects.get(id_cliente=id_cliente),
-                total_venta=total_venta,
-                usuario_creacion=request.user.id,
-                id_tipo_venta=TipoVenta.objects.get(id=id_tipo_venta),
-            )
-
-            nueva_venta.save()
-            productos_json = request.POST.get('productos_json')
-            productos_data = json.loads(productos_json)  # Convertir JSON en lista de diccionarios
-
-            for detalle in productos_data:
-                id_producto = detalle['id_producto']
-                cantidad_producto = detalle['cantidad']
-                total_detalle = detalle['total_detalle']
-                total_iva_10 = detalle['total_detalle_iva_10']
-                total_iva_5 = detalle['total_detalle_iva_5']
-
-                # Crear y guardar cada detalle de venta
-                venta_detalle = VentaDetalle.objects.create(
-                    id_venta=nueva_venta,
-                    id_producto=Producto.objects.get(id_producto=id_producto),
-                    cantidad_producto=cantidad_producto,
-                    total_detalle=total_detalle,
-                    total_iva_5=total_iva_5,
-                    total_iva_10=total_iva_10
+            # Todo o nada: una falla en un detalle no deja la venta a medias.
+            with transaction.atomic():
+                nueva_venta = Venta.objects.create(
+                    fecha_venta=fecha_venta,
+                    total_iva_10=request.POST['total_iva_10'],
+                    total_iva_5=request.POST['total_iva_5'],
+                    id_cliente=Cliente.objects.get(id_cliente=request.POST['cliente']),
+                    total_venta=request.POST['total_venta'],
+                    usuario_creacion=request.user.id,
+                    id_tipo_venta=TipoVenta.objects.get(id=id_tipo_venta),
                 )
-                venta_detalle.save()
-
-            if pago_pos > 0:
-                venta_tipo_pago = VentaTipoDePago.objects.create(
-                    id_venta=nueva_venta,
-                    id_tipo_pago=TipoPago.objects.get(id_tipo_pago=2),
-                    monto=pago_pos,
+                _guardar_detalles_y_pagos(
+                    nueva_venta, request.POST.get('productos_json'),
+                    pago_efectivo, pago_pos, pago_transferencia,
                 )
-                venta_tipo_pago.save()
 
-            if pago_efectivo > 0:
-                venta_tipo_pago = VentaTipoDePago.objects.create(
-                    id_venta=nueva_venta,
-                    id_tipo_pago=TipoPago.objects.get(id_tipo_pago=1),
-                    monto=pago_efectivo,
-                )
-                venta_tipo_pago.save()
-
-            if pago_transferencia > 0:
-                venta_tipo_pago = VentaTipoDePago.objects.create(
-                    id_venta=nueva_venta,
-                    id_tipo_pago=TipoPago.objects.get(id_tipo_pago=3),
-                    monto=pago_transferencia,
-                )
-                venta_tipo_pago.save()
-
-            messages.success(request, "Venta registrada exitosamente")
+            messages.success(request, f"Venta #{nueva_venta.id_venta} registrada exitosamente")
+            # "Seguir vendiendo": vuelve directo a un formulario vacio.
+            if request.POST.get('seguir_vendiendo') == '1':
+                return redirect('ventas:crear_venta')
             return redirect('ventas:ventas')
         except Exception as e:
             error_message = str(e)
@@ -233,16 +273,7 @@ def ventasCreateView(request):
             logging.error(f'Error al crear venta: {error_message}')
             return redirect('ventas:crear_venta')
 
-    context = {
-        'productos': productos,
-        'clientes': clientes,
-        'tipos_de_pago': tipos_de_pago,
-        'now': timezone.now(),
-        "tipo_venta": tipo_venta,
-        'cliente_form': _cliente_form_modal(),
-    }
-
-    return render(request, 'ventas/crear_venta.html', context=context)
+    return render(request, 'ventas/crear_venta.html', context=_contexto_formulario_venta())
 
 
 @login_required(login_url="/")
@@ -260,138 +291,58 @@ def ventasEditView(request, id_venta):
 
     if request.method == 'POST':
         try:
-            total_iva_10 = request.POST['total_iva_10']
-            total_iva_5 = request.POST['total_iva_5']
-            id_cliente = request.POST['cliente']
-            total_venta = request.POST['total_venta']
             pago_pos = float(request.POST.get('pos', 0) or 0)
             pago_efectivo = float(request.POST.get('efectivo', 0) or 0)
             pago_transferencia = float(request.POST.get('transferencia', 0) or 0)
-            fecha_venta_str = request.POST.get('fecha_venta')
             id_tipo_venta = request.POST.get('tipo_venta')
             if not id_tipo_venta:
                 raise ValueError("Debes seleccionar un tipo de venta.")
             venta = get_object_or_404(Venta, id_venta=id_venta)
 
             # Si el campo llega vacio se conserva la fecha original de la venta.
-            fecha_venta = _parsear_fecha_venta(fecha_venta_str, por_defecto=venta.fecha_venta)
+            fecha_venta = _parsear_fecha_venta(request.POST.get('fecha_venta'), por_defecto=venta.fecha_venta)
 
-            venta.total_iva_10 = total_iva_10
-            venta.total_iva_5 = total_iva_5
-            venta.id_cliente = Cliente.objects.get(id_cliente=id_cliente)
-            venta.total_venta = total_venta
-            venta.fecha_venta = fecha_venta
-            venta.id_tipo_venta = TipoVenta.objects.get(id=id_tipo_venta) if id_tipo_venta else None
-            venta.usuario_creacion = request.user.id
-            venta.save()
+            with transaction.atomic():
+                venta.total_iva_10 = request.POST['total_iva_10']
+                venta.total_iva_5 = request.POST['total_iva_5']
+                venta.id_cliente = Cliente.objects.get(id_cliente=request.POST['cliente'])
+                venta.total_venta = request.POST['total_venta']
+                venta.fecha_venta = fecha_venta
+                venta.id_tipo_venta = TipoVenta.objects.get(id=id_tipo_venta)
+                venta.usuario_creacion = request.user.id
+                venta.save()
 
-            # Se obtienen los detalles para eliminarlos 
-            detalles = VentaDetalle.objects.filter(id_venta=id_venta)
-            for detalle in detalles:
-                detalle.delete()
-
-            # Se obtienen la lista nueva de productos
-            productos_json = request.POST.get('productos_json')
-            if not productos_json:
-                raise ValueError("No se recibieron los detalles de la venta.")
-            productos_data = json.loads(productos_json)  # Convertir JSON en lista de diccionarios
-            for detalle in productos_data:
-                id_producto = detalle['id_producto']
-                cantidad_producto = detalle['cantidad']
-                total_detalle = detalle['total_detalle']
-                total_iva_10 = detalle['total_detalle_iva_10']
-                total_iva_5 = detalle['total_detalle_iva_5']
-
-                # Crear y guardar cada detalle de venta 
-                venta_detalle = VentaDetalle.objects.create(
-                    id_venta=venta,
-                    id_producto=Producto.objects.get(id_producto=id_producto),
-                    cantidad_producto=cantidad_producto,
-                    total_detalle=total_detalle,
-                    total_iva_5=total_iva_5,
-                    total_iva_10=total_iva_10
+                VentaDetalle.objects.filter(id_venta=venta).delete()
+                VentaTipoDePago.objects.filter(id_venta=venta).delete()
+                _guardar_detalles_y_pagos(
+                    venta, request.POST.get('productos_json'),
+                    pago_efectivo, pago_pos, pago_transferencia,
                 )
-                venta_detalle.save()
 
-            VentaTipoDePago.objects.filter(id_venta=venta).delete()
-
-            if pago_pos > 0:
-                venta_tipo_pago = VentaTipoDePago.objects.create(
-                    id_venta=venta,
-                    id_tipo_pago=TipoPago.objects.get(id_tipo_pago=2),
-                    monto=pago_pos,
-                )
-                venta_tipo_pago.save()
-
-            if pago_efectivo > 0:
-                venta_tipo_pago = VentaTipoDePago.objects.create(
-                    id_venta=venta,
-                    id_tipo_pago=TipoPago.objects.get(id_tipo_pago=1),
-                    monto=pago_efectivo,
-                )
-                venta_tipo_pago.save()
-
-            if pago_transferencia > 0:
-                venta_tipo_pago = VentaTipoDePago.objects.create(
-                    id_venta=venta,
-                    id_tipo_pago=TipoPago.objects.get(id_tipo_pago=3),
-                    monto=pago_transferencia,
-                )
-                venta_tipo_pago.save()
-
+            messages.success(request, f"Venta #{venta.id_venta} actualizada")
             return redirect('ventas:ventas')
         except Exception as e:
             error_message = str(e)
             messages.error(request, f"Error al registrar venta {error_message}")
-            logging.error(f'Error al crear venta: {error_message}')
+            logging.error(f'Error al editar venta: {error_message}')
             return redirect(reverse('ventas:editar_venta', args=[id_venta]))
-    else:
-        venta = get_object_or_404(Venta, id_venta=id_venta)
-        detalle_venta = VentaDetalle.objects.filter(id_venta=id_venta)
-        detalle_tipo_pago = VentaTipoDePago.objects.filter(id_venta=id_venta)
-        monto_efectivo = 0
-        monto_pos = 0
-        monto_transferencia = 0
 
-        for pago in detalle_tipo_pago:
-            if pago.id_tipo_pago_id == 1:
-                monto_efectivo = pago.monto
-            elif pago.id_tipo_pago_id == 2:
-                monto_pos = pago.monto
-            elif pago.id_tipo_pago_id == 3:
-                monto_transferencia = pago.monto
+    venta = get_object_or_404(Venta, id_venta=id_venta)
+    pagos = {1: 0, 2: 0, 3: 0}
+    for pago in VentaTipoDePago.objects.filter(id_venta=id_venta):
+        pagos[pago.id_tipo_pago_id] = pago.monto
 
-        detalles_serializados = []
-        for detalle in detalle_venta:
-            precio_unitario = _obtener_precio_producto_por_tipo_venta(detalle.id_producto, venta.id_tipo_venta)
-            detalle.precio_unitario_venta = precio_unitario
-            detalles_serializados.append({
-                'id_producto': detalle.id_producto.id_producto,
-                'cantidad': detalle.cantidad_producto,
-                'precioUnitario': float(precio_unitario),
-                'totalDetalle': float(detalle.total_detalle),
-                'ivaDescripcion': int(detalle.id_producto.id_iva.descripcion),
-                'total_iva_10': float(detalle.total_iva_10),
-                'total_iva_5': float(detalle.total_iva_5),
-                'nombre': detalle.id_producto.nombre
-            })
+    carrito_inicial = [
+        {'id': detalle.id_producto_id, 'cantidad': detalle.cantidad_producto}
+        for detalle in VentaDetalle.objects.filter(id_venta=id_venta).order_by('id_detalle')
+    ]
 
-        clientes = Cliente.objects.all()
-        productos = Producto.objects.all()
-        tipo_venta = TipoVenta.objects.all()
-        context = {
-            'venta': venta,
-            'clientes': clientes,
-            'detalle_venta': detalle_venta,
-            'productos': productos,
-            'detalle_tipo_pago': detalle_tipo_pago,
-            'detalle_venta_json': json.dumps(detalles_serializados, cls=DjangoJSONEncoder),
-            'tipo_venta': tipo_venta,
-            'monto_efectivo': monto_efectivo,
-            'monto_pos': monto_pos,
-            'monto_transferencia': monto_transferencia,
-            'cliente_form': _cliente_form_modal(),
-        }
+    context = _contexto_formulario_venta(venta)
+    context.update({
+        'venta': venta,
+        'carrito_inicial': carrito_inicial,
+        'pagos_iniciales': {'efectivo': pagos[1], 'pos': pagos[2], 'transferencia': pagos[3]},
+    })
     return render(request, 'ventas/editar_venta.html', context=context)
 
 

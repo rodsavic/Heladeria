@@ -1,0 +1,98 @@
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-labelledby="modalNuevoClienteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalNuevoClienteLabel">
+          <i class="bi bi-person-plus"></i> Crear cliente
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div id="formNuevoCliente">
+        <div class="modal-body">
+          <div id="clienteModalAlert" class="alert alert-danger d-none" role="alert"></div>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_nombre">Nombre</label>
+              {{ cliente_form.nombre }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_apellido">Apellido</label>
+              {{ cliente_form.apellido }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_correo">Correo</label>
+              {{ cliente_form.correo }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_celular">Celular</label>
+              {{ cliente_form.celular }}
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="cliente_direccion">Dirección</label>
+              {{ cliente_form.direccion }}
+            </div>
+          </div>
+
+          <h6 class="mt-4 mb-3">Datos para facturación electrónica</h6>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_tipo_documento">Tipo de documento</label>
+              {{ cliente_form.tipo_documento }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_documento">Documento / RUC</label>
+              {{ cliente_form.documento }}
+              <small class="text-muted">Si es RUC, incluir el dígito verificador (ej. 80000000-1).</small>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-check-inline">
+                {{ cliente_form.es_contribuyente }}
+                <label class="form-check-label" for="cliente_es_contribuyente">El documento es un RUC</label>
+              </div>
+              <div class="form-check form-check-inline">
+                {{ cliente_form.es_persona_juridica }}
+                <label class="form-check-label" for="cliente_es_persona_juridica">Persona jurídica</label>
+              </div>
+              <div class="form-check form-check-inline">
+                {{ cliente_form.es_proveedor_estado }}
+                <label class="form-check-label" for="cliente_es_proveedor_estado">Proveedor del Estado</label>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_nombre_fantasia">Nombre de fantasía</label>
+              {{ cliente_form.nombre_fantasia }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cliente_pais">País</label>
+              {{ cliente_form.pais }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="cliente_departamento">Departamento</label>
+              {{ cliente_form.departamento }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="cliente_distrito">Distrito</label>
+              {{ cliente_form.distrito }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="cliente_id_ciudad">Ciudad</label>
+              {{ cliente_form.id_ciudad }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="cliente_numero_casa">Número de casa</label>
+              {{ cliente_form.numero_casa }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-crear" id="btnGuardarNuevoCliente">
+            <i class="bi bi-save"></i> Guardar cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
