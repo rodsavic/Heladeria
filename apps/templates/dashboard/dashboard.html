@@ -30,7 +30,7 @@
             <button class="btn btn-primary" type="button" onclick="updateDashboard()">Actualizar</button>
         </div>
         <div>
-            <button class="btn btn-success" type="button" onclick="downloadDailyReport(event)">Reporte Diario</button>
+            <button class="btn btn-success" type="button" title="Descarga en Excel el período seleccionado en Desde/Hasta" onclick="downloadReport(event, 'excel', 'dashboard')">Exportar período</button>
         </div>
     </div>
 
@@ -90,13 +90,21 @@
 
     <div class="report-section">
         <h3>Generar Reporte</h3>
+        <p class="report-hint">El Excel incluye un resumen y hojas separadas de ventas, productos, detalle, pagos y gastos. Para un solo día, usá la misma fecha en Desde y Hasta.</p>
         <div class="report-controls">
             <div>
-                <label for="reportDate">Fecha del reporte:</label>
-                <input type="date" id="reportDate">
+                <label for="reportStart">Desde:</label>
+                <input type="date" id="reportStart">
             </div>
-            <button class="btn btn-success" type="button" onclick="downloadDailyReport(event)">
-                Descargar Reporte Diario
+            <div>
+                <label for="reportEnd">Hasta:</label>
+                <input type="date" id="reportEnd">
+            </div>
+            <button class="btn btn-success" type="button" onclick="downloadReport(event, 'excel', 'report')">
+                Descargar Excel
+            </button>
+            <button class="btn btn-primary" type="button" onclick="downloadReport(event, 'pdf', 'report')">
+                Descargar PDF
             </button>
         </div>
     </div>
@@ -142,7 +150,8 @@
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
         document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
         document.getElementById('endDate').value = today.toISOString().split('T')[0];
-        document.getElementById('reportDate').value = today.toISOString().split('T')[0];
+        document.getElementById('reportStart').value = localISODate(today);
+        document.getElementById('reportEnd').value = localISODate(today);
         updateDashboard();
     });
 
@@ -315,19 +324,33 @@
         }, 5000);
     }
 
-    function downloadDailyReport(event) {
-        const reportDate = document.getElementById('reportDate').value || new Date().toISOString().split('T')[0];
-        const button = event ? event.target : null;
-        const originalText = button ? button.innerHTML : '';
+    function localISODate(date) {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().split('T')[0];
+    }
 
+    function downloadReport(event, format, source) {
+        const startId = source === 'dashboard' ? 'startDate' : 'reportStart';
+        const endId = source === 'dashboard' ? 'endDate' : 'reportEnd';
+        const today = localISODate(new Date());
+        const start = document.getElementById(startId).value || today;
+        const end = document.getElementById(endId).value || start;
+
+        if (end < start) {
+            showErrorMessage('La fecha "Hasta" no puede ser anterior a "Desde".');
+            return;
+        }
+
+        const button = event ? event.currentTarget : null;
+        const originalText = button ? button.innerHTML : '';
         if (button) {
             button.innerHTML = 'Descargando...';
             button.disabled = true;
         }
 
+        const endpoint = format === 'pdf' ? '/dashboard/api/daily-report-pdf/' : '/dashboard/api/daily-report/';
         const downloadLink = document.createElement('a');
-        downloadLink.href = `/dashboard/api/daily-report/?date=${reportDate}`;
-        downloadLink.download = `reporte_ventas_${reportDate}.csv`;
+        downloadLink.href = `${endpoint}?start=${start}&end=${end}`;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -337,7 +360,7 @@
                 button.innerHTML = originalText;
                 button.disabled = false;
             }
-        }, 1000);
+        }, 1500);
     }
 
     document.getElementById('periodSelect').addEventListener('change', function () {
@@ -378,6 +401,12 @@
         margin-bottom: 30px;
         flex-wrap: wrap;
         gap: 15px;
+    }
+
+    .report-hint {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin: -5px 0 15px;
     }
 
     .date-controls, .report-controls {

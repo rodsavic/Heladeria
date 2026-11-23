@@ -6,15 +6,10 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 import json
 import logging
-import csv
-from io import StringIO
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from django.contrib.auth.decorators import login_required, user_passes_test
 from apps.ventas.views import Venta, VentaDetalle, VentaTipoDePago, TipoPago
 from apps.gastos.models import Gasto
+from .reportes import obtener_datos_reporte, generar_excel, generar_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -278,214 +273,55 @@ def get_expenses_by_period(queryset, period):
     }
 
 
+def _periodo_reporte(request):
+    """Lee el periodo del reporte: ?start=&end= o ?date= (por defecto, hoy)."""
+    hoy = timezone.localdate()
+    unico = request.GET.get('date')
+    desde = request.GET.get('start') or unico
+    hasta = request.GET.get('end') or unico
+    desde = datetime.strptime(desde, '%Y-%m-%d').date() if desde else hoy
+    hasta = datetime.strptime(hasta, '%Y-%m-%d').date() if hasta else desde
+    if hasta < desde:
+        desde, hasta = hasta, desde
+    return desde, hasta
+
+
 @login_required(login_url="/")
 @user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def daily_report_view(request):
-    """Generar reporte diario en CSV"""
+    """Reporte de ventas y gastos en Excel (una hoja por tipo de informacion)."""
     try:
-        # Obtener fecha del reporte
-        report_date = request.GET.get('date')
-        if report_date:
-            report_datetime = datetime.strptime(report_date, '%Y-%m-%d')
-            # Crear rango de fecha completa para el día
-            start_datetime = timezone.make_aware(report_datetime.replace(hour=0, minute=0, second=0))
-            end_datetime = timezone.make_aware(
-                report_datetime.replace(hour=23, minute=59, second=59, microsecond=999999))
-        else:
-            # Usar día actual
-            today = timezone.now()
-            start_datetime = today.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_datetime = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-            report_date = today.strftime('%Y-%m-%d')
-
-        # Obtener ventas del día usando el rango de timestamp
-        ventas = Venta.objects.filter(
-            fecha_venta__gte=start_datetime,
-            fecha_venta__lte=end_datetime
-        ).select_related('id_cliente').prefetch_related(
-            'ventadetalle_set__id_producto',
-            'ventatipodepago_set__id_tipo_pago'
+        desde, hasta = _periodo_reporte(request)
+    except ValueError:
+        return JsonResponse({'error': 'Fecha inválida, usar formato AAAA-MM-DD.'}, status=400)
+    try:
+        datos = obtener_datos_reporte(desde, hasta)
+        response = HttpResponse(
+            generar_excel(datos),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
-
-        # Crear respuesta CSV
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="reporte_ventas_{report_date}.csv"'
-
-        writer = csv.writer(response)
-
-        # Escribir encabezados
-        writer.writerow([
-            'ID Venta',
-            'Fecha',
-            'Cliente',
-            'Total Venta',
-            'IVA 10%',
-            'IVA 5%',
-            'Productos',
-            'Tipos de Pago'
-        ])
-
-        # Escribir datos
-        for venta in ventas:
-            # Obtener productos
-            productos = []
-            for detalle in venta.ventadetalle_set.all():
-                producto_info = f"{detalle.id_producto.nombre} (Cant: {detalle.cantidad_producto}, Total: ₲{detalle.total_detalle:,.0f})"
-                productos.append(producto_info)
-            productos_str = ' | '.join(productos)
-
-            # Obtener tipos de pago
-            tipos_pago = []
-            for pago in venta.ventatipodepago_set.all():
-                pago_info = f"{pago.id_tipo_pago.descripcion}: ₲{pago.monto:,.0f}"
-                tipos_pago.append(pago_info)
-            tipos_pago_str = ' | '.join(tipos_pago)
-
-            writer.writerow([
-                venta.id_venta,
-                venta.fecha_venta.strftime('%d/%m/%Y %H:%M'),
-                str(venta.id_cliente),
-                f"₲{venta.total_venta:,.0f}",
-                f"₲{venta.total_iva_10:,.0f}",
-                f"₲{venta.total_iva_5:,.0f}",
-                productos_str,
-                tipos_pago_str
-            ])
-
+        response['Content-Disposition'] = f'attachment; filename="reporte_ventas_{datos.sufijo_archivo}.xlsx"'
         return response
-
     except Exception as e:
+        logger.exception('Error al generar el reporte Excel')
         return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required(login_url="/")
 @user_passes_test(lambda u: u.groups.filter(name='ADMIN').exists(), login_url='/')
 def daily_report_pdf_view(request):
-    """Generar reporte diario en PDF"""
+    """Reporte de ventas y gastos en PDF."""
     try:
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib import colors
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-        from reportlab.lib.units import inch
-
-        # Obtener fecha del reporte
-        report_date = request.GET.get('date')
-        if report_date:
-            report_datetime = datetime.strptime(report_date, '%Y-%m-%d')
-            # Crear rango de fecha completa para el día
-            start_datetime = timezone.make_aware(report_datetime.replace(hour=0, minute=0, second=0))
-            end_datetime = timezone.make_aware(
-                report_datetime.replace(hour=23, minute=59, second=59, microsecond=999999))
-            report_date_str = report_datetime.strftime('%d/%m/%Y')
-        else:
-            # Usar día actual
-            today = timezone.now()
-            start_datetime = today.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_datetime = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-            report_date = today.strftime('%Y-%m-%d')
-            report_date_str = today.strftime('%d/%m/%Y')
-
-        # Crear respuesta PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="reporte_ventas_{report_date}.pdf"'
-
-        # Crear documento
-        doc = SimpleDocTemplate(response, pagesize=A4)
-        elements = []
-        styles = getSampleStyleSheet()
-
-        # Título del reporte
-        title = Paragraph(
-            f"<b>Reporte Diario de Ventas - {report_date_str}</b>",
-            styles['Title']
-        )
-        elements.append(title)
-        elements.append(Spacer(1, 20))
-
-        # Obtener ventas del día usando el rango de timestamp
-        ventas = Venta.objects.filter(
-            fecha_venta__gte=start_datetime,
-            fecha_venta__lte=end_datetime
-        ).select_related('id_cliente').prefetch_related(
-            'ventadetalle_set__id_producto',
-            'ventatipodepago_set__id_tipo_pago'
-        )
-
-        if not ventas.exists():
-            no_data = Paragraph("No se encontraron ventas para esta fecha.", styles['Normal'])
-            elements.append(no_data)
-        else:
-            # Resumen del día
-            totals = ventas.aggregate(
-                total_ventas=Sum('total_venta'),
-                total_iva_10=Sum('total_iva_10'),
-                total_iva_5=Sum('total_iva_5'),
-                count_ventas=Count('id_venta')
-            )
-
-            summary_data = [
-                ['Concepto', 'Valor'],
-                ['Total de Ventas', f"₲{totals['total_ventas']:,.0f}"],
-                ['Cantidad de Ventas', f"{totals['count_ventas']}"],
-                ['Total IVA 10%', f"₲{totals['total_iva_10']:,.0f}"],
-                ['Total IVA 5%', f"₲{totals['total_iva_5']:,.0f}"]
-            ]
-
-            summary_table = Table(summary_data, colWidths=[2 * inch, 2 * inch])
-            summary_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-
-            elements.append(summary_table)
-            elements.append(Spacer(1, 30))
-
-            # Detalle de ventas
-            detail_title = Paragraph("<b>Detalle de Ventas</b>", styles['Heading2'])
-            elements.append(detail_title)
-            elements.append(Spacer(1, 10))
-
-            # Tabla de ventas
-            table_data = [['ID', 'Hora', 'Cliente', 'Total', 'IVA 10%', 'IVA 5%']]
-
-            for venta in ventas:
-                table_data.append([
-                    str(venta.id_venta),
-                    venta.fecha_venta.strftime('%H:%M'),
-                    str(venta.id_cliente),
-                    f"₲{venta.total_venta:,.0f}",
-                    f"₲{venta.total_iva_10:,.0f}",
-                    f"₲{venta.total_iva_5:,.0f}"
-                ])
-
-            detail_table = Table(table_data,
-                                 colWidths=[0.8 * inch, 0.8 * inch, 1.5 * inch, 1.2 * inch, 1 * inch, 1 * inch])
-            detail_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTSIZE', (0, 1), (-1, -1), 9)
-            ]))
-
-            elements.append(detail_table)
-
-        # Generar PDF
-        doc.build(elements)
+        desde, hasta = _periodo_reporte(request)
+    except ValueError:
+        return JsonResponse({'error': 'Fecha inválida, usar formato AAAA-MM-DD.'}, status=400)
+    try:
+        datos = obtener_datos_reporte(desde, hasta)
+        response = HttpResponse(generar_pdf(datos), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="reporte_ventas_{datos.sufijo_archivo}.pdf"'
         return response
-
     except Exception as e:
+        logger.exception('Error al generar el reporte PDF')
         return JsonResponse({'error': str(e)}, status=500)
 
 
