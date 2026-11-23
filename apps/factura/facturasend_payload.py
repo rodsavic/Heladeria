@@ -8,7 +8,8 @@ credito/debito, exoneraciones de IVA, transporte ni moneda extranjera.
 from django.utils import timezone
 
 from apps.clientes.models import Cliente
-from apps.ventas.models import VentaDetalle, VentaTipoDePago
+from apps.factura.lineas import lineas_factura
+from apps.ventas.models import VentaTipoDePago
 
 TIPO_DOCUMENTO_FACTURA = 1
 
@@ -147,14 +148,11 @@ def _cliente_payload(cliente):
 
 
 def _items_payload(ventas):
-    detalles = (
-        VentaDetalle.objects.filter(id_venta__in=ventas)
-        .order_by('id_venta__fecha_venta', 'id_venta', 'pk')
-        .select_related('id_producto', 'id_producto__id_medida', 'id_producto__id_iva')
-    )
+    # Una linea por producto y precio: en una factura agrupada el mismo
+    # producto vendido en varias ventas no se repite.
     items = []
-    for detalle in detalles:
-        producto = detalle.id_producto
+    for detalle in lineas_factura(ventas):
+        producto = detalle.producto
         if not producto.id_medida.codigo_set:
             raise PayloadError(
                 f'La medida "{producto.id_medida.descripcion}" del producto "{producto.nombre}" '

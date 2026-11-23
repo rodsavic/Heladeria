@@ -1,437 +1,269 @@
 {% load static %}
-{% load humanize %}
 {% load custom_filters %}
 <style>
-  .tipo-venta-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-  }
+  .pos { --pos-primary: var(--color-primary, #B5652E); --pos-primary-soft: var(--color-primary-soft, #FBF1E7); --pos-border: var(--color-border, #E7E4E1); --pos-muted: var(--color-text-muted, #6B7280); }
 
-  .tipo-venta-group .form-check {
-    margin: 0;
-    padding: 0;
-  }
+  .pos-header { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .pos-header h2 { margin: 0; font-size: 1.4rem; }
+  .pos-atajos { color: var(--pos-muted); font-size: .8rem; }
+  .pos-atajos kbd { background: #fff; color: #333; border: 1px solid var(--pos-border); box-shadow: 0 1px 0 var(--pos-border); padding: .05rem .35rem; font-size: .75rem; }
 
-  .tipo-venta-group .form-check-input {
-    display: none;
-  }
+  /* Tipo de venta: botones segmentados */
+  .pos-tipos { display: inline-flex; flex-wrap: wrap; gap: .4rem; }
+  .pos-tipos input { position: absolute; opacity: 0; pointer-events: none; }
+  .pos-tipos label { padding: .45rem 1rem; border: 1px solid var(--pos-border); border-radius: 999px; background: #fff; font-weight: 600; font-size: .9rem; cursor: pointer; user-select: none; transition: all .15s ease; }
+  .pos-tipos input:checked + label { background: var(--pos-primary); border-color: var(--pos-primary); color: #fff; }
+  .pos-tipos input:focus-visible + label { outline: 2px solid var(--pos-primary); outline-offset: 2px; }
 
-  .tipo-venta-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.5rem 0.9rem;
-    border: 1px solid #d7d7d7;
-    border-radius: 999px;
-    background: #f8f9fa;
-    color: #4b4b4b;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
-  }
+  /* Catalogo */
+  .pos-panel { background: #fff; border: 1px solid var(--pos-border); border-radius: 12px; padding: 1rem; }
+  .pos-buscar { position: relative; }
+  .pos-buscar .bi-search { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--pos-muted); }
+  .pos-buscar input { padding: .75rem 1rem .75rem 2.5rem; font-size: 1.05rem; border-radius: 10px; }
+  .pos-categorias { display: flex; gap: .4rem; overflow-x: auto; padding: .75rem 0 .25rem; scrollbar-width: thin; }
+  .pos-categorias button { flex: 0 0 auto; border: 1px solid var(--pos-border); background: #fff; border-radius: 999px; padding: .3rem .8rem; font-size: .85rem; }
+  .pos-categorias button.activa { background: var(--pos-primary-soft); border-color: var(--pos-primary); color: var(--pos-primary); font-weight: 600; }
 
-  .tipo-venta-chip::before {
-    content: "";
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #c7c7c7;
-    transition: all 0.2s ease;
-  }
+  .pos-grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6rem; margin-top: .75rem; max-height: calc(100vh - 290px); min-height: 240px; overflow-y: auto; padding: 8px 8px 2px 2px; align-content: start; }
+  .pos-producto { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: .35rem; min-height: 86px; text-align: left; border: 1px solid var(--pos-border); border-radius: 10px; background: #fff; padding: .6rem .7rem; cursor: pointer; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease; }
+  .pos-producto:hover { border-color: var(--pos-primary); box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+  .pos-producto:active { transform: scale(.97); }
+  .pos-producto.resaltado { border-color: var(--pos-primary); box-shadow: 0 0 0 3px rgba(181,101,46,.25); }
+  .pos-producto .nombre { font-weight: 600; font-size: .9rem; line-height: 1.2; color: #2b2d31; }
+  .pos-producto .precio { font-size: .85rem; color: var(--pos-primary); font-weight: 700; }
+  .pos-producto .en-ticket { position: absolute; top: -7px; right: -7px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--pos-primary); color: #fff; font-size: .75rem; font-weight: 700; display: none; align-items: center; justify-content: center; }
+  .pos-producto.en-carrito .en-ticket { display: inline-flex; }
+  .pos-producto.agregado { animation: pos-pulso .3s ease; }
+  @keyframes pos-pulso { 50% { background: var(--pos-primary-soft); } }
+  .pos-vacio { grid-column: 1 / -1; text-align: center; color: var(--pos-muted); padding: 2rem 0; }
 
-  .tipo-venta-group .form-check-input:checked + .tipo-venta-chip {
-    border-color: #e95420;
-    background: #fff1eb;
-    color: #8a2f12;
-    box-shadow: 0 0 0 2px rgba(233, 84, 32, 0.12);
-  }
+  /* Ticket */
+  .pos-ticket { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: .85rem; }
+  .pos-ticket h5 { margin: 0; font-size: 1.05rem; }
+  .pos-items { max-height: 34vh; overflow-y: auto; margin: 0 -.25rem; padding: 0 .25rem; }
+  .pos-item { display: grid; grid-template-columns: 1fr auto; gap: .2rem .5rem; padding: .55rem 0; border-bottom: 1px dashed var(--pos-border); }
+  .pos-item:last-child { border-bottom: 0; }
+  .pos-item .nombre { font-weight: 600; font-size: .9rem; }
+  .pos-item .unitario { color: var(--pos-muted); font-size: .78rem; }
+  .pos-item .subtotal { font-weight: 700; text-align: right; }
+  .pos-item .controles { display: flex; align-items: center; gap: .25rem; }
+  .pos-item .controles button { width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--pos-border); background: #fff; line-height: 1; }
+  .pos-item .controles button:hover { border-color: var(--pos-primary); color: var(--pos-primary); }
+  .pos-item .controles .quitar { border: 0; color: #b02a37; background: transparent; margin-left: .25rem; }
+  .pos-item .controles input { width: 52px; height: 30px; text-align: center; padding: 0 .25rem; border: 1px solid var(--pos-border); border-radius: 8px; }
+  .pos-ticket-vacio { text-align: center; color: var(--pos-muted); padding: 1.25rem 0; font-size: .9rem; }
 
-  .tipo-venta-group .form-check-input:checked + .tipo-venta-chip::before {
-    background: #e95420;
+  .pos-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: .6rem; border-top: 2px solid #2b2d31; }
+  .pos-total .monto { font-size: 1.9rem; font-weight: 800; letter-spacing: -.5px; }
+  .pos-ivas { display: flex; justify-content: space-between; color: var(--pos-muted); font-size: .8rem; }
+
+  .pos-metodos { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; }
+  .pos-metodos button { border: 1px solid var(--pos-border); background: #fff; border-radius: 10px; padding: .5rem .25rem; font-size: .8rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+  .pos-metodos button i { font-size: 1.15rem; }
+  .pos-metodos button.activo { background: var(--pos-primary-soft); border-color: var(--pos-primary); color: var(--pos-primary); }
+  .pos-billetes { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+  .pos-billetes button { border: 1px solid var(--pos-border); background: #fff; border-radius: 8px; padding: .25rem .6rem; font-size: .8rem; font-weight: 600; }
+  .pos-billetes button:hover { border-color: var(--pos-primary); color: var(--pos-primary); }
+  .pos-resultado { border-radius: 10px; padding: .55rem .8rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; background: #f1f3f5; }
+  .pos-resultado.ok { background: #e7f6ec; color: #1e7b40; }
+  .pos-resultado.falta { background: #fdecea; color: #b02a37; }
+  .pos-resultado .valor { font-size: 1.2rem; }
+
+  .pos-cobrar { font-size: 1.15rem; padding: .8rem; border-radius: 12px; }
+  .pos-opciones summary { cursor: pointer; color: var(--pos-muted); font-size: .85rem; }
+
+  /* Barra inferior en pantallas chicas */
+  .pos-barra-movil { display: none; }
+  @media (max-width: 991.98px) {
+    .pos-ticket { position: static; }
+    .pos-grilla { max-height: none; }
+    .pos-barra-movil { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1030; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem 1rem; background: #fff; border-top: 1px solid var(--pos-border); box-shadow: 0 -6px 18px rgba(0,0,0,.08); }
+    .pos-barra-movil .monto { font-weight: 800; font-size: 1.15rem; }
+    .pos { padding-bottom: 70px; }
+  }
+  @media (max-width: 575.98px) {
+    .pos-grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pos-atajos { display: none; }
   }
 
   /* El contenedor intermedio impide que modal-dialog-scrollable llegue al modal-body */
-  #formNuevoCliente {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  #formNuevoCliente .modal-body {
-    overflow-y: auto;
-  }
-
-  .tipo-venta-group .form-check-input:focus-visible + .tipo-venta-chip {
-    outline: 2px solid #e95420;
-    outline-offset: 2px;
-  }
+  #formNuevoCliente { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  #formNuevoCliente .modal-body { overflow-y: auto; }
 </style>
 
-<div class="container-fluid">
-  <div class="card" style="width: 100%;">
-    <div class="card-body">
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-        <div>
-          <h2 class="card-title mb-1">{{ page_title }}</h2>
-          <h6 class="card-subtitle text-muted">{{ page_subtitle }}</h6>
+<div class="container-fluid pos" id="posVenta" data-modo="{% if is_edit %}editar{% else %}crear{% endif %}">
+  <form method="post" id="formVenta" autocomplete="off">
+    {% csrf_token %}
+    {% if not is_edit %}{% token_envio %}{% endif %}
+
+    <div class="pos-header">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <a href="{% url 'ventas:ventas' %}" class="btn btn-outline-secondary btn-sm" title="Volver a la lista">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2>{{ page_title }}{% if venta %} <small class="text-muted fs-6">#{{ venta.id_venta }}</small>{% endif %}</h2>
+        <div class="pos-tipos" role="radiogroup" aria-label="Tipo de venta">
+          {% for tipo in tipo_venta %}
+          <input type="radio" name="tipo_venta" id="tipo_venta_{{ tipo.id }}" value="{{ tipo.id }}"
+                 class="tipo-venta-radio" data-nombre="{{ tipo.nombre }}"
+                 {% if venta and venta.id_tipo_venta_id == tipo.id %}checked{% elif not venta.id_tipo_venta_id and forloop.first %}checked{% endif %}>
+          <label for="tipo_venta_{{ tipo.id }}">{{ tipo.nombre }}</label>
+          {% endfor %}
         </div>
-        <div class="mt-2 mt-md-0">
-          <a href="{% url 'ventas:ventas' %}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Volver a la lista
-          </a>
+      </div>
+      <div class="pos-atajos d-none d-md-block">
+        <kbd>F2</kbd> buscar · <kbd>Enter</kbd> agregar · <kbd>3*cono</kbd> cantidad · <kbd>F4</kbd> cobrar
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Catalogo de productos -->
+      <div class="col-12 col-lg-7 col-xl-8">
+        <div class="pos-panel">
+          <div class="pos-buscar">
+            <i class="bi bi-search"></i>
+            <input type="search" class="form-control" id="posBuscar" placeholder="Buscar producto…  (F2)"
+                   aria-label="Buscar producto" {% if not is_edit %}autofocus{% endif %}>
+          </div>
+          {% if categorias_pos %}
+          <div class="pos-categorias" id="posCategorias">
+            <button type="button" class="activa" data-categoria="">Todos</button>
+            {% for categoria in categorias_pos %}
+            <button type="button" data-categoria="{{ categoria.id }}">{{ categoria.nombre }}</button>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="pos-grilla" id="posGrilla" role="list"></div>
         </div>
       </div>
 
-      <form method="post" onsubmit="event.preventDefault(); abrirModalVuelto();">
-        {% csrf_token %}
-        {% if not is_edit %}{% token_envio %}{% endif %}
-
-        <div class="card mb-3">
-          <div class="card-body">
-            <label class="form-label fw-semibold mb-2">Tipo de Venta</label>
-            <div class="tipo-venta-group">
-              {% for tipo in tipo_venta %}
-              <div class="form-check">
-                <input
-                  class="form-check-input tipo-venta-check"
-                  type="checkbox"
-                  id="tipo_venta_{{ tipo.id }}"
-                  value="{{ tipo.id }}"
-                  data-nombre="{{ tipo.nombre }}"
-                  {% if venta and venta.id_tipo_venta and tipo.id == venta.id_tipo_venta.id %}checked{% elif not venta and forloop.first %}checked{% endif %}
-                >
-                <label class="tipo-venta-chip" for="tipo_venta_{{ tipo.id }}">{{ tipo.nombre }}</label>
-              </div>
-              {% endfor %}
-            </div>
-            <input type="hidden" name="tipo_venta" id="tipo_venta" value="{% if venta and venta.id_tipo_venta %}{{ venta.id_tipo_venta.id }}{% elif tipo_venta %}{{ tipo_venta.0.id }}{% endif %}">
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-12 col-lg-8 order-2 order-lg-1">
-            <div class="product-selector-container">
-              <div class="row g-3 align-items-end">
-                <div class="col-12 col-md-6 col-lg-5">
-                  <label for="selectProducto" class="form-label fw-semibold">Producto</label>
-                  <select class="selectProducto form-control" name="selectProducto" id="selectProducto">
-                    <option value="" disabled>Seleccionar producto...</option>
-                    {% for producto in productos %}
-                    <option value="{{ producto.id_producto }}"
-                            data-precio-normal="{{ producto.precio_actual }}"
-                            data-precio-pedidosya="{{ producto.precio_pedidos_ya|default_if_none:producto.precio_actual }}"
-                            data-descripcionIva="{{ producto.id_iva.descripcion }}">
-                      {{ producto.nombre }}
-                    </option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <div class="col-12 col-md-4 col-lg-3">
-                  <label for="cantidad" class="form-label fw-semibold">Cantidad</label>
-                  <input class="form-control" type="number" name="cantidad" id="cantidad" min="1" value="1">
-                </div>
-
-                <div class="col-12 col-md-2 col-lg-2">
-                  <button class="btn btn-crear w-100" type="button" onclick="agregarProductoATabla()">
-                    <i class="bi bi-plus-circle"></i>
-                    <span class="d-none d-sm-inline"> Agregar</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="table-responsive">
-              <table class="table table-hover table-striped" id="tablaProductos">
-                <thead class="table-head-color">
-                  <tr>
-                    <th class="text-center">Producto</th>
-                    <th class="text-center">Cant.</th>
-                    <th class="text-center">Precio Unit.</th>
-                    <th class="text-center">Total</th>
-                    <th class="text-center d-none d-sm-table-cell">IVA 10</th>
-                    <th class="text-center d-none d-sm-table-cell">IVA 5</th>
-                    <th class="text-center">Accion</th>
-                  </tr>
-                </thead>
-                <tbody class="text-center">
-                  {% for detalle in detalle_venta %}
-                  <tr data-producto-id="{{ detalle.id_producto.id_producto }}">
-                    <td>{{ detalle.id_producto.nombre }}</td>
-                    <td>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        class="form-control form-control-sm text-center cantidad-producto-input"
-                        value="{{ detalle.cantidad_producto|floatformat:0 }}"
-                      >
-                    </td>
-                    <td>{{ detalle.precio_unitario_venta|floatformat:0 }}</td>
-                    <td>{{ detalle.total_detalle|floatformat:0 }}</td>
-                    <td>{{ detalle.total_iva_10|floatformat:0 }}</td>
-                    <td>{{ detalle.total_iva_5|floatformat:0 }}</td>
-                    <td>
-                      <button type="button" class="btn-cancelar btn-sm" title="Eliminar"
-                              onclick="eliminarProducto('{{ detalle.id_producto.id_producto }}', {{ detalle.id_producto.id_iva.descripcion|floatformat:0 }})">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
+      <!-- Ticket y cobro -->
+      <div class="col-12 col-lg-5 col-xl-4">
+        <div class="pos-panel pos-ticket" id="posTicket">
+          <div>
+            <label class="form-label fw-semibold mb-1" for="cliente">Cliente</label>
+            <div class="d-flex gap-2 align-items-start">
+              <div class="flex-grow-1" style="min-width: 0;">
+                <select class="form-control" name="cliente" id="cliente">
+                  <option value="">Seleccionar cliente...</option>
+                  {% for cliente in clientes %}
+                  <option value="{{ cliente.id_cliente }}" {% if cliente.id_cliente == cliente_seleccionado %}selected{% endif %}>
+                    {{ cliente.nombre }} {{ cliente.apellido }} - {{ cliente.documento }}
+                  </option>
                   {% endfor %}
-                </tbody>
-              </table>
-              <input type="hidden" name="productos_json" id="productos_json">
+                </select>
+              </div>
+              <button type="button" class="btn btn-outline-secondary flex-shrink-0" id="btnNuevoCliente" title="Crear cliente">
+                <i class="bi bi-person-plus"></i>
+              </button>
             </div>
           </div>
 
-          <div class="col-12 col-lg-4 order-1 order-lg-2">
-            <div class="summary-card card-sidebar">
-              <h5 class="mb-3 text-center text-lg-start">Resumen de Venta</h5>
+          <div class="d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-receipt"></i> Ticket <span class="badge rounded-pill text-bg-light" id="posCantidadItems">0</span></h5>
+            <button type="button" class="btn btn-link btn-sm text-danger p-0" id="posVaciar">Vaciar</button>
+          </div>
+          <div class="pos-items" id="posItems"></div>
 
-              <div class="mb-3">
-                <label class="form-label fw-semibold" for="fecha_venta">Fecha y hora de venta</label>
-                <input type="datetime-local" class="form-control" name="fecha_venta" id="fecha_venta"
-                  value="{% if venta %}{{ venta.fecha_venta|date:'Y-m-d\\TH:i' }}{% else %}{{ now|date:'Y-m-d\\TH:i' }}{% endif %}">
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-semibold" for="cliente">Cliente</label>
-                <div class="d-flex gap-2 align-items-start">
-                  <select class="form-control" name="cliente" id="cliente">
-                    <option value="">Seleccionar cliente...</option>
-                    {% for cliente in clientes %}
-                    <option value="{{ cliente.id_cliente }}" {% if venta and cliente.id_cliente == venta.id_cliente.id_cliente %}selected{% endif %}>
-                      {{ cliente.nombre }} - {{ cliente.documento }}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <button type="button" class="btn btn-outline-primary flex-shrink-0" id="btnNuevoCliente" title="Crear cliente">
-                    <i class="bi bi-person-plus"></i>
-                  </button>
-                </div>
-                <small class="text-muted">Si el cliente no existe, puedes crearlo aqui mismo.</small>
-              </div>
-
-              <div class="row g-3">
-                <div class="col-12">
-                  <label class="form-label fw-semibold" for="total_venta">Total Venta</label>
-                  <div class="input-group">
-                    <span class="input-group-text">Gs</span>
-                    <input class="form-control fw-bold" type="number" name="total_venta" id="total_venta"
-                      value="{% if venta %}{{ venta.total_venta|floatformat:0 }}{% else %}0{% endif %}" readonly>
-                  </div>
-                </div>
-
-                <div class="col-6">
-                  <label class="form-label fw-semibold" for="total_iva_10">IVA 10%</label>
-                  <div class="input-group">
-                    <span class="input-group-text">Gs</span>
-                    <input class="form-control" type="number" name="total_iva_10" id="total_iva_10"
-                      value="{% if venta %}{{ venta.total_iva_10|floatformat:0 }}{% else %}0{% endif %}" readonly>
-                  </div>
-                </div>
-
-                <div class="col-6">
-                  <label class="form-label fw-semibold" for="total_iva_5">IVA 5%</label>
-                  <div class="input-group">
-                    <span class="input-group-text">Gs</span>
-                    <input class="form-control" type="number" name="total_iva_5" id="total_iva_5"
-                      value="{% if venta %}{{ venta.total_iva_5|floatformat:0 }}{% else %}0{% endif %}" readonly>
-                  </div>
-                </div>
-              </div>
-
-              <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-crear btn-lg d-none d-lg-inline-block">
-                  <i class="bi bi-save"></i> {{ save_button_text }}
-                </button>
-              </div>
+          <div>
+            <div class="pos-total">
+              <span class="fw-semibold">Total</span>
+              <span class="monto">Gs <span id="posTotal">0</span></span>
+            </div>
+            <div class="pos-ivas">
+              <span>IVA 10%: Gs <span id="posIva10">0</span></span>
+              <span>IVA 5%: Gs <span id="posIva5">0</span></span>
             </div>
           </div>
-        </div>
 
-        <div class="d-grid mt-3 d-lg-none">
-          <button type="submit" class="btn btn-crear btn-lg">
-            <i class="bi bi-save"></i> {{ save_button_text }}
+          <!-- Cobro -->
+          <div>
+            <label class="form-label fw-semibold mb-1">Forma de pago</label>
+            <div class="pos-metodos" id="posMetodos">
+              <button type="button" data-metodo="efectivo"><i class="bi bi-cash"></i>Efectivo</button>
+              <button type="button" data-metodo="pos"><i class="bi bi-credit-card-2-front"></i>POS</button>
+              <button type="button" data-metodo="transferencia"><i class="bi bi-bank"></i>Transf.</button>
+              <button type="button" data-metodo="mixto"><i class="bi bi-intersect"></i>Mixto</button>
+            </div>
+          </div>
+
+          <div id="posPagoEfectivo" class="d-none">
+            <label class="form-label mb-1 small fw-semibold" for="posRecibido">Recibido</label>
+            <div class="input-group">
+              <span class="input-group-text">Gs</span>
+              <input type="number" min="0" step="1" class="form-control" id="posRecibido" placeholder="Monto exacto">
+            </div>
+            <div class="pos-billetes" id="posBilletes"></div>
+          </div>
+
+          <div id="posPagoMixto" class="d-none">
+            <div class="row g-2">
+              <div class="col-4">
+                <label class="form-label mb-1 small fw-semibold" for="posMixtoEfectivo">Efectivo</label>
+                <input type="number" min="0" step="1" class="form-control form-control-sm pos-mixto" id="posMixtoEfectivo" data-metodo="efectivo" placeholder="0">
+              </div>
+              <div class="col-4">
+                <label class="form-label mb-1 small fw-semibold" for="posMixtoPos">POS</label>
+                <input type="number" min="0" step="1" class="form-control form-control-sm pos-mixto" id="posMixtoPos" data-metodo="pos" placeholder="0">
+              </div>
+              <div class="col-4">
+                <label class="form-label mb-1 small fw-semibold" for="posMixtoTransferencia">Transf.</label>
+                <input type="number" min="0" step="1" class="form-control form-control-sm pos-mixto" id="posMixtoTransferencia" data-metodo="transferencia" placeholder="0">
+              </div>
+            </div>
+            <small class="text-muted">Al entrar en un campo vacío se completa con lo que falta.</small>
+          </div>
+
+          <div class="pos-resultado d-none" id="posResultado">
+            <span id="posResultadoTexto"></span>
+            <span class="valor" id="posResultadoValor"></span>
+          </div>
+
+          <details class="pos-opciones" {% if is_edit %}open{% endif %}>
+            <summary>Más opciones</summary>
+            <div class="mt-2">
+              <label class="form-label small fw-semibold mb-1" for="fecha_venta">Fecha y hora de venta</label>
+              <input type="datetime-local" class="form-control form-control-sm" name="fecha_venta" id="fecha_venta"
+                     value="{% if venta %}{{ venta.fecha_venta|date:'Y-m-d\\TH:i' }}{% else %}{{ now|date:'Y-m-d\\TH:i' }}{% endif %}">
+              {% if not is_edit %}
+              <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="posSeguirVendiendo" name="seguir_vendiendo" value="1" checked>
+                <label class="form-check-label small" for="posSeguirVendiendo">Al guardar, empezar otra venta</label>
+              </div>
+              {% endif %}
+            </div>
+          </details>
+
+          <button type="submit" class="btn btn-crear pos-cobrar w-100" id="posBtnCobrar">
+            <i class="bi bi-check2-circle"></i> {{ save_button_text }} <small class="opacity-75 d-none d-md-inline">(F4)</small>
           </button>
         </div>
-
-        <div class="modal fade" id="modalCobro" tabindex="-1" aria-labelledby="modalCobroLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="modalCobroLabel">
-                  <i class="bi bi-credit-card"></i> Forma de pago
-                </h5>
-                <button onclick="cerrarModal()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-              </div>
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label for="totalVentaModal" class="form-label fw-semibold">Total de Venta</label>
-                  <div class="input-group">
-                    <span class="input-group-text">Gs</span>
-                    <input type="number" id="totalVentaModal" class="form-control fw-bold" disabled>
-                  </div>
-                </div>
-
-                <label class="form-label fw-semibold mb-2">Seleccione el/los métodos de pago</label>
-                <div class="row g-3">
-                  <div class="col-12 col-md-4">
-                    <div class="form-check mb-2">
-                      <input class="form-check-input pago-check" type="checkbox" id="chk_efectivo" data-target="efectivo">
-                      <label class="form-check-label" for="chk_efectivo"><i class="bi bi-cash"></i> Efectivo</label>
-                    </div>
-                    <div class="input-group">
-                      <span class="input-group-text">Gs</span>
-                      <input type="number" id="efectivo" name="efectivo" class="form-control" placeholder="0" min="0"
-                             value="0" data-default="{{ monto_efectivo|default:0 }}" disabled>
-                    </div>
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <div class="form-check mb-2">
-                      <input class="form-check-input pago-check" type="checkbox" id="chk_pos" data-target="pos">
-                      <label class="form-check-label" for="chk_pos"><i class="bi bi-credit-card-2-front"></i> POS</label>
-                    </div>
-                    <div class="input-group">
-                      <span class="input-group-text">Gs</span>
-                      <input type="number" id="pos" name="pos" class="form-control" placeholder="0" min="0"
-                             value="0" data-default="{{ monto_pos|default:0 }}" disabled>
-                    </div>
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <div class="form-check mb-2">
-                      <input class="form-check-input pago-check" type="checkbox" id="chk_transferencia" data-target="transferencia">
-                      <label class="form-check-label" for="chk_transferencia"><i class="bi bi-bank"></i> Transferencia</label>
-                    </div>
-                    <div class="input-group">
-                      <span class="input-group-text">Gs</span>
-                      <input type="number" id="transferencia" name="transferencia" class="form-control" placeholder="0" min="0"
-                             value="0" data-default="{{ monto_transferencia|default:0 }}" disabled>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-3 p-3 bg-light rounded">
-                  <span id="mensajeVuelto" class="fw-bold d-block text-center"></span>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <div class="action-buttons w-100">
-                  <button type="button" class="btn btn-crear" id="btnGuardarCobro" data-bs-dismiss="modal" onclick="enviarFormulario()" disabled>
-                    <i class="bi bi-check-circle"></i> Guardar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-labelledby="modalNuevoClienteLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="modalNuevoClienteLabel">
-                  <i class="bi bi-person-plus"></i> Crear cliente
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-              </div>
-              <div id="formNuevoCliente">
-                <div class="modal-body">
-                  <div id="clienteModalAlert" class="alert alert-danger d-none" role="alert"></div>
-
-                  <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_nombre">Nombre</label>
-                      {{ cliente_form.nombre }}
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_apellido">Apellido</label>
-                      {{ cliente_form.apellido }}
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_correo">Correo</label>
-                      {{ cliente_form.correo }}
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_celular">Celular</label>
-                      {{ cliente_form.celular }}
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label" for="cliente_direccion">Dirección</label>
-                      {{ cliente_form.direccion }}
-                    </div>
-                  </div>
-
-                  <h6 class="mt-4 mb-3">Datos para facturación electrónica</h6>
-
-                  <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_tipo_documento">Tipo de documento</label>
-                      {{ cliente_form.tipo_documento }}
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_documento">Documento / RUC</label>
-                      {{ cliente_form.documento }}
-                      <small class="text-muted">Si es RUC, incluir el dígito verificador (ej. 80000000-1).</small>
-                    </div>
-                    <div class="col-12">
-                      <div class="form-check form-check-inline">
-                        {{ cliente_form.es_contribuyente }}
-                        <label class="form-check-label" for="cliente_es_contribuyente">El documento es un RUC</label>
-                      </div>
-                      <div class="form-check form-check-inline">
-                        {{ cliente_form.es_persona_juridica }}
-                        <label class="form-check-label" for="cliente_es_persona_juridica">Persona jurídica</label>
-                      </div>
-                      <div class="form-check form-check-inline">
-                        {{ cliente_form.es_proveedor_estado }}
-                        <label class="form-check-label" for="cliente_es_proveedor_estado">Proveedor del Estado</label>
-                      </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_nombre_fantasia">Nombre de fantasía</label>
-                      {{ cliente_form.nombre_fantasia }}
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="cliente_pais">País</label>
-                      {{ cliente_form.pais }}
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <label class="form-label" for="cliente_departamento">Departamento</label>
-                      {{ cliente_form.departamento }}
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <label class="form-label" for="cliente_distrito">Distrito</label>
-                      {{ cliente_form.distrito }}
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <label class="form-label" for="cliente_id_ciudad">Ciudad</label>
-                      {{ cliente_form.id_ciudad }}
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <label class="form-label" for="cliente_numero_casa">Número de casa</label>
-                      {{ cliente_form.numero_casa }}
-                    </div>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                  <button type="button" class="btn btn-crear" id="btnGuardarNuevoCliente">
-                    <i class="bi bi-save"></i> Guardar cliente
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
+
+    <!-- Valores que procesa el servidor -->
+    <input type="hidden" name="productos_json" id="productos_json">
+    <input type="hidden" name="total_venta" id="total_venta" value="0">
+    <input type="hidden" name="total_iva_10" id="total_iva_10" value="0">
+    <input type="hidden" name="total_iva_5" id="total_iva_5" value="0">
+    <input type="hidden" name="efectivo" id="efectivo" value="0">
+    <input type="hidden" name="pos" id="pos" value="0">
+    <input type="hidden" name="transferencia" id="transferencia" value="0">
+
+    {% include 'ventas/partials/modal_nuevo_cliente.html' %}
+  </form>
+
+  <div class="pos-barra-movil">
+    <div>
+      <div class="small text-muted"><span id="posBarraItems">0</span> ítems</div>
+      <div class="monto">Gs <span id="posBarraTotal">0</span></div>
+    </div>
+    <button type="button" class="btn btn-crear" id="posBarraIr">
+      <i class="bi bi-receipt"></i> Ver ticket y cobrar
+    </button>
   </div>
 </div>
+
+{{ productos_pos|json_script:"pos-productos" }}
+{{ carrito_inicial|default_if_none:""|json_script:"pos-carrito-inicial" }}
+{{ pagos_iniciales|default_if_none:""|json_script:"pos-pagos-iniciales" }}
