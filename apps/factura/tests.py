@@ -195,12 +195,40 @@ class FacturaAgrupadaTest(TestCase):
 
         documento = construir_documento(factura)
         self.assertEqual(documento['cliente']['documentoNumero'], '2222222')
-        self.assertEqual(len(documento['items']), 2)
+        # El mismo producto de las dos ventas va en una sola linea.
+        self.assertEqual(len(documento['items']), 1)
+        self.assertEqual(documento['items'][0]['cantidad'], 3)
+        self.assertEqual(documento['items'][0]['precioUnitario'], 11_000)
         self.assertEqual(documento['condicion']['entregas'], [{'tipo': 1, 'monto': 33_000, 'moneda': 'PYG'}])
 
         detalle = self.client.get(f'/factura/detalle/{factura.id_factura}/')
         self.assertContains(detalle, 'Ana Gómez')
         self.assertEqual(detalle.context['factura'].total, 33_000)
+        self.assertEqual(
+            [(l.descripcion_mostrar, l.cantidad_producto, l.total_detalle) for l in detalle.context['detalles']],
+            [('Helado', 3, 33_000)],
+        )
+
+    def test_agrupa_por_producto_y_precio(self):
+        from apps.factura.facturasend_payload import construir_documento
+        from apps.productos.models import Producto
+        from apps.ventas.models import VentaDetalle
+
+        agua = Producto.objects.create(
+            nombre='Agua', precio_actual=5_500, id_medida=self.producto.id_medida, id_iva=self.producto.id_iva,
+        )
+        # Venta 1: Helado x1 (11.000) + Agua x2; venta 2: Helado x2; venta 3: Helado x3.
+        VentaDetalle.objects.create(id_venta=self.ventas[0], id_producto=agua, cantidad_producto=2, total_detalle=11_000)
+        # El mismo producto a otro precio (ej. PedidosYa) no se mezcla: cambiaria el precio unitario.
+        VentaDetalle.objects.create(
+            id_venta=self.ventas[2], id_producto=self.producto, cantidad_producto=1, total_detalle=14_000,
+        )
+
+        self._emitir(self.ventas)
+        items = construir_documento(Factura.objects.get())['items']
+
+        resumen = [(i['descripcion'], i['cantidad'], i['precioUnitario']) for i in items]
+        self.assertEqual(resumen, [('Helado', 6, 11_000), ('Agua', 2, 5_500), ('Helado', 1, 14_000)])
 
     def test_ventas_agrupadas_quedan_facturadas_y_bloqueadas(self):
         self._emitir(self.ventas[:2])

@@ -25,8 +25,9 @@ from apps.factura.facturasend_service import (
     obtener_kude,
     reenviar_email,
 )
+from apps.factura.lineas import lineas_factura
 from apps.factura.models import Factura, facturas_de_ventas
-from apps.ventas.models import Venta, VentaDetalle, VentaTipoDePago
+from apps.ventas.models import Venta, VentaTipoDePago
 
 
 @login_required(login_url='/')
@@ -325,11 +326,8 @@ def detalleFacturaView(request, id_factura):
     factura = get_object_or_404(Factura, id_factura=id_factura)
     venta = factura.id_venta
     ventas = factura.get_ventas()
-    detalle_venta = (
-        VentaDetalle.objects.filter(id_venta__in=ventas)
-        .select_related('id_producto')
-        .order_by('id_venta__fecha_venta', 'id_venta', 'pk')
-    )
+    # Mismas lineas que se informan a SIFEN (agrupadas por producto).
+    detalle_venta = lineas_factura(ventas)
     pagos = VentaTipoDePago.objects.filter(id_venta__in=ventas).select_related('id_tipo_pago')
     configuracion = _configuracion_facturasend()
 
